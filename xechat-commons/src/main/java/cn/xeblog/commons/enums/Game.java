@@ -18,7 +18,9 @@ public enum Game {
     GAME_2048("2048", false),
     SUDOKU("数独", false),
     PUSH_BOX("推箱子", false),
-    CHINESE_CHESS("中国象棋", false);
+    CHINESE_CHESS("中国象棋", false),
+    /** 大富翁 */
+    ZILLIONAIRE("大富翁", true);
 
     /**
      * 游戏名称
