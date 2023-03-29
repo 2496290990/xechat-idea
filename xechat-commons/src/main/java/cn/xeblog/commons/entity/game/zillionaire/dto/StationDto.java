@@ -1,9 +1,10 @@
 package cn.xeblog.commons.entity.game.zillionaire.dto;
 
-import cn.xeblog.commons.entity.game.zillionaire.enums.Color;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.awt.*;
 
 /**
  * @author eleven
@@ -15,6 +16,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class StationDto extends PositionDto{
 
+    private Integer level;
+
+    private Integer price;
 
     /**
      * 一台价格
@@ -35,6 +39,8 @@ public class StationDto extends PositionDto{
 
 
     public void superConstructor(Integer position, String name){
+        this.level = 0;
+        this.price = 1000;
         this.oneStationPrice = 250;
         this.twoStationPrice = 500;
         this.threeStationPrice = 1000;
@@ -43,6 +49,19 @@ public class StationDto extends PositionDto{
         super.setName(name);
         super.setIsCity(false);
         super.setUpgradeAllowed(false);
-        super.setColor(Color.NULL);
+        super.setColor(Color.BLACK);
+    }
+
+    public Integer getToll(){
+        switch (level) {
+            case 2 :
+                return twoStationPrice;
+            case 3:
+                return threeStationPrice;
+            case 4 :
+                return fourStationPrice;
+            default:
+                return oneStationPrice;
+        }
     }
 }

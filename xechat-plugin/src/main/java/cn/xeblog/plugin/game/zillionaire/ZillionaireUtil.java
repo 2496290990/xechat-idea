@@ -1,8 +1,8 @@
 package cn.xeblog.plugin.game.zillionaire;
 
 import cn.xeblog.commons.entity.game.zillionaire.dto.*;
-import cn.xeblog.commons.entity.game.zillionaire.enums.Color;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -31,10 +31,10 @@ public class ZillionaireUtil {
      * 初始化定位卡牌
      * @return List
      */
-    public static List<PositionDto> initPosition(){
+    private static List<PositionDto> initPosition(){
         PositionDto[] positionArr = new PositionDto[40];
         // 起点 坐标 0
-        PositionDto start = new PositionDto(0, false, "起点", Color.NULL, null, false, 0);
+        PositionDto start = new PositionDto(0, false, "起点", Color.BLACK, null, false, 0);
         positionArr[0] = start;
         // 美国 坐标 1
         CityDto america = new CityDto(0, 3500, 350, 1750, 5000, 11000, 13000, 15000, null, 2000 );
@@ -42,14 +42,14 @@ public class ZillionaireUtil {
         positionArr[1] = america;
         // 命运 坐标 2
         LuckDto firstDestiny = new LuckDto();
-        firstDestiny.superConstructor(2, "命运", Color.NULL);
+        firstDestiny.superConstructor(2, "命运", Color.BLACK);
         positionArr[2] = firstDestiny;
         // 加拿大 坐标 3
         CityDto canada = new CityDto(0, 3500, 350, 1750, 5000, 11000, 13000, 15000, null, 2000 );
         canada.superConstructor(3, "加拿大", Color.PINK);
         positionArr[3] = canada;
         // 所得税 坐标 4
-        PositionDto incomeTax = new PositionDto(4, false, "所得税", Color.NULL, null, false , 4);
+        PositionDto incomeTax = new PositionDto(4, false, "所得税", Color.BLACK, null, false , 4);
         positionArr[4] = incomeTax;
         // 纽约火车站 坐标 5
         StationDto newYorkStation = new StationDto();
@@ -57,11 +57,11 @@ public class ZillionaireUtil {
         positionArr[5] = newYorkStation;
         // 阿根廷 坐标 6
         CityDto argentina = new CityDto(0, 1000, 60, 300, 900, 2700, 4000, 5500, null, 500 );
-        canada.superConstructor(6, "阿根廷", Color.YELLOW);
+        argentina.superConstructor(6, "阿根廷", Color.YELLOW);
         positionArr[6] = argentina;
         // 机会 坐标 7
         LuckDto firstChance = new LuckDto();
-        firstChance.superConstructor(7, "机会", Color.NULL);
+        firstChance.superConstructor(7, "机会", Color.BLACK);
         positionArr[7] = firstChance;
         // 墨西哥 坐标 8
         CityDto mexico = new CityDto(0, 1000, 60, 300, 900, 2700, 4000, 5500, null, 500 );
@@ -70,13 +70,13 @@ public class ZillionaireUtil {
         // 古巴 坐标 9
         CityDto cubo = new CityDto(0, 3000, 260, 1300, 3900, 9000, 11000, 12750, null, 2000 );
         cubo.superConstructor(9, "古巴", Color.YELLOW);
-        positionArr[8] = cubo;
+        positionArr[9] = cubo;
         // 监狱 坐标 10
-        PositionDto jail = new PositionDto(10, false, "监狱", Color.NULL, null, false, 1);
+        PositionDto jail = new PositionDto(10, false, "监狱", Color.BLACK, null, false, 1);
         positionArr[10] = jail;
         // 法国 坐标 11
         CityDto france = new CityDto(0, 3000, 260, 1300, 3900, 9000, 11000, 12750, null, 2000 );
-        france.superConstructor(11, "法国", Color.PURPLE);
+        france.superConstructor(11, "法国", Color.CYAN);
         positionArr[11] = france;
         // 电力公司 坐标 12
         CompanyDto electricPowerCompany = new CompanyDto();
@@ -84,11 +84,11 @@ public class ZillionaireUtil {
         positionArr[12] = electricPowerCompany;
         // 德国 坐标 13
         CityDto germany = new CityDto(0, 2400, 200, 1000, 3000, 7500, 9250, 11000, null, 1500 );
-        germany.superConstructor(13, "德国", Color.PURPLE);
+        germany.superConstructor(13, "德国", Color.CYAN);
         positionArr[13] = germany;
         // 意大利 坐标 14
         CityDto italy = new CityDto(0, 1400, 100, 500, 1500, 4500, 6250, 7500, null, 1000 );
-        italy.superConstructor(14, "意大利", Color.PURPLE);
+        italy.superConstructor(14, "意大利", Color.CYAN);
         positionArr[14] = italy;
         // 巴黎火车站 坐标 15
         StationDto parisStation = new StationDto();
@@ -100,7 +100,7 @@ public class ZillionaireUtil {
         positionArr[16] = spain;
         // 命运 坐标 17
         LuckDto secondDestiny = new LuckDto();
-        secondDestiny.superConstructor(17, "命运", Color.NULL);
+        secondDestiny.superConstructor(17, "命运", Color.BLACK);
         positionArr[17] = secondDestiny;
         // 希腊 坐标 18
         CityDto greece = new CityDto(0, 1600, 120, 600, 1800, 5000, 7000, 9000, null, 1000 );
@@ -111,7 +111,7 @@ public class ZillionaireUtil {
         netherlands.superConstructor(19, "荷兰", Color.ORANGE);
         positionArr[19] = netherlands;
         // 免费停车场 坐标 20
-        PositionDto park = new PositionDto(20, false, "停车场", Color.NULL, null, false, 20);
+        PositionDto park = new PositionDto(20, false, "停车场", Color.BLACK, null, false, 20);
         positionArr[20] = park;
         // 英国 坐标 21
         CityDto england = new CityDto(0, 2200,  180, 900, 2500, 7000, 8750, 10500, null, 1500 );
@@ -119,7 +119,7 @@ public class ZillionaireUtil {
         positionArr[21] = england;
         // 机会 坐标 22
         LuckDto secondChance = new LuckDto();
-        secondChance.superConstructor(22, "机会", Color.NULL);
+        secondChance.superConstructor(22, "机会", Color.BLACK);
         positionArr[22] = secondChance;
         // 俄罗斯 坐标 23
         CityDto russia = new CityDto(0, 1000, 60, 300, 900, 2700, 4000, 5500, null, 500 );
@@ -150,23 +150,23 @@ public class ZillionaireUtil {
         singapore.superConstructor(29, "新加坡", Color.BLUE);
         positionArr[29] = singapore;
         // 坐牢 坐标 30
-        PositionDto toJail = new PositionDto(30, false, "停车场", Color.NULL, null, false,  30);
+        PositionDto toJail = new PositionDto(30, false, "停车场", Color.BLACK, null, false,  30);
         positionArr[30] = toJail;
         // 韩国 坐标 31
         CityDto korea = new CityDto(0, 1000, 60, 300, 900, 2700, 4000, 5500, null, 500 );
-        korea.superConstructor(31, "韩国", Color.BROWN);
+        korea.superConstructor(31, "韩国", Color.WHITE);
         positionArr[31] = korea;
         // 中国 坐标 32
         CityDto china = new CityDto(0, 4000,500, 2000, 6000, 14000, 17000, 20000, null, 2000 );
-        china.superConstructor(32, "中国", Color.BROWN);
+        china.superConstructor(32, "中国", Color.WHITE);
         positionArr[32] = china;
         // 命运 坐标 33
         LuckDto thirdDestiny = new LuckDto();
-        thirdDestiny.superConstructor(33, "命运", Color.NULL);
+        thirdDestiny.superConstructor(33, "命运", Color.BLACK);
         positionArr[33] = thirdDestiny;
         // 中国香港 坐标 34
         CityDto chinaHK = new CityDto(0, 2800, 220, 1200, 3600, 8500, 10250, 12000, null, 1500 );
-        china.superConstructor(34, "中国香港", Color.BROWN);
+        chinaHK.superConstructor(34, "中国香港", Color.WHITE);
         positionArr[34] = chinaHK;
         // 北京火车站 坐标 35
         StationDto beiJingStation = new StationDto();
@@ -174,18 +174,18 @@ public class ZillionaireUtil {
         positionArr[35] = beiJingStation;
         // 机会 坐标 36
         LuckDto thirdChance = new LuckDto();
-        thirdChance.superConstructor(36, "机会", Color.NULL);
+        thirdChance.superConstructor(36, "机会", Color.BLACK);
         positionArr[36] = thirdChance;
         // 日本 坐标 37
         CityDto japan = new CityDto(0, 1000, 60, 300, 900, 2700, 4000, 5500, null, 500 );
-        japan.superConstructor(37, "日本", Color.BROWN);
+        japan.superConstructor(37, "日本", Color.GREEN);
         positionArr[37] = japan;
         // 财产税 38
-        PositionDto propertyTax = new PositionDto(38, false, "财产税", Color.NULL, null, false, 38);
+        PositionDto propertyTax = new PositionDto(38, false, "财产税", Color.BLACK, null, false, 38);
         positionArr[38] = propertyTax;
         // 巴西 坐标 39
         CityDto brazil = new CityDto(0, 1800, 140, 700, 2000, 5500, 7500, 9500, null, 1000 );
-        brazil.superConstructor(39, "巴西", Color.NULL);
+        brazil.superConstructor(39, "巴西", Color.GREEN);
         positionArr[39] = brazil;
         return Arrays.asList(positionArr);
     }
@@ -194,7 +194,7 @@ public class ZillionaireUtil {
      * 初始化命运卡牌
      * @return List
      */
-    public static List<LuckEntity> initDestinyCard(){
+    private static List<LuckEntity> initDestinyCard(){
         List<LuckEntity> destinyCards = new ArrayList<>();
         Collections.addAll(destinyCards,
                 new LuckEntity(0,"搭乘'欧洲之星'从巴黎直达伦敦","直达伦敦(若经过起点可领2000)",
@@ -235,7 +235,7 @@ public class ZillionaireUtil {
      * 初始化机会卡牌
      * @return  List
      */
-    public static List<LuckEntity> initChanceCard(){
+    private static List<LuckEntity> initChanceCard(){
         List<LuckEntity> chanceCards = new ArrayList<>();
         Collections.addAll(chanceCards,
                 new LuckEntity(0,"拯救了迷路的北极熊宝宝","玩家得600元",

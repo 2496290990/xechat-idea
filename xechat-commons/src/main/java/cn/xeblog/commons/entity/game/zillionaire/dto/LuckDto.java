@@ -1,6 +1,7 @@
 package cn.xeblog.commons.entity.game.zillionaire.dto;
 
-import cn.xeblog.commons.entity.game.zillionaire.enums.Color;
+
+import java.awt.*;
 
 /**
  * @author eleven

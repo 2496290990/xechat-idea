@@ -1,7 +1,8 @@
 package cn.xeblog.commons.entity.game.zillionaire.dto;
 
-import cn.xeblog.commons.entity.game.zillionaire.enums.Color;
 import lombok.Data;
+
+import java.awt.*;
 
 /**
  * @author eleven
@@ -16,6 +17,6 @@ public class CompanyDto extends PositionDto{
         super.setIsCity(false);
         super.setUpgradeAllowed(false);
         super.setName(name);
-        super.setColor(Color.NULL);
+        super.setColor(Color.BLACK);
     }
 }

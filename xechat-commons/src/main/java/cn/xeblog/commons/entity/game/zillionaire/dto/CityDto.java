@@ -1,10 +1,11 @@
 package cn.xeblog.commons.entity.game.zillionaire.dto;
 
-import cn.xeblog.commons.entity.game.zillionaire.enums.Color;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
+
+import java.awt.*;
 
 /**
  * @author eleven
@@ -72,5 +73,22 @@ public class CityDto extends PositionDto{
         super.setUpgradeAllowed(true);
         super.setName(name);
         super.setColor(color);
+    }
+
+    public Integer getToll(){
+        switch (level) {
+            case 1:
+                return firstToll;
+            case 2:
+                return secondToll;
+            case 3:
+                return thirdToll;
+            case 4:
+                return fourthToll;
+            case 5:
+                return fifthToll;
+            default:
+                return zeroToll;
+        }
     }
 }
