@@ -1,5 +1,6 @@
 package cn.xeblog.plugin.game.zillionaire;
 
+import cn.hutool.core.util.RandomUtil;
 import cn.xeblog.commons.entity.game.GameRoom;
 import cn.xeblog.commons.entity.game.zillionaire.dto.CityDto;
 import cn.xeblog.commons.entity.game.zillionaire.dto.PlayerDto;
@@ -13,6 +14,8 @@ import cn.xeblog.plugin.game.AbstractGame;
 import cn.xeblog.plugin.game.landlords.PlayerNode;
 import cn.xeblog.plugin.game.zillionaire.enums.WindowMode;
 import cn.xeblog.plugin.game.zillionaire.ui.PositionUi;
+import cn.xeblog.plugin.game.zillionaire.utils.ZillionaireUtil;
+import cn.xeblog.plugin.util.AlertMessagesUtil;
 import com.intellij.openapi.ui.ComboBox;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -41,6 +44,8 @@ public class Zillionaire extends AbstractGame<PositionDto>{
     private JLabel titleLabel;
     /** 返回游戏 */
     private JButton backButton;
+    // 随机数标签
+    private JLabel randomLabel = new JLabel();
     /**
      * 提示标签
      */
@@ -58,6 +63,14 @@ public class Zillionaire extends AbstractGame<PositionDto>{
      * 当前玩家
      */
     private PlayerNode currentPlayer;
+    /**
+     * 玩家的建筑
+     */
+    private List<? extends PositionDto> userPosition;
+    /**
+     * 已选中的地皮
+     */
+    private List<? extends PositionDto> selectedPosition;
     /**
      * ai玩家行动地图
      */
@@ -153,6 +166,7 @@ public class Zillionaire extends AbstractGame<PositionDto>{
         return button;
     }
 
+    // 获取返回游戏按钮
     private JButton getBackButton() {
         JButton button = new JButton("返回游戏");
         button.addActionListener(e -> init());
@@ -165,8 +179,6 @@ public class Zillionaire extends AbstractGame<PositionDto>{
             showGamePanel();
         }
     }
-
-
 
     @Override
     protected void start() {
@@ -212,19 +224,13 @@ public class Zillionaire extends AbstractGame<PositionDto>{
         bottomPanel.setPreferredSize(new Dimension(400,30));
         JPanel centerPanel = new JPanel();
         centerPanel.setPreferredSize(new Dimension(280,280));
-
-        JPanel textPanel = new JPanel();
-        tipsLabel = new JLabel("测试刷新游戏页面");
-        tipsLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        tipsLabel.setPreferredSize(new Dimension(200, 40));
-        textPanel.add(tipsLabel);
-        centerPanel.add(textPanel);
         // 初始化游戏区域
         initPlayAreaCenterPanel(centerPanel);
         initPlayAreaRightPanel(rightPanel);
         initPlayAreaBottomPanel(bottomPanel);
         initPlayAreaLeftPanel(leftPanel);
         initPlayAreaTopPanel(topPanel);
+        //添加按钮等
         panel.add(centerPanel, BorderLayout.CENTER);
         panel.add(topPanel, BorderLayout.NORTH);
         panel.add(rightPanel, BorderLayout.EAST);
@@ -257,10 +263,6 @@ public class Zillionaire extends AbstractGame<PositionDto>{
         mainPanel.add(panel, BorderLayout.CENTER);
         mainPanel.add(mainBottomPanel, BorderLayout.SOUTH);
         mainPanel.add(initUserPanel(), BorderLayout.EAST);
-        //JPanel placeholderPanel = new JPanel();
-        //placeholderPanel.setMinimumSize(new Dimension(5, 0));
-        //mainPanel.add(placeholderPanel, BorderLayout.WEST);
-        //mainPanel.add(placeholderPanel, BorderLayout.EAST);
         mainPanel.updateUI();
 
     }
@@ -295,6 +297,10 @@ public class Zillionaire extends AbstractGame<PositionDto>{
         return positionUis;
     }
 
+    /**
+     * 加载游戏区域头部地区
+     * @param jPanel
+     */
     private void initPlayAreaTopPanel(JPanel jPanel) {
         jPanel.setLayout(new GridLayout(1, 11));
         initPositionUi(jPanel, 0, 11, false);
@@ -314,11 +320,63 @@ public class Zillionaire extends AbstractGame<PositionDto>{
         initPositionUi(jPanel, 31, 40, true );
     }
 
-    private void initPlayAreaCenterPanel(JPanel jPanel) {
-        JLabel label = new JLabel("添加中央的游戏面板");
-        jPanel.add(label);
-        jPanel.setBorder(new LineBorder(new Color(255, 100, 0), 1));
+    private void initPlayAreaCenterPanel(JPanel centerPanel) {
+        centerPanel.setLayout(new GridLayout(3,1));
+        JPanel textPanel = new JPanel();
+        tipsLabel = new JLabel("测试刷新游戏页面");
+        tipsLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        tipsLabel.setPreferredSize(new Dimension(200, 40));
+        textPanel.add(tipsLabel);
+        centerPanel.add(textPanel);
+        centerPanel.add(randomLabel);
+        centerPanel.add(centerGameButton());
+        centerPanel.setBorder(new LineBorder(new Color(255, 100, 0), 1));
     }
+
+    private JPanel centerGameButton() {
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setLayout(new GridLayout(1,6));
+        JButton randomBtn = new JButton("投掷骰子");
+        JButton buildBtn = new JButton("升级建筑");
+        JButton buyBtn = new JButton("购买地皮");
+        JButton saleBtn = new JButton("售卖建筑");
+        JButton redemptionBtn = new JButton("赎回建筑");
+        JButton passBtn = new JButton("过");
+        buttonPanel.add(randomBtn);
+        buttonPanel.add(buildBtn);
+        buttonPanel.add(buyBtn);
+        buttonPanel.add(saleBtn);
+        buttonPanel.add(redemptionBtn);
+        buttonPanel.add(passBtn);
+        randomBtn.addActionListener(e -> {
+            int randomInt = RandomUtil.randomInt(2, 12);
+            randomLabel.setText("当前投掷点数为: " + randomInt);
+        });
+        buildBtn.addActionListener(e -> {
+            // TODO: 2023/3/29 开发升级建筑功能
+        });
+
+        buyBtn.addActionListener(e -> {
+            // TODO: 2023/3/29 开发购买地皮功能
+        });
+
+        saleBtn.addActionListener(e -> {
+            // TODO: 2023/3/29 开发售卖建筑或地皮功能
+
+        });
+
+        redemptionBtn.addActionListener( e -> {
+            // TODO: 2023/3/29 开发赎回功能
+        });
+        passBtn.addActionListener(e -> {
+            AlertMessagesUtil.showInfoDialog("提示", "玩家跳过");
+            if (null != currentPlayer) {
+                currentPlayer = currentPlayer.getNextPlayer();
+            }
+        });
+        return buttonPanel;
+    }
+
 
     /**
      * 初始化坐标点位UI
@@ -339,16 +397,14 @@ public class Zillionaire extends AbstractGame<PositionDto>{
 
     private JPanel initUserPanel(){
         JPanel userPanel = new JPanel();
-        userPanel.setMinimumSize(new Dimension(5, 0));
         JPanel userItem = new JPanel();
         userItem.add(new JLabel("玩家1"));
         userItem.add(new JLabel("献祭1000"));
         userItem.add(new JLabel("现金1000"));
         for (int i = 0; i < 6; i++) {
-            userItem.setBorder(new LineBorder(new Color(255, 100, 0), 4));
             userPanel.add(userItem);
         }
-        userPanel.setBorder(new LineBorder(new Color(255, 100, 0), 4));
+        userPanel.setBorder(new LineBorder(new Color(255, 100, 0), 1));
         return userPanel;
     }
 

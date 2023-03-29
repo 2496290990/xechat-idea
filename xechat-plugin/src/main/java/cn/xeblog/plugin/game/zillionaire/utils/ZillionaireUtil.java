@@ -1,4 +1,4 @@
-package cn.xeblog.plugin.game.zillionaire;
+package cn.xeblog.plugin.game.zillionaire.utils;
 
 import cn.xeblog.commons.entity.game.zillionaire.dto.*;
 
@@ -11,22 +11,22 @@ import java.util.List;
 /**
  * @author eleven
  * @date 2023/3/27 14:25
- * @description 工具类
+ * @apiNote  卡牌工具类， 不允许修改
  */
-public class ZillionaireUtil {
+public final class ZillionaireUtil {
     /**
      * 获取命运卡牌
      */
-    public static final List<LuckEntity> destinyCards = initDestinyCard();
+    public static List<LuckEntity> destinyCards = initDestinyCard();
 
     /**
      * 机会卡牌
      */
-    public static final List<LuckEntity> chanceCards = initDestinyCard();
+    public static List<LuckEntity> chanceCards = initChanceCard();
     /**
      * 位置卡牌
      */
-    public static final List<PositionDto> positionDtoList = initPosition();
+    public static List<PositionDto> positionDtoList = initPosition();
     /**
      * 初始化定位卡牌
      * @return List
@@ -34,7 +34,7 @@ public class ZillionaireUtil {
     private static List<PositionDto> initPosition(){
         PositionDto[] positionArr = new PositionDto[40];
         // 起点 坐标 0
-        PositionDto start = new PositionDto(0, false, "起点", Color.BLACK, null, false, 0);
+        PositionDto start = new PositionDto(0, "起点", 0);
         positionArr[0] = start;
         // 美国 坐标 1
         CityDto america = new CityDto(0, 3500, 350, 1750, 5000, 11000, 13000, 15000, null, 2000 );
@@ -49,7 +49,7 @@ public class ZillionaireUtil {
         canada.superConstructor(3, "加拿大", Color.PINK);
         positionArr[3] = canada;
         // 所得税 坐标 4
-        PositionDto incomeTax = new PositionDto(4, false, "所得税", Color.BLACK, null, false , 4);
+        PositionDto incomeTax = new PositionDto(4, "所得税", 4);
         positionArr[4] = incomeTax;
         // 纽约火车站 坐标 5
         StationDto newYorkStation = new StationDto();
@@ -72,7 +72,7 @@ public class ZillionaireUtil {
         cubo.superConstructor(9, "古巴", Color.YELLOW);
         positionArr[9] = cubo;
         // 监狱 坐标 10
-        PositionDto jail = new PositionDto(10, false, "监狱", Color.BLACK, null, false, 1);
+        PositionDto jail = new PositionDto(10,"监狱", 1);
         positionArr[10] = jail;
         // 法国 坐标 11
         CityDto france = new CityDto(0, 3000, 260, 1300, 3900, 9000, 11000, 12750, null, 2000 );
@@ -111,7 +111,7 @@ public class ZillionaireUtil {
         netherlands.superConstructor(19, "荷兰", Color.ORANGE);
         positionArr[19] = netherlands;
         // 免费停车场 坐标 20
-        PositionDto park = new PositionDto(20, false, "停车场", Color.BLACK, null, false, 20);
+        PositionDto park = new PositionDto(20, "停车场", 20);
         positionArr[20] = park;
         // 英国 坐标 21
         CityDto england = new CityDto(0, 2200,  180, 900, 2500, 7000, 8750, 10500, null, 1500 );
@@ -150,7 +150,7 @@ public class ZillionaireUtil {
         singapore.superConstructor(29, "新加坡", Color.BLUE);
         positionArr[29] = singapore;
         // 坐牢 坐标 30
-        PositionDto toJail = new PositionDto(30, false, "停车场", Color.BLACK, null, false,  30);
+        PositionDto toJail = new PositionDto(30,  "入狱",  30);
         positionArr[30] = toJail;
         // 韩国 坐标 31
         CityDto korea = new CityDto(0, 1000, 60, 300, 900, 2700, 4000, 5500, null, 500 );
@@ -181,7 +181,7 @@ public class ZillionaireUtil {
         japan.superConstructor(37, "日本", Color.GREEN);
         positionArr[37] = japan;
         // 财产税 38
-        PositionDto propertyTax = new PositionDto(38, false, "财产税", Color.BLACK, null, false, 38);
+        PositionDto propertyTax = new PositionDto(38, "财产税", 38);
         positionArr[38] = propertyTax;
         // 巴西 坐标 39
         CityDto brazil = new CityDto(0, 1800, 140, 700, 2000, 5500, 7500, 9500, null, 1000 );
@@ -266,7 +266,7 @@ public class ZillionaireUtil {
                         "无尾熊只要吃尤加利树的树叶，就可以供给它们所需要的养分及水分，所以英语名为Koala是'不喝水'的意思",1),
                 new LuckEntity(13,"到英国享受下午茶","最靠近英国的玩家付500元",
                         "最早有下午喝茶习惯的是以茶文化著称的中国，然而将下午茶发展为一种特定习俗的则是英国人",1),
-                new LuckEntity(14,"在牙买加学习雷鬼音乐","房子最少名玩家免费盖一栋",
+                new LuckEntity(14,"在牙买加学习雷鬼音乐","房子最少名玩家盖一栋",
                         "雷鬼乐是牙买加盛行的曲风，融合了非洲传统乐，美国抒情蓝调及拉丁热情曲风对西方音乐有重大的影响",1)
         );
         return chanceCards;

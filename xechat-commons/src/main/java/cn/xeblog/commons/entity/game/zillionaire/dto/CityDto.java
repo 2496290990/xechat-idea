@@ -70,6 +70,7 @@ public class CityDto extends PositionDto{
     public void superConstructor(Integer position, String name, Color color){
         super.setPosition(position);
         super.setIsCity(true);
+        super.setAllowBuy(true);
         super.setUpgradeAllowed(true);
         super.setName(name);
         super.setColor(color);

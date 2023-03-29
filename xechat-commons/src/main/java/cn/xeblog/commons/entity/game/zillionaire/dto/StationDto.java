@@ -45,6 +45,7 @@ public class StationDto extends PositionDto{
         this.twoStationPrice = 500;
         this.threeStationPrice = 1000;
         this.fourStationPrice = 2000;
+        super.setAllowBuy(true);
         super.setPosition(position);
         super.setName(name);
         super.setIsCity(false);

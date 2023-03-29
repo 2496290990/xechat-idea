@@ -1,4 +1,4 @@
-package cn.xeblog.plugin.game.zillionaire;
+package cn.xeblog.plugin.game.zillionaire.utils;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.RandomUtil;

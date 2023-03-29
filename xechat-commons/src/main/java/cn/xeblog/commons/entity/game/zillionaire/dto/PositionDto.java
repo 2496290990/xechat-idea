@@ -29,6 +29,8 @@ public class PositionDto extends GameDTO {
      */
     private Boolean isCity;
 
+    private Boolean allowBuy;
+
     /**
      * 名字
      */
@@ -53,4 +55,21 @@ public class PositionDto extends GameDTO {
      * 行动
      */
     private Integer action;
+
+    /**
+     * 状态 默认 true， false代表待赎回
+     */
+    private Boolean positionStatus;
+
+    public PositionDto(Integer position, String name, Integer action) {
+        this.position = position;
+        this.name = name;
+        this.owner = "--";
+        this.action = action;
+        this.isCity = false;
+        this.upgradeAllowed = false;
+        this.positionStatus = true;
+        this.allowBuy = false;
+        this.color = Color.BLACK;
+    }
 }

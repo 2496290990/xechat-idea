@@ -12,11 +12,15 @@ import java.awt.*;
 @Data
 public class CompanyDto extends PositionDto{
 
+    private Integer price;
+
     public void superConstructor(Integer position, String name){
         super.setPosition(position);
         super.setIsCity(false);
+        super.setAllowBuy(true);
         super.setUpgradeAllowed(false);
         super.setName(name);
         super.setColor(Color.BLACK);
+        this.price = 1000;
     }
 }
