@@ -200,18 +200,18 @@ public class Zillionaire extends AbstractGame<PositionDto>{
         mainPanel.setMinimumSize(new Dimension(490, 350));
 
         JPanel panel = new JPanel();
-        panel.setPreferredSize(new Dimension(330, 330));
+        panel.setPreferredSize(new Dimension(480, 300));
         panel.setLayout(new BorderLayout(10, 10));
         JPanel topPanel = new JPanel();
-        topPanel.setPreferredSize(new Dimension(330,30));
+        topPanel.setPreferredSize(new Dimension(400,30));
         JPanel leftPanel = new JPanel();
-        leftPanel.setPreferredSize(new Dimension(30,270));
+        leftPanel.setPreferredSize(new Dimension(60,280));
         JPanel rightPanel = new JPanel();
-        rightPanel.setPreferredSize(new Dimension(30,270));
+        rightPanel.setPreferredSize(new Dimension(60,280));
         JPanel bottomPanel = new JPanel();
-        bottomPanel.setPreferredSize(new Dimension(330,30));
+        bottomPanel.setPreferredSize(new Dimension(400,30));
         JPanel centerPanel = new JPanel();
-        centerPanel.setPreferredSize(new Dimension(270,270));
+        centerPanel.setPreferredSize(new Dimension(280,280));
 
         JPanel textPanel = new JPanel();
         tipsLabel = new JLabel("测试刷新游戏页面");

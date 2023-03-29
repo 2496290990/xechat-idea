@@ -36,7 +36,7 @@ public class PositionUi extends JPanel {
     public PositionUi(Integer position, String name, String owner, Integer level, Integer pay, Integer buildMoney, Integer toll, Color color) {
         PositionUi positionUi = this;
         positionUi.setBorder(new LineBorder(color, 1));
-        positionUi.setPreferredSize(new Dimension(30,30));
+        positionUi.setPreferredSize(new Dimension(40,40));
         //StringBuffer sb = new StringBuffer();
         //sb.append("<html>")
         //        .append("坐标:").append(position).append("<br/>")
@@ -64,7 +64,6 @@ public class PositionUi extends JPanel {
     public PositionUi(Integer position, String name, Color color) {
         PositionUi positionUi = this;
         positionUi.setBorder(new LineBorder(color, 1));
-        positionUi.setPreferredSize(new Dimension(30,30));
         //StringBuffer sb = new StringBuffer();
         //sb.append("<html>")
         //        .append("坐标:").append(position).append("<br/>")
