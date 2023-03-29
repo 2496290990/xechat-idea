@@ -200,19 +200,18 @@ public class Zillionaire extends AbstractGame<PositionDto>{
         mainPanel.setMinimumSize(new Dimension(490, 350));
 
         JPanel panel = new JPanel();
-        panel.setPreferredSize(new Dimension(480, 300));
+        panel.setPreferredSize(new Dimension(330, 330));
         panel.setLayout(new BorderLayout(10, 10));
-        List<PositionDto> positions = ZillionaireUtil.positionDtoList;
         JPanel topPanel = new JPanel();
-        topPanel.setSize(new Dimension(550,70));
+        topPanel.setPreferredSize(new Dimension(330,30));
         JPanel leftPanel = new JPanel();
-        leftPanel.setSize(new Dimension(50,560));
+        leftPanel.setPreferredSize(new Dimension(30,270));
         JPanel rightPanel = new JPanel();
-        rightPanel.setSize(new Dimension(50,560));
+        rightPanel.setPreferredSize(new Dimension(30,270));
         JPanel bottomPanel = new JPanel();
-        bottomPanel.setSize(new Dimension(550,70));
+        bottomPanel.setPreferredSize(new Dimension(330,30));
         JPanel centerPanel = new JPanel();
-        bottomPanel.setSize(new Dimension(550,350));
+        centerPanel.setPreferredSize(new Dimension(270,270));
 
         JPanel textPanel = new JPanel();
         tipsLabel = new JLabel("测试刷新游戏页面");
@@ -298,31 +297,27 @@ public class Zillionaire extends AbstractGame<PositionDto>{
 
     private void initPlayAreaTopPanel(JPanel jPanel) {
         jPanel.setLayout(new GridLayout(1, 11));
-        initPositionUi(jPanel, 0, 10, false);
-        jPanel.setBorder(new LineBorder(new Color(255, 100, 0), 4));
+        initPositionUi(jPanel, 0, 11, false);
     }
 
     private void initPlayAreaRightPanel(JPanel jPanel) {
-        jPanel.setLayout(new GridLayout(8, 1));
+        jPanel.setLayout(new GridLayout(9, 1));
         initPositionUi(jPanel, 11, 20, false );
-        jPanel.setBorder(new LineBorder(new Color(255, 100, 0), 4));
     }
 
     private void initPlayAreaBottomPanel(JPanel jPanel) {
         jPanel.setLayout(new GridLayout(1, 11));
-        initPositionUi(jPanel, 20, 30, true);
-        jPanel.setBorder(new LineBorder(new Color(255, 100, 0), 4));
+        initPositionUi(jPanel, 20, 31, true);
     }
     private void initPlayAreaLeftPanel(JPanel jPanel) {
-        jPanel.setLayout(new GridLayout(8, 1));
+        jPanel.setLayout(new GridLayout(9, 1));
         initPositionUi(jPanel, 31, 40, true );
-        jPanel.setBorder(new LineBorder(new Color(255, 100, 0), 4));
     }
 
     private void initPlayAreaCenterPanel(JPanel jPanel) {
         JLabel label = new JLabel("添加中央的游戏面板");
         jPanel.add(label);
-        jPanel.setBorder(new LineBorder(new Color(255, 100, 0), 4));
+        jPanel.setBorder(new LineBorder(new Color(255, 100, 0), 1));
     }
 
     /**

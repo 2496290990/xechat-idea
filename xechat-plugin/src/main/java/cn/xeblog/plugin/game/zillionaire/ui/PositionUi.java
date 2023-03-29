@@ -1,5 +1,6 @@
 package cn.xeblog.plugin.game.zillionaire.ui;
 
+import cn.hutool.core.util.StrUtil;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -35,24 +36,21 @@ public class PositionUi extends JPanel {
     public PositionUi(Integer position, String name, String owner, Integer level, Integer pay, Integer buildMoney, Integer toll, Color color) {
         PositionUi positionUi = this;
         positionUi.setBorder(new LineBorder(color, 1));
-        positionUi.setSize(50,70);
-        positionUi.setLayout(new GridLayout(1, 7));
+        positionUi.setPreferredSize(new Dimension(30,30));
+        //StringBuffer sb = new StringBuffer();
+        //sb.append("<html>")
+        //        .append("坐标:").append(position).append("<br/>")
+        //        .append("名称:").append(name).append("<br/>")
+        //        .append("拥有者:").append(StrUtil.isBlank(owner) ? "--" : owner).append("<br/>")
+        //        .append("等级:").append(level).append("<br/>")
+        //        .append("售价:").append(pay).append("<br/>")
+        //        .append("升级:").append(buildMoney).append("<br/>")
+        //        .append("过路费:").append(toll)
+        //   .append("</html>");
         // 创建label
-        JLabel positionLabel = new JLabel(position.toString());
-        JLabel nameLabel = new JLabel(name);
-        JLabel ownerLabel = new JLabel(owner);
-        JLabel levelLabel = new JLabel(level.toString());
-        JLabel payLabel = new JLabel(pay.toString());
-        JLabel buildMoneyLabel = new JLabel(buildMoney.toString());
-        JLabel tollLabel = new JLabel(toll.toString());
+        JLabel positionLabel = new JLabel(name);
         // 添加组件
-        positionUi.add(nameLabel);
         positionUi.add(positionLabel);
-        positionUi.add(ownerLabel);
-        positionUi.add(levelLabel);
-        positionUi.add(payLabel);
-        positionUi.add(buildMoneyLabel);
-        positionUi.add(tollLabel);
         // 设置参数
         positionUi.setPosition(position);
         positionUi.setName(name);
@@ -66,14 +64,16 @@ public class PositionUi extends JPanel {
     public PositionUi(Integer position, String name, Color color) {
         PositionUi positionUi = this;
         positionUi.setBorder(new LineBorder(color, 1));
-        positionUi.setSize(40,50);
-        positionUi.setLayout(new GridLayout(1, 2));
+        positionUi.setPreferredSize(new Dimension(30,30));
+        //StringBuffer sb = new StringBuffer();
+        //sb.append("<html>")
+        //        .append("坐标:").append(position).append("<br/>")
+        //        .append("名称:").append(name)
+        //   .append("</html>");
         // 创建组件
-        JLabel positionLabel = new JLabel(position.toString());
-        JLabel nameLabel = new JLabel(name);
+        JLabel positionLabel = new JLabel(name);
         // 添加组件
         positionUi.add(positionLabel);
-        positionUi.add(nameLabel);
         // 设置参数
         positionUi.setPosition(position);
         positionUi.setName(name);
