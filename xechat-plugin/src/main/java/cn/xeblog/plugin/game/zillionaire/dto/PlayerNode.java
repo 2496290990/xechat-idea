@@ -1,10 +1,10 @@
-package cn.xeblog.plugin.game.zillionaire;
+package cn.xeblog.plugin.game.zillionaire.dto;
 
 import cn.xeblog.commons.entity.game.zillionaire.dto.CityDto;
 import cn.xeblog.commons.entity.game.zillionaire.dto.CompanyDto;
-import cn.xeblog.commons.entity.game.zillionaire.dto.PositionDto;
 import cn.xeblog.commons.entity.game.zillionaire.dto.StationDto;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
@@ -14,6 +14,7 @@ import java.util.List;
  * @description
  */
 @Data
+@NoArgsConstructor
 public class PlayerNode {
     /**
      * 当前玩家

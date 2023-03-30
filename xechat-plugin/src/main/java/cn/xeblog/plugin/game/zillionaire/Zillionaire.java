@@ -11,14 +11,14 @@ import cn.xeblog.plugin.action.GameAction;
 import cn.xeblog.plugin.annotation.DoGame;
 import cn.xeblog.plugin.cache.DataCache;
 import cn.xeblog.plugin.game.AbstractGame;
-import cn.xeblog.plugin.game.landlords.PlayerNode;
+import cn.xeblog.plugin.game.zillionaire.dto.PlayerNode;
+import cn.xeblog.plugin.game.zillionaire.dto.MonopolyGameDto;
+import cn.xeblog.plugin.game.zillionaire.enums.GameMode;
 import cn.xeblog.plugin.game.zillionaire.enums.WindowMode;
 import cn.xeblog.plugin.game.zillionaire.ui.PositionUi;
 import cn.xeblog.plugin.game.zillionaire.utils.ZillionaireUtil;
 import cn.xeblog.plugin.util.AlertMessagesUtil;
 import com.intellij.openapi.ui.ComboBox;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
@@ -33,7 +33,7 @@ import java.util.List;
  * @apiNote  大富翁
  */
 @DoGame(Game.ZILLIONAIRE)
-public class Zillionaire extends AbstractGame<PositionDto>{
+public class Zillionaire extends AbstractGame<MonopolyGameDto>{
     public static WindowMode windowMode;
 
     /** 开始 */
@@ -460,7 +460,6 @@ public class Zillionaire extends AbstractGame<PositionDto>{
         for (int i = 0; i < usersTotal; i++) {
             PlayerNode node = new PlayerNode();
             node.setPlayer(roomUserList.get(i));
-            node.setPokerTotal(17);
             node.setAlias("Machine 0" + (i + 1));
             //playerMap.put(node.getPlayer(), new PlayerDto(node, null));
 
@@ -495,22 +494,10 @@ public class Zillionaire extends AbstractGame<PositionDto>{
         tipsLabel.updateUI();
     }
 
-    @AllArgsConstructor
-    @Getter
-    private enum GameMode {
-        BROKE_EXIT("破产结束"),
-        ONLY_ONE("一人胜出");
 
-        private String name;
-
-        public static Zillionaire.GameMode getMode(String name) {
-            for (Zillionaire.GameMode model : values()) {
-                if (model.name.equals(name)) {
-                    return model;
-                }
-            }
-
-            return Zillionaire.GameMode.BROKE_EXIT;
-        }
+    @Override
+    public void handle(MonopolyGameDto body) {
+        String player = body.getPlayer();
+        PlayerDto playerDto = playerMap.get(player);
     }
 }

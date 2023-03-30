@@ -6,8 +6,7 @@ import cn.hutool.core.util.RandomUtil;
 import cn.xeblog.commons.entity.game.zillionaire.dto.CityDto;
 import cn.xeblog.commons.entity.game.zillionaire.dto.CompanyDto;
 import cn.xeblog.commons.entity.game.zillionaire.dto.StationDto;
-import cn.xeblog.plugin.game.zillionaire.PlayerNode;
-import com.intellij.collaboration.ui.CollaborationToolsUIUtil;
+import cn.xeblog.plugin.game.zillionaire.dto.PlayerNode;
 
 import java.util.*;
 import java.util.stream.Collectors;

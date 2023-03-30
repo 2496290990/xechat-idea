@@ -3,7 +3,7 @@ package cn.xeblog.plugin.game.zillionaire.action;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.xeblog.commons.entity.game.zillionaire.dto.*;
-import cn.xeblog.plugin.game.zillionaire.PlayerNode;
+import cn.xeblog.plugin.game.zillionaire.dto.PlayerNode;
 import cn.xeblog.plugin.game.zillionaire.utils.ZillionaireUtil;
 import cn.xeblog.plugin.util.AlertMessagesUtil;
 import lombok.AllArgsConstructor;

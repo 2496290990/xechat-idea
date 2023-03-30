@@ -17,7 +17,7 @@ import java.awt.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Accessors(chain = true)
-public class PositionDto extends GameDTO {
+public class PositionDto{
 
     /**
      * 位置
