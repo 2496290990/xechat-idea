@@ -50,6 +50,8 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
     private JLabel titleLabel;
     /** 返回游戏 */
     private JButton backButton;
+    /** 游戏说明 */
+    private JButton helpBtn;
     // 随机数标签
     private JLabel randomLabel = new JLabel();
     /**
@@ -322,6 +324,22 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         JPanel mainBottomPanel = new JPanel();
         if (getRoom() == null) {
             backButton = getBackButton();
+            helpBtn = new JButton("帮助说明");
+            helpBtn.addActionListener(e -> {
+                AlertMessagesUtil.showInfoDialog("游戏说明","游戏规则:\n" +
+                        "1. 每次开始的时候先投骰子，然后移动玩家位置。\n" +
+                        "2. 如果到达位置的地皮没有人买则可以买地皮，如果是自己的地皮就可以盖房子，别人的地皮就需要给她钱 \n" +
+                        "3. 机会和命运需要抽卡牌，财产税和所得税会扣钱\n" +
+                        "4. 到达起点的时候就会拿到2000块\n" +
+                        "5. 坐牢会直接移动到监狱位置，并且拿不到起点的2000块，入狱会休息一轮\n" +
+                        "6. 停车场也会休息一轮,路过监狱不会休息\n" +
+                        "8. 现金不够的时候可以卖房卖地，半价出售\n" +
+                        "9. 如果一名玩家拥有同颜色的所有地皮则该颜色的空地过路费翻倍\n" +
+                        "10. 经过自来水公司和电力公司需要投掷骰子，一个公司则点数*10 两个则点数*100\n"
+
+                );
+            });
+            mainBottomPanel.add(helpBtn);
             mainBottomPanel.add(backButton);
         }
         gameOverButton = getGameOverButton();
@@ -423,6 +441,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         buttonPanel.add(saleBtn);
         buttonPanel.add(redemptionBtn);
         buttonPanel.add(passBtn);
+
         randomBtn.addActionListener(e -> {
             int randomInt = RandomUtil.randomInt(2, 12);
             randomLabel.setText("当前投掷点数为: " + randomInt);
