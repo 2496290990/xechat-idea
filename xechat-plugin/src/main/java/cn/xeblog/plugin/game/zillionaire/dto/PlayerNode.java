@@ -4,7 +4,6 @@ import cn.xeblog.commons.entity.game.zillionaire.dto.CityDto;
 import cn.xeblog.commons.entity.game.zillionaire.dto.CompanyDto;
 import cn.xeblog.commons.entity.game.zillionaire.dto.StationDto;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.util.List;
 
@@ -84,4 +83,7 @@ public class PlayerNode {
         this.status = true;
     }
 
+    public Integer getPosition(){
+        return position % 40;
+    }
 }
