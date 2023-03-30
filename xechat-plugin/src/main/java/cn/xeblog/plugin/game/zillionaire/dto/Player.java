@@ -39,6 +39,20 @@ public class Player {
         tipsLabel.updateUI();
     }
 
-
+    public void flushTips(){
+        StringBuffer sb = new StringBuffer();
+        String white = "  ";
+        String br = "<br />";
+        sb.append("<html>")
+                .append("玩家: ").append(playerNode.getPlayer()).append(white)
+                .append("状态: ").append(playerNode.getStatus() ? "正常" : "入狱").append(br)
+                .append("位置: ").append(0).append(white)
+                .append("名称: ").append("起点 ").append(br)
+                .append("现金: ").append(playerNode.getCash()).append(white)
+                .append("资产: ").append(playerNode.getProperty()).append(br)
+                .append("</html>");
+        tipsLabel.setText(sb.toString());
+        tipsLabel.updateUI();
+    }
 
 }

@@ -558,9 +558,6 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
 
             panel.add(otherPlayerPanel);
         }
-
-        player.setNicknameLabel(nicknameLabel);
-
         panel.updateUI();
     }
 
