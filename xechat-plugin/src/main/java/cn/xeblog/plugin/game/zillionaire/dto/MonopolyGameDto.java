@@ -3,6 +3,7 @@ package cn.xeblog.plugin.game.zillionaire.dto;
 import cn.xeblog.commons.entity.game.GameDTO;
 import cn.xeblog.plugin.game.zillionaire.enums.MsgType;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 /**
  * @author eleven
@@ -10,6 +11,7 @@ import lombok.Data;
  * @apiNote
  */
 @Data
+@EqualsAndHashCode(callSuper=false)
 public class MonopolyGameDto extends GameDTO {
     /**
      * msg类型
@@ -30,4 +32,6 @@ public class MonopolyGameDto extends GameDTO {
      * 动作id
      */
     private Integer actionId;
+
+    private Object data;
 }

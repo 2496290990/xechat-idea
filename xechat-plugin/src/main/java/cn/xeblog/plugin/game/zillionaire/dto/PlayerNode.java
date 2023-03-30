@@ -14,7 +14,6 @@ import java.util.List;
  * @description
  */
 @Data
-@NoArgsConstructor
 public class PlayerNode {
     /**
      * 当前玩家
@@ -68,8 +67,21 @@ public class PlayerNode {
      */
     private PlayerNode nextPlayer;
 
+    public PlayerNode() {
+        int initMoney = 2 * (5000 + 2000 + 1000 + 500 + 200 + 100 + 50 + 10);
+        this.cash = initMoney;
+        this.property = initMoney;
+        this.position = 0;
+        this.status = true;
+    }
+
     public PlayerNode(String player) {
         this.player = player;
+        int initMoney = 2 * (5000 + 2000 + 1000 + 500 + 200 + 100 + 50 + 10);
+        this.cash = initMoney;
+        this.property = initMoney;
+        this.position = 0;
+        this.status = true;
     }
 
 }

@@ -6,7 +6,10 @@ package cn.xeblog.plugin.game.zillionaire.enums;
  * @apiNote 大富翁消息类型
  */
 public enum MsgType {
-
+    /**
+     * 加入机器人
+     */
+    JOIN_ROBOTS,
     /**
      * 支付过路费
      */

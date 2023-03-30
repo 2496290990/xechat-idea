@@ -1,9 +1,9 @@
 package cn.xeblog.plugin.game.zillionaire;
 
 import cn.hutool.core.util.RandomUtil;
+import cn.xeblog.commons.entity.game.GameDTO;
 import cn.xeblog.commons.entity.game.GameRoom;
 import cn.xeblog.commons.entity.game.zillionaire.dto.CityDto;
-import cn.xeblog.commons.entity.game.zillionaire.dto.PlayerDto;
 import cn.xeblog.commons.entity.game.zillionaire.dto.PositionDto;
 import cn.xeblog.commons.entity.game.zillionaire.dto.StationDto;
 import cn.xeblog.commons.enums.Game;
@@ -11,16 +11,22 @@ import cn.xeblog.plugin.action.GameAction;
 import cn.xeblog.plugin.annotation.DoGame;
 import cn.xeblog.plugin.cache.DataCache;
 import cn.xeblog.plugin.game.AbstractGame;
+import cn.xeblog.plugin.game.zillionaire.action.AiPlayerAction;
+import cn.xeblog.plugin.game.zillionaire.action.PlayerAction;
+import cn.xeblog.plugin.game.zillionaire.dto.Player;
 import cn.xeblog.plugin.game.zillionaire.dto.PlayerNode;
 import cn.xeblog.plugin.game.zillionaire.dto.MonopolyGameDto;
 import cn.xeblog.plugin.game.zillionaire.enums.GameMode;
+import cn.xeblog.plugin.game.zillionaire.enums.MsgType;
 import cn.xeblog.plugin.game.zillionaire.enums.WindowMode;
 import cn.xeblog.plugin.game.zillionaire.ui.PositionUi;
 import cn.xeblog.plugin.game.zillionaire.utils.ZillionaireUtil;
 import cn.xeblog.plugin.util.AlertMessagesUtil;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.ui.components.JBScrollPane;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.util.*;
@@ -50,19 +56,26 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
      * 提示标签
      */
     private JLabel tipsLabel;
+    /** 玩家主要的面板 */
+    private JPanel playerMainPanel;
+    /** 玩家头部面板 */
+    private JPanel playerTopPanel;
     /**
-     * 用户列表
+     * 位置主面板
      */
-    private List<String> userList;
+    private JPanel positionMainPanel;
     /**
-     * ai玩家列表
+     * 职位面板
      */
-    private static List<String> aiPlayerList;
+    private JPanel positionsPanel;
+
+    private JPanel userListPanel;
 
     /**
      * 当前玩家
      */
     private PlayerNode currentPlayer;
+
     /**
      * 玩家的建筑
      */
@@ -74,12 +87,48 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
     /**
      * ai玩家行动地图
      */
-    private Map<String, PlayerDto> aiPlayerMap;
-    private Map<String, PlayerDto> playerMap;
+    private Map<String, Player> aiPlayerMap;
+    /**
+     * 玩家键值对
+     */
+    private Map<String, Player> playerMap;
+    /**
+     * 用户列表
+     */
+    private List<String> userList;
+    /**
+     * ai玩家列表
+     */
+    private static List<String> aiPlayerList;
+    /** ai处理类 */
+    private Map<String, PlayerAction> aiPlayerActionMap;
+
+    private PlayerAction helpPlayerAction;
+
+    static {
+        aiPlayerList = new ArrayList<>();
+        Collections.addAll(aiPlayerList,
+                "AI: 叶凡",
+                "AI: 萧炎",
+                "AI: 罗峰",
+                "AI: 唐三",
+                "AI: 陈平安",
+                "AI: 寂寞",
+                "AI: 迪迦",
+                "AI: 阿古茹",
+                "AI: 盖亚",
+                "AI: 泰罗",
+                "AI: 坚果",
+                "AI: 林动"
+        );
+    }
+
     /**
      * 当前游戏模式
      */
     private GameMode gameMode;
+    /** 游戏状态 0 初始化 1游戏中  2 结束*/
+    private Integer status;
 
     @Override
     protected void init() {
@@ -147,6 +196,12 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
     private void initValue() {
         userList = new ArrayList<>();
         aiPlayerMap = new HashMap<>();
+        status = 0;
+        currentPlayer = null;
+        playerMap = null;
+        userList = new ArrayList<>();
+        aiPlayerActionMap = new HashMap<>();
+        userListPanel = new JPanel();
     }
 
     /**
@@ -176,7 +231,26 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
     @Override
     protected void allPlayersGameStarted() {
         if (isHomeowner()) {
-            showGamePanel();
+            int usersTotal = userList.size();
+            // 指定最少三名玩家游玩
+            int roomUsers = 6;
+            GameRoom room = this.getRoom();
+            if (null != room) {
+                roomUsers = room.getNums();
+            }
+            int nums = roomUsers - usersTotal;
+            invoke(() -> {
+                if (nums > 0) {
+                    List<String> joinedAIList = new ArrayList<>(aiPlayerList);
+                    joinedAIList.removeAll(userList);
+                    List<String> aiList = joinedAIList.subList(0, nums);
+                    aiList.forEach(ai -> aiPlayerActionMap.put(ai, null));
+                    sendMsg(MsgType.JOIN_ROBOTS, GameAction.getNickname(), new ArrayList<>(aiList));
+                    initUserPanel();
+                } else {
+                    showGamePanel();
+                }
+            }, 500);
         }
     }
 
@@ -193,12 +267,13 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
 
         buildPlayerNode();
         showGamePanel();
+        status = 1;
         showTips("请等待...");
 
         if (userList.size() < 2) {
             showTips("正在加入机器人...");
         } else {
-            showTips("等待发牌...");
+            showTips("等待开始...");
         }
 
         if (gameRoom == null) {
@@ -396,20 +471,108 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
     }
 
     private JPanel initUserPanel(){
-        JPanel userPanel = new JPanel();
-        JPanel userItem = new JPanel();
-        userItem.add(new JLabel("玩家1"));
-        userItem.add(new JLabel("献祭1000"));
-        userItem.add(new JLabel("现金1000"));
-        for (int i = 0; i < 6; i++) {
-            userPanel.add(userItem);
+        userListPanel.removeAll();
+        userListPanel.setLayout(new GridLayout(userList.size(), 1));
+        JLabel tipsLabel = null;
+        StringBuffer sb = null;
+        for (String username : playerMap.keySet()) {
+            Player player = playerMap.get(username);
+            JPanel panel = player.getPanel();
+            panel.setLayout(new FlowLayout());
+            int r = RandomUtil.randomInt(0, 255);
+            int g = RandomUtil.randomInt(0, 255);
+            int b = RandomUtil.randomInt(0, 255);
+            panel.setBorder(new LineBorder(new Color(r, g, b), 1));
+            PlayerNode playerNode = player.getPlayerNode();
+            sb = new StringBuffer();
+            String white = "  ";
+            String br = "<br />";
+            sb.append("<html>")
+                    .append("玩家: ").append(playerNode.getPlayer()).append(white)
+                    .append("状态: ").append(playerNode.getStatus() ? "正常" : "入狱").append(br)
+                    .append("位置: ").append(0).append(white)
+                    .append("名称: ").append("起点 ").append(br)
+                    .append("现金: ").append(playerNode.getCash()).append(white)
+                    .append("资产: ").append(playerNode.getProperty()).append(br)
+             .append("</html>");
+            tipsLabel = new JLabel(sb.toString());
+            panel.add(tipsLabel);
+            player.setTipsLabel(tipsLabel);
+            userListPanel.add(panel);
         }
-        userPanel.setBorder(new LineBorder(new Color(255, 100, 0), 1));
-        return userPanel;
+        userListPanel.updateUI();
+        return userListPanel;
+    }
+
+    private Color playerTipsColor = new Color(241, 135, 135);
+
+    private void flushPlayerPanel(Player player) {
+        PlayerNode playerNode = player.getPlayerNode();
+        JPanel panel = player.getPanel();
+        panel.removeAll();
+
+        String nickname = playerNode.getPlayer();
+        JLabel nicknameLabel = new JLabel("<html>" + nickname + "</html>");
+        JLabel cashLabel = new JLabel();
+
+        if (playerNode == currentPlayer) {
+            playerMainPanel = new JPanel();
+            playerTopPanel = new JPanel();
+            positionMainPanel = new JPanel(new BorderLayout());
+            positionsPanel = new JPanel();
+
+            panel.add(playerTopPanel);
+            panel.add(playerMainPanel);
+
+            flushWindowMode();
+            flushPositions();
+
+            JBScrollPane pokersScroll = new JBScrollPane(positionsPanel);
+            pokersScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            pokersScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+            positionMainPanel.add(pokersScroll);
+            playerMainPanel.add(positionMainPanel);
+            nicknameLabel.setText(nickname);
+            nicknameLabel.setPreferredSize(new Dimension(300, 30));
+            playerMainPanel.add(nicknameLabel);
+            playerMainPanel.add(cashLabel);
+        } else {
+            JPanel otherPlayerPanel = new JPanel();
+            otherPlayerPanel.setLayout(new BorderLayout());
+            otherPlayerPanel.setPreferredSize(new Dimension(120, 100));
+            otherPlayerPanel.setBorder(BorderFactory.createEtchedBorder());
+            nicknameLabel.setHorizontalAlignment(SwingConstants.CENTER);
+            nicknameLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 5));
+            otherPlayerPanel.add(nicknameLabel, BorderLayout.NORTH);
+            int alignment = 1;
+            Border border = BorderFactory.createEmptyBorder(0, 5, 5, 0);
+            cashLabel.setBorder(border);
+            cashLabel.setHorizontalAlignment(alignment);
+            otherPlayerPanel.add(cashLabel, BorderLayout.SOUTH);
+
+            JLabel tipsLabel = new JLabel("");
+            tipsLabel.setForeground(playerTipsColor);
+            tipsLabel.setHorizontalAlignment(SwingConstants.CENTER);
+            player.setTipsLabel(tipsLabel);
+            otherPlayerPanel.add(tipsLabel, BorderLayout.CENTER);
+
+            panel.add(otherPlayerPanel);
+        }
+
+        player.setNicknameLabel(nicknameLabel);
+
+        panel.updateUI();
     }
 
     private JPanel flushUserPanel(){
         return null;
+    }
+
+    /**
+     * 刷新地皮UI
+     */
+    private void flushPositions(){
+
     }
 
     private ComboBox getWindowModeComboBox() {
@@ -451,25 +614,32 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
 
 
     private void buildPlayerNode() {
+        // 设置开始玩家
         PlayerNode startNode = null;
+        // 创建玩家节点
         PlayerNode playerNode = null;
+        // 玩家姓名集合
         playerMap = new HashMap<>();
+        // 获取当前房间内的玩家
         List<String> roomUserList = userList;
+        // 当前房间玩家总数
         int usersTotal = roomUserList.size();
-
+        // 节点放在外边防止循环创建玩家节点
+        PlayerNode node = null;
+        // 创建玩家节点
         for (int i = 0; i < usersTotal; i++) {
-            PlayerNode node = new PlayerNode();
+            node =  new PlayerNode();
             node.setPlayer(roomUserList.get(i));
             node.setAlias("Machine 0" + (i + 1));
-            //playerMap.put(node.getPlayer(), new PlayerDto(node, null));
+            playerMap.put(node.getPlayer(), new Player(node, new JPanel()));
 
             if (GameAction.getNickname().equals(node.getPlayer())) {
                 currentPlayer = node;
-                //helpPlayerAction = new AIPlayerAction(currentPlayer);
+                helpPlayerAction = new AiPlayerAction(currentPlayer);
             }
 
             if (aiPlayerMap.containsKey(node.getPlayer())) {
-                //aiPlayerMap.put(node.getPlayer(), new AIPlayerAction(node));
+                aiPlayerActionMap.put(node.getPlayer(), new AiPlayerAction(node));
             }
 
             if (playerNode == null) {
@@ -497,7 +667,64 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
 
     @Override
     public void handle(MonopolyGameDto body) {
-        String player = body.getPlayer();
-        PlayerDto playerDto = playerMap.get(player);
+        if (status == 0){
+            return;
+        }
+        String playerName = body.getPlayer();
+        Player player = playerMap.get(playerName);
+        PlayerNode playerNode = player.getPlayerNode();
+        PlayerNode nextPlayerNode = playerNode.getNextPlayer();
+        Player nextPlayer = null;
+        PlayerAction aiPlayerAction = null;
+        if (nextPlayerNode != null) {
+            nextPlayer = playerMap.get(nextPlayerNode.getPlayer());
+            aiPlayerAction = aiPlayerActionMap.get(nextPlayerNode.getPlayer());
+        }
+
+        boolean isHomeowner = isHomeowner();
+        boolean isMe = playerNode == currentPlayer;
+        boolean controlRobot = isHomeowner && aiPlayerAction != null;
+
+        switch (body.getMsgType()) {
+            case JOIN_ROBOTS:
+                joinRobots(body, isHomeowner);
+            default:
+                break;
+        }
+    }
+
+    /**
+     * 加入人机玩家
+     * @param body          消息体
+     * @param isHomeowner   是否房主
+     */
+    private void joinRobots(MonopolyGameDto body, Boolean isHomeowner){
+        List<String> robotList = (List<String>) body.getData();
+        userList.addAll(robotList);
+        buildPlayerNode();
+        showGamePanel();
+        if (isHomeowner) {
+            // todo 开始游戏
+        }
+    }
+
+    private void sendMsg(MsgType msgType, String player, Object data) {
+        if (status == 0) {
+            return;
+        }
+
+        MonopolyGameDto  dto = new MonopolyGameDto ();
+        dto.setMsgType(msgType);
+        dto.setPlayer(player);
+        dto.setData(data);
+        if (getRoom() != null) {
+            sendMsg(dto);
+        }
+        invoke(() -> handle(dto));
+    }
+
+    @Override
+    protected void sendMsg(GameDTO body) {
+        super.sendMsg(body);
     }
 }

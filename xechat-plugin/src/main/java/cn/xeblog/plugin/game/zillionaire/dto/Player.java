@@ -1,5 +1,6 @@
 package cn.xeblog.plugin.game.zillionaire.dto;
 
+import cn.xeblog.commons.entity.game.zillionaire.dto.PositionDto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -27,21 +28,17 @@ public class Player {
      * 提示面板
      */
     private JLabel tipsLabel;
-    /**
-     * 现金标签
-     */
-    private JLabel cashLabel;
-    /**
-     * 状态标签
-     */
-    private JLabel statusLabel;
-    /**
-     * 资产标签
-     */
-    private JLabel propertyLabel;
-    /**
-     * 昵称标签
-     */
-    private JLabel nicknameLabel;
+
+    public Player(PlayerNode playerNode, JPanel panel) {
+        this.playerNode = playerNode;
+        this.panel = panel;
+    }
+
+    public void showTips(String tips) {
+        tipsLabel.setText(tips);
+        tipsLabel.updateUI();
+    }
+
+
 
 }
