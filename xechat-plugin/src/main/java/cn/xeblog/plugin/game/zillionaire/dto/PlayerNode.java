@@ -31,7 +31,7 @@ public class PlayerNode {
      */
     private String alias;
     /**
-     * 状态
+     * 状态 true 正常 false 休息一次
      */
     private Boolean status;
     /**

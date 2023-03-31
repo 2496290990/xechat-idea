@@ -59,5 +59,13 @@ public enum MsgType {
      * 刷新提示
      */
     REFRESH_TIPS,
+    /**
+     * 税
+     */
+    TAX,
+    /**
+     * 玩家破产
+     */
+    BROKE_EXIT
     ;
 }

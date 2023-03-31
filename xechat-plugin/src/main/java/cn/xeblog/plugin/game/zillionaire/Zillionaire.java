@@ -4,10 +4,7 @@ import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.xeblog.commons.entity.game.GameDTO;
 import cn.xeblog.commons.entity.game.GameRoom;
-import cn.xeblog.commons.entity.game.zillionaire.dto.CityDto;
-import cn.xeblog.commons.entity.game.zillionaire.dto.CompanyDto;
-import cn.xeblog.commons.entity.game.zillionaire.dto.PositionDto;
-import cn.xeblog.commons.entity.game.zillionaire.dto.StationDto;
+import cn.xeblog.commons.entity.game.zillionaire.dto.*;
 import cn.xeblog.commons.enums.Game;
 import cn.xeblog.plugin.action.GameAction;
 import cn.xeblog.plugin.annotation.DoGame;
@@ -445,7 +442,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
                         // TODO: 2023/3/31 随机清空一位玩家的房产
                     }
                     if (cheatCodeStr.contains("Occupy the house")) {
-                        // TODO: 2023/3/31 随机获取一位玩家的所有房子
+                        sendRefreshTipsMsg(GameAction.getName(), GameAction.getNickname() + "妄想随机清空以为玩家的房产，获得警告一次");
                         AlertMessagesUtil.showInfoDialog("游戏提示", "警告一次！");
                     }
                 }
@@ -893,6 +890,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         String playerName = body.getPlayer();
         Player player = playerMap.get(playerName);
         PlayerNode playerNode = player.getPlayerNode();
+        body.setCurrentPlayer(playerNode);
         PlayerNode nextPlayerNode = playerNode.getNextPlayer();
         Player nextPlayer = null;
         PlayerAction aiPlayerAction = null;
@@ -914,8 +912,141 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
                 break;
             case REFRESH_TIPS:
                 refreshTips(body);
+                break;
+            case TAX:
+                tax(body);
+                break;
+            case BROKE_EXIT:
+                gameOver();
+                break;
+            case CHANCE:
+                randomChance(body);
+                break;
+            case DESTINY:
+                randomDestiny(body);
+                break;
+            case TO_JAIL:
+                toJail(playerName, player, playerNode);
+                break;
+            case REST:
+                restInPark(playerName, player, playerNode);
+                break;
             default:
                 break;
+        }
+    }
+
+    /**
+     * 在停车场休息一回合
+     * @param playerName  玩家名称
+     * @param player      玩家
+     * @param playerNode  玩家节点
+     */
+    private void restInPark(String playerName, Player player, PlayerNode playerNode) {
+        sendRefreshTipsMsg(playerName, "玩家在停车场休息一轮");
+        playerNode.setStatus(false);
+        player.setPlayerNode(playerNode);
+    }
+
+    /**
+     * 玩家入狱休息一轮
+     * @param playerName  玩家名称
+     * @param player      玩家
+     * @param playerNode  玩家节点
+     */
+    private void toJail(String playerName, Player player, PlayerNode playerNode) {
+        playerNode.setStatus(false);
+        playerNode.setPosition(10);
+        player.setPlayerNode(playerNode);
+        sendRefreshTipsMsg(playerName, "玩家移动到监狱，休息一轮");
+    }
+
+    /**
+     * 随机命运卡
+     * @param body
+     */
+    private void randomDestiny(MonopolyGameDto body) {
+        List<LuckEntity> destinyCards = ZillionaireUtil.destinyCards;
+        Collections.shuffle(destinyCards);
+        LuckEntity destinyCard = RandomUtil.randomEle(destinyCards);
+        switch (destinyCard.getId()) {
+            case 0:
+            case 1:
+            case 2:
+            case 3:
+            case 4:
+            case 5:
+            case 6:
+            case 7:
+            case 8:
+            case 9:
+            case 10:
+            case 11:
+            case 12:
+            case 13:
+            case 14:
+            default:
+                break;
+        }
+        // TODO: 2023/3/31 完善命运卡逻辑
+    }
+
+    /**
+     * 随机机会卡片
+     * @param body
+     */
+    private void randomChance(MonopolyGameDto body) {
+        List<LuckEntity> chanceCards = ZillionaireUtil.chanceCards;
+        Collections.shuffle(chanceCards);
+        LuckEntity chanceCard = RandomUtil.randomEle(chanceCards);
+        // TODO: 2023/3/31 完善机会卡逻辑
+        switch (chanceCard.getId()) {
+            case 0:
+            case 1:
+            case 2:
+            case 3:
+            case 4:
+            case 5:
+            case 6:
+            case 7:
+            case 8:
+            case 9:
+            case 10:
+            case 11:
+            case 12:
+            case 13:
+            case 14:
+            default:
+                break;
+        }
+    }
+
+    /**
+     * 游戏结束
+     */
+    private void gameOver() {
+        // TODO: 2023/3/31  游戏结束
+    }
+
+    /**
+     * 税务
+     * @param body
+     */
+    private void tax(MonopolyGameDto body) {
+        Integer actionId = body.getActionId();
+        String player = body.getPlayer();
+        PlayerNode currentPlayer = body.getCurrentPlayer();
+        // 获取用户的现金
+        Integer cash = currentPlayer.getCash();
+        // 获取用户当前的资产
+        Integer property = currentPlayer.getProperty();
+        Integer tax = actionId  == 4 ? 2000 : 1000;
+        // 税后现金
+        int afterCash = cash - tax;
+        int afterProperty = property - tax;
+        if (afterProperty < 0 && gameMode == GameMode.BROKE_EXIT) {
+            sendMsg(BROKE_EXIT, player, "玩家破产，游戏结束");
+            sendRefreshTipsMsg(player, "玩家破产，游戏结束");
         }
     }
 
@@ -967,7 +1098,8 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         PositionDto position = positionMap.get(userPosition);
         player.refreshTips(position);
         sendRefreshTipsMsg(playerName, "投掷了骰子");
-        sendRefreshTipsMsg(playerName, String.format("%s向前行走了%d步,当前位置%s", playerName, step, position.getName()));
+        String name = position.getName();
+        sendRefreshTipsMsg(playerName, String.format("%s向前行走了%d步,当前位置%s", playerName, step, name));
         refreshBtnStatus(false, null, null, null, null, position.getAllowBuy());
         // 上一次的圈数
         int lastCylinderNumber = lastPosition / ALL_STEP;
@@ -990,9 +1122,42 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         }
         // 如果是别人的房产
         if (StrUtil.isNotBlank(owner) && !StrUtil.equalsIgnoreCase(owner, playerName)) {
-
+            // TODO: 2023/3/31 给其他玩家钱 
         }
+        // 不允许买的位置有命运，机会，停车场，坐牢，财产税，所得税
+        if (!position.getAllowBuy()) {
+            // 地皮的位置
+            Integer positionIndex = position.getPosition();
+            // 所得税
+            if (positionIndex == 4 && StrUtil.equalsIgnoreCase("所得税", name)) {
+                sendMsg(TAX, playerName, 4, null);
+            }
+            // 财产税
+            if (positionIndex == 39 && StrUtil.equalsIgnoreCase("财产税", name)) {
+                sendMsg(TAX, playerName, 39, null);
+            }
+            // 机会
+            if (StrUtil.equalsIgnoreCase("机会", name)) {
+                sendMsg(CHANCE, playerName, null);
+            }
+            // 命运
+            if (StrUtil.equalsIgnoreCase("命运", name)) {
+                sendMsg(DESTINY, playerName, null);
+            }
+            // 入狱
+            if (positionIndex == 30 && StrUtil.equalsIgnoreCase("入狱", name)) {
+                sendMsg(TO_JAIL, playerName, null);
+            }
+            // 停车场
+            if (positionIndex == 20 && StrUtil.equalsIgnoreCase("停车场", name)) {
+                sendMsg(REST, playerName, null);
+            }
 
+            // 监狱
+            if (positionIndex == 10 && StrUtil.equalsIgnoreCase("监狱", name)) {
+                sendRefreshTipsMsg(playerName, "路过了监狱");
+            }
+        }
 
     }
 
@@ -1076,7 +1241,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         sendMsg(REFRESH_TIPS, playerName, playerName + ": " + data);
     }
 
-    private void sendMsg(MsgType msgType, String player, Object data) {
+    private void sendMsg(MsgType msgType, String player, Integer action ,Object data) {
         if (status == 0) {
             return;
         }
@@ -1084,7 +1249,12 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         dto.setMsgType(msgType);
         dto.setPlayer(player);
         dto.setData(data);
+        dto.setActionId(action);
         sendMsg(dto);
+    }
+
+    private void sendMsg(MsgType msgType, String player, Object data) {
+        sendMsg(msgType, player, null, data);
     }
 
     @Override
