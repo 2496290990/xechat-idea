@@ -1,16 +1,13 @@
 package cn.xeblog.plugin.game.zillionaire.dto;
 
-import cn.hutool.core.collection.CollUtil;
 import cn.xeblog.commons.entity.game.zillionaire.dto.CityDto;
 import cn.xeblog.commons.entity.game.zillionaire.dto.CompanyDto;
 import cn.xeblog.commons.entity.game.zillionaire.dto.PositionDto;
 import cn.xeblog.commons.entity.game.zillionaire.dto.StationDto;
-import javafx.geometry.Pos;
 import lombok.Data;
 import lombok.ToString;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
