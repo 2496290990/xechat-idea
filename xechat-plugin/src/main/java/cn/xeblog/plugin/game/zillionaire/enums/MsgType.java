@@ -66,6 +66,10 @@ public enum MsgType {
     /**
      * 玩家破产
      */
-    BROKE_EXIT
+    BROKE_EXIT,
+    /**
+     * 支付其他
+     */
+    PAY_OTHER,
     ;
 }

@@ -164,7 +164,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
      * 当前游戏模式
      */
     private GameMode gameMode;
-    /** 游戏状态 0 初始化 1游戏中  2 结束*/
+    /** 游戏状态 0 初始化 1游戏中 2需要支付金额 3结束*/
     private Integer status;
 
     @Override
@@ -943,8 +943,24 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
             case REST:
                 restInPark(playerName, player, playerNode);
                 break;
+            case PAY_OTHER:
+                payOther(body);
             default:
                 break;
+        }
+    }
+
+    /**
+     * 支付给其他游戏钱
+     * @param body
+     */
+    private void payOther(MonopolyGameDto body) {
+        Set<String> data = (Set<String>) body.getData();
+        for (String playerName : data) {
+            Player player = playerMap.get(playerName);
+            PlayerNode playerNode = player.getPlayerNode();
+            playerNode.setCash(playerNode.getCash() + body.getActionId());
+            player.refreshTips(positionMap.get(playerNode.getPosition()));
         }
     }
 
@@ -1008,9 +1024,11 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
                 break;
             case 4:
                 // 罚款600元
+                subPlayerCash(player, playerNode, 600);
                 break;
             case 5:
                 // 花费700元
+                subPlayerCash(player, playerNode, 700);
                 break;
             case 6:
                 // 奖金800元
@@ -1022,6 +1040,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
                 break;
             case 8:
                 // 赔偿500元
+                subPlayerCash(player, playerNode, 500);
                 break;
             case 9:
                 // 罚款房子每栋200元，旅馆600元
@@ -1045,7 +1064,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
                     penaltyMoney = hotelNum * hotelPenalty + hotelNum * housePenalty;
                 }
                 sendRefreshTipsMsg(playerName, "玩家拥有房屋%d间，旅馆%d间，扣款%d", houseNum, hotelNum, penaltyMoney);
-
+                subPlayerCash(player, playerNode, penaltyMoney);
                 break;
             case 10:
                 // 休息一次
@@ -1057,9 +1076,14 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
                 break;
             case 12:
                 // 罚款400元
+                subPlayerCash(player, playerNode, 400);
                 break;
             case 13:
                 // 给每人100元观光费
+                Set<String> playerNameSet = playerMap.keySet();
+                subPlayerCash(player, playerNode, 100 * playerNameSet.size() - 1);
+                playerNameSet.remove(playerName);
+                sendMsg(PAY_OTHER, playerName, 100, playerNameSet);
                 break;
             case 14:
                 // 奖金700元
@@ -1072,6 +1096,50 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         player.refreshTips(positionMap.get(playerNode.getPosition()));
     }
 
+    /**
+     * 罚款
+     * @param player        玩家
+     * @param playerNode    玩家节点
+     * @param money         扣款金额
+     */
+    private void subPlayerCash(Player player, PlayerNode playerNode, Integer money) {
+        int property = playerNode.getProperty();
+        int cash = playerNode.getCash();
+        if (money > property) {
+            sendRefreshTipsMsg(playerNode.getPlayer(), "玩家当前总资产%d,待支付%d,资产不足游戏结束", property, money);
+            gameOver();
+        }
+        // 玩家总资产等于扣款金额 全部资产售卖，房产等级归零
+        if (money == property) {
+            playerNode.getCities().forEach(item -> {
+                item.setPositionStatus(false);
+                item.setLevel(0);
+            });
+            playerNode.getPositions().forEach(item -> item.setPositionStatus(false));
+            playerNode.getCompanies().forEach(item -> item.setPositionStatus(false));
+            playerNode.getStations().forEach(item -> {
+                item.setPositionStatus(false);
+                item.setLevel(0);
+            });
+            sendRefreshTipsMsg(playerNode.getPlayer(), "玩家当前总资产与待支付金额相同，地皮房产清空");
+        }
+
+        if (money == cash) {
+            playerNode.setCash(0);
+            sendRefreshTipsMsg(playerNode.getPlayer(), "玩家当前现金与待支付金额相同，地皮房产清空");
+        }
+        // 待支付金额超过现金额度但是小于总资产数量
+        if (money > cash && money < property) {
+            playerNode.setCash(cash - money);
+            playerNode.setProperty(property - cash);
+            status = 2;
+            // 更新出售按钮状态
+            refreshBtnStatus(saleBtn, true);
+        }
+        player.setPlayerNode(playerNode);
+        // 刷新玩家面板
+        player.refreshTips(positionMap.get(playerNode.getPosition()));
+    }
 
     /**
      * 随机机会卡片
