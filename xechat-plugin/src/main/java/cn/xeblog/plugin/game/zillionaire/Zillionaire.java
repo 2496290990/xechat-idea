@@ -13,9 +13,9 @@ import cn.xeblog.plugin.cache.DataCache;
 import cn.xeblog.plugin.game.AbstractGame;
 import cn.xeblog.plugin.game.zillionaire.action.AiPlayerAction;
 import cn.xeblog.plugin.game.zillionaire.action.PlayerAction;
+import cn.xeblog.plugin.game.zillionaire.dto.MonopolyGameDto;
 import cn.xeblog.plugin.game.zillionaire.dto.Player;
 import cn.xeblog.plugin.game.zillionaire.dto.PlayerNode;
-import cn.xeblog.plugin.game.zillionaire.dto.MonopolyGameDto;
 import cn.xeblog.plugin.game.zillionaire.enums.GameMode;
 import cn.xeblog.plugin.game.zillionaire.enums.MsgType;
 import cn.xeblog.plugin.game.zillionaire.enums.WindowMode;
@@ -29,8 +29,10 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
+
+import static cn.xeblog.plugin.game.zillionaire.enums.MsgType.*;
 
 
 /**
@@ -264,6 +266,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
             gameMode = GameMode.getMode(gameRoom.getGameMode());
             userList.addAll(gameRoom.getUsers().keySet());
         } else {
+
             userList.add(GameAction.getNickname());
         }
 
@@ -445,6 +448,11 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         randomBtn.addActionListener(e -> {
             int randomInt = RandomUtil.randomInt(2, 12);
             randomLabel.setText("当前投掷点数为: " + randomInt);
+            MonopolyGameDto msgDto = new MonopolyGameDto();
+            msgDto.setCurrentPlayer(currentPlayer);
+            msgDto.setMsgType(DICE_ROLL);
+            msgDto.setData(randomInt);
+            sendMsg(msgDto);
         });
         buildBtn.addActionListener(e -> {
             // TODO: 2023/3/29 开发升级建筑功能
@@ -704,6 +712,9 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         switch (body.getMsgType()) {
             case JOIN_ROBOTS:
                 joinRobots(body, isHomeowner);
+            case DICE_ROLL:
+                diceRoll(body);
+                break;
             default:
                 break;
         }
@@ -722,6 +733,15 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         if (isHomeowner) {
             // todo 开始游戏
         }
+    }
+
+    private void diceRoll(MonopolyGameDto body){
+        Integer step = (Integer)body.getData();
+        String playerName = body.getPlayer();
+        Player player = playerMap.get(playerName);
+        PlayerNode playerNode = player.getPlayerNode();
+        playerNode.setPosition(playerNode.getPosition() + step);
+        player.flushTips();
     }
 
     private void sendMsg(MsgType msgType, String player, Object data) {

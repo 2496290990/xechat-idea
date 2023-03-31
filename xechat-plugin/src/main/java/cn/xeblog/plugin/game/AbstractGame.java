@@ -123,6 +123,7 @@ public abstract class AbstractGame<T extends GameDTO> extends AbstractPanelCompo
         MessageAction.send(body, Action.GAME);
     }
 
+    @Override
     protected JButton getExitButton() {
         JButton exitButton = super.getExitButton();
         exitButton.setText("退出游戏");
