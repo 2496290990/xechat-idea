@@ -1,10 +1,16 @@
 package cn.xeblog.plugin.game.zillionaire.dto;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.xeblog.commons.entity.game.zillionaire.dto.CityDto;
 import cn.xeblog.commons.entity.game.zillionaire.dto.CompanyDto;
+import cn.xeblog.commons.entity.game.zillionaire.dto.PositionDto;
 import cn.xeblog.commons.entity.game.zillionaire.dto.StationDto;
+import javafx.geometry.Pos;
 import lombok.Data;
+import lombok.ToString;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -13,6 +19,7 @@ import java.util.List;
  * @description
  */
 @Data
+@ToString(exclude = {"prevPlayer", "nextPlayer"})
 public class PlayerNode {
     /**
      * 当前玩家
@@ -34,7 +41,7 @@ public class PlayerNode {
     /**
      * 现金
      */
-    private Integer  cash;
+    private Integer cash;
 
     /**
      * 财产
@@ -56,6 +63,9 @@ public class PlayerNode {
      */
     private List<CompanyDto> companies;
 
+    private List<PositionDto> positions;
+
+
     /**
      * 前一位玩家
      */
@@ -72,6 +82,10 @@ public class PlayerNode {
         this.property = initMoney;
         this.position = 0;
         this.status = true;
+        this.cities = new ArrayList<>();
+        this.companies = new ArrayList<>();
+        this.stations = new ArrayList<>();
+        this.positions = new ArrayList<>();
     }
 
     public PlayerNode(String player) {
@@ -81,9 +95,14 @@ public class PlayerNode {
         this.property = initMoney;
         this.position = 0;
         this.status = true;
+        this.cities = new ArrayList<>();
+        this.companies = new ArrayList<>();
+        this.stations = new ArrayList<>();
+        this.positions = new ArrayList<>();
     }
 
-    public Integer getPosition(){
+    public Integer getPosition() {
         return position % 40;
     }
+
 }

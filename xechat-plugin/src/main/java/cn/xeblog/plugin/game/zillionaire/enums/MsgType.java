@@ -53,6 +53,11 @@ public enum MsgType {
     /**
      * 命运
      */
-    DESTINY
+    DESTINY,
+
+    /**
+     * 刷新提示
+     */
+    REFRESH_TIPS,
     ;
 }
