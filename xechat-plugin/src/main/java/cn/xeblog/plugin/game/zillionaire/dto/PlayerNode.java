@@ -105,4 +105,21 @@ public class PlayerNode {
         return position % 40;
     }
 
+    /**
+     * 更新现金及资产
+     * @param cashMoney         变更的现金额
+     * @param propertyMoney     变更的资产额度
+     * @param addFlag           添加标记 true 增加 false 减少
+     * @return
+     */
+    public void upgradeCashAnProperty(Integer cashMoney, Integer propertyMoney, Boolean addFlag) {
+        if (addFlag) {
+            cash += cashMoney;
+            property += propertyMoney;
+        } else {
+            cash -= cashMoney;
+            property -= propertyMoney;
+        }
+    }
+
 }

@@ -1,5 +1,6 @@
 package cn.xeblog.plugin.game.zillionaire;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.xeblog.commons.entity.game.GameDTO;
@@ -129,6 +130,17 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
     private PlayerAction helpPlayerAction;
     /** 总步数 40 */
     private static final Integer ALL_STEP = 40;
+    /** 经过起点的奖金 */
+    private Integer startMoney = 2000;
+    /** 所得税 */
+    private Integer incomeTax = 2000;
+    /** 财产税 */
+    private Integer propertyTax = 1000;
+    /** 旅馆扣费 */
+    private Integer hotelPenalty = 600;
+    /** 房屋扣费 */
+    private Integer housePenalty = 200;
+
 
     static {
         aiPlayerList = new ArrayList<>();
@@ -920,10 +932,10 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
                 gameOver();
                 break;
             case CHANCE:
-                randomChance(body);
+                randomChance(playerName, player, playerNode);
                 break;
             case DESTINY:
-                randomDestiny(body);
+                randomDestiny(playerName, player, playerNode);
                 break;
             case TO_JAIL:
                 toJail(playerName, player, playerNode);
@@ -963,39 +975,111 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
 
     /**
      * 随机命运卡
-     * @param body
+     * @param playerName  玩家名称
+     * @param player      玩家
+     * @param playerNode  玩家节点
      */
-    private void randomDestiny(MonopolyGameDto body) {
+    private void randomDestiny(String playerName, Player player, PlayerNode playerNode) {
         List<LuckEntity> destinyCards = ZillionaireUtil.destinyCards;
         Collections.shuffle(destinyCards);
         LuckEntity destinyCard = RandomUtil.randomEle(destinyCards);
+        sendRefreshTipsMsg(playerName, destinyCard.getAction());
         switch (destinyCard.getId()) {
             case 0:
+                // 从巴黎直达伦敦 过起点的话领2000
+                Integer position = playerNode.getPosition();
+                // 在英国或者超过英国就会经过起点可以领取等值于startMoney的钱
+                if (position >= 21) {
+                    playerNode.upgradeCashAnProperty(startMoney, startMoney, true);
+                    player.setPlayerNode(playerNode);
+                    sendRefreshTipsMsg(playerName, "玩家经过起点，领取%d块", startMoney);
+                }
+                break;
             case 1:
+                // 免费盖一栋房子
+                break;
             case 2:
+                // 奖金1000元
+                playerNode.upgradeCashAnProperty(1000, 1000, true);
+                break;
             case 3:
+                // 奖金900元
+                playerNode.upgradeCashAnProperty(900, 900, true);
+                break;
             case 4:
+                // 罚款600元
+                break;
             case 5:
+                // 花费700元
+                break;
             case 6:
+                // 奖金800元
+                playerNode.upgradeCashAnProperty(800, 800, true);
+                break;
             case 7:
+                // 奖金850元
+                playerNode.upgradeCashAnProperty(850, 850, true);
+                break;
             case 8:
+                // 赔偿500元
+                break;
             case 9:
+                // 罚款房子每栋200元，旅馆600元
+                List<CityDto> cities = playerNode.getCities();
+                // 罚款
+                int penaltyMoney = 0;
+                // 房子总数
+                int houseNum = 0;
+                // 旅馆总数
+                int hotelNum = 0;
+                if (CollUtil.isNotEmpty(cities)) {
+                    List<CityDto> hotelCity = cities.stream()
+                            .filter(item -> item.getLevel() == 5)
+                            .collect(Collectors.toList());
+                    hotelNum = hotelCity.size();
+                    // 获取不是满级的城市
+                    cities.removeAll(hotelCity);
+                    houseNum = (int)cities.stream()
+                            .mapToInt(CityDto::getLevel)
+                            .count();
+                    penaltyMoney = hotelNum * hotelPenalty + hotelNum * housePenalty;
+                }
+                sendRefreshTipsMsg(playerName, "玩家拥有房屋%d间，旅馆%d间，扣款%d", houseNum, hotelNum, penaltyMoney);
+
+                break;
             case 10:
+                // 休息一次
+                playerNode.setStatus(false);
+                break;
             case 11:
+                // 奖金600元
+                playerNode.upgradeCashAnProperty(600, 600, true);
+                break;
             case 12:
+                // 罚款400元
+                break;
             case 13:
+                // 给每人100元观光费
+                break;
             case 14:
+                // 奖金700元
+                playerNode.upgradeCashAnProperty(700, 700, true);
+                break;
             default:
                 break;
         }
-        // TODO: 2023/3/31 完善命运卡逻辑
+        // 更新右侧
+        player.refreshTips(positionMap.get(playerNode.getPosition()));
     }
+
 
     /**
      * 随机机会卡片
-     * @param body
+     * @param playerName  玩家名称
+     * @param player      玩家
+     * @param playerNode  玩家节点
      */
-    private void randomChance(MonopolyGameDto body) {
+    private void randomChance(String playerName, Player player, PlayerNode playerNode) {
         List<LuckEntity> chanceCards = ZillionaireUtil.chanceCards;
         Collections.shuffle(chanceCards);
         LuckEntity chanceCard = RandomUtil.randomEle(chanceCards);
@@ -1040,7 +1124,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         Integer cash = currentPlayer.getCash();
         // 获取用户当前的资产
         Integer property = currentPlayer.getProperty();
-        Integer tax = actionId  == 4 ? 2000 : 1000;
+        Integer tax = actionId  == 4 ? incomeTax : propertyTax;
         // 税后现金
         int afterCash = cash - tax;
         int afterProperty = property - tax;
@@ -1226,8 +1310,8 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
     private void addStartMoney(Player player, Boolean toJail){
         PlayerNode playerNode = player.getPlayerNode();
         if (!toJail) {
-            playerNode.setCash(playerNode.getCash() + 2000);
-            playerNode.setProperty(playerNode.getProperty() + 2000);
+            playerNode.setCash(playerNode.getCash() + startMoney);
+            playerNode.setProperty(playerNode.getProperty() + startMoney);
             player.refreshTips(positionMap.get(playerNode.getPosition()));
         }
     }
@@ -1239,6 +1323,16 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
      */
     private void sendRefreshTipsMsg(String playerName, Object data){
         sendMsg(REFRESH_TIPS, playerName, playerName + ": " + data);
+    }
+
+    /**
+     * 发送刷新提示消息
+     * @param playerName        玩家姓名
+     * @param formatStr         格式化字符串
+     * @param data              模板替换内容
+     */
+    private void sendRefreshTipsMsg(String playerName, String formatStr, Object... data) {
+        sendMsg(REFRESH_TIPS, playerName, String.format(formatStr, data));
     }
 
     private void sendMsg(MsgType msgType, String player, Integer action ,Object data) {
