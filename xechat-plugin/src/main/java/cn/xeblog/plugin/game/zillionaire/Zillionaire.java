@@ -30,6 +30,7 @@ import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.util.List;
+import java.util.Queue;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -335,7 +336,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
                     Collections.shuffle(joinedAIList);
                     List<String> aiList = joinedAIList.subList(0, nums);
                     aiList.forEach(ai -> aiPlayerActionMap.put(ai, null));
-                    sendMsg(MsgType.JOIN_ROBOTS, GameAction.getNickname(), new ArrayList<>(aiList));
+                    sendMsg(JOIN_ROBOTS, GameAction.getNickname(), new ArrayList<>(aiList));
                     initUserPanel();
                 } else {
                     showGamePanel();
@@ -610,6 +611,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
                 if (cash >= positionPrice) {
                     playerNode.setCash(cash - positionPrice);
                     playerNode.setProperty(playerNode.getProperty() - positionPrice / 2);
+                    player.setPlayerNode(playerNode);
                     player.refreshTips(position);
                     sendRefreshTipsMsg(nickname, String.format("%s: 购买了【%s】 地皮", nickname, position.getName()));
                     // 购买之后禁止购买
@@ -945,9 +947,19 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
                 break;
             case PAY_OTHER:
                 payOther(body);
+                break;
+            case PASS:
+                pass(body);
             default:
                 break;
         }
+    }
+
+    /**
+     * 切换玩家
+     * @param body
+     */
+    private void pass(MonopolyGameDto body) {
     }
 
     /**
@@ -1283,9 +1295,6 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         userList.addAll(robotList);
         buildPlayerNode();
         showGamePanel();
-        if (isHomeowner) {
-            // todo 开始游戏
-        }
     }
 
     private void diceRoll(MonopolyGameDto body){

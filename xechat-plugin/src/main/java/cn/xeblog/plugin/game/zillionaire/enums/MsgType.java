@@ -71,5 +71,9 @@ public enum MsgType {
      * 支付其他
      */
     PAY_OTHER,
+    /**
+     * 通过
+     */
+    PASS,
     ;
 }
