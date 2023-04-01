@@ -1154,23 +1154,77 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         // TODO: 2023/3/31 完善机会卡逻辑
         switch (chanceCard.getId()) {
             case 0:
+                // 玩家得600元
+                playerNode.upgradeCashAnProperty(600, 600, true);
+                break;
             case 1:
+                // 花费1200元
+                subPlayerCash(player, playerNode, 1200);
+                break;
             case 2:
+                // 获得出狱许可证
+                break;
             case 3:
+                // 损失800元
+                subPlayerCash(player, playerNode, 800);
+                break;
             case 4:
+                // 马上回到起点并领取2000元
+                playerNode.setPosition(0);
+                playerNode.upgradeCashAnProperty(startMoney, startMoney, true);
+                break;
             case 5:
+                // 房子最多的人拆一栋房子
+                break;
             case 6:
+                // 最靠近美国的玩家罚700元
+                break;
             case 7:
+                // 立即坐牢
+                playerNode.setPosition(10);
+                playerNode.setStatus(false);
+                break;
             case 8:
+                // 大家转转盘，点数最大的人拿取点数X10的金额
+                break;
             case 9:
+                // 玩家下回合暂停一次
+                playerNode.setStatus(false);
+                break;
             case 10:
+                // 现金最多的玩家罚1000元
+                break;
             case 11:
+                // 捐200元再转转盘行动一次
+                if (playerNode.getCash() > 200) {
+                    int dialog = JOptionPane.showConfirmDialog(null, "是否话费200元重新投掷一次", "游戏提示", JOptionPane.OK_CANCEL_OPTION);
+                    if (dialog == JOptionPane.YES_OPTION) {
+                        int randomInt = RandomUtil.randomInt(2, 12);
+                        randomLabel.setText("当前投掷点数为: " + randomInt);
+                        MonopolyGameDto msgDto = new MonopolyGameDto();
+                        msgDto.setCurrentPlayer(currentPlayer);
+                        msgDto.setMsgType(DICE_ROLL);
+                        msgDto.setData(randomInt);
+                        msgDto.setPlayer(playerNode.getPlayer());
+                        sendMsg(msgDto);
+                    }
+                }
+                break;
             case 12:
+                // 付600元看医生
+                subPlayerCash(player, playerNode, 600);
+                break;
             case 13:
+                // 最靠近英国的玩家付500元
+                break;
             case 14:
+                // 房子最少名玩家盖一栋
+                break;
             default:
                 break;
         }
+        player.setPlayerNode(playerNode);
+        player.refreshTips(positionMap.get(playerNode.getPosition()));
     }
 
     /**
