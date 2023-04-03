@@ -30,7 +30,6 @@ import lombok.extern.slf4j.Slf4j;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
-import com.intellij.ui.components.JBScrollPane;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -559,6 +558,8 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         tipsArea.setLineWrap(true);
         tipsArea.setPreferredSize(new Dimension(300, 80));
         JBScrollPane scrollPane = new JBScrollPane(tipsArea);//创建滚动条面板
+        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
         scrollPane.setBounds(20,20,100,50);
         textPanel.add(scrollPane);
 
