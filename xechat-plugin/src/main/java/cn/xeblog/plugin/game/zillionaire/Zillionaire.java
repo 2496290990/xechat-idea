@@ -260,9 +260,10 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         PositionDto position = positionMap.get(playerNode.getPosition());
         boolean actionFlag = StrUtil.equalsIgnoreCase(nickname, currentPlayer.getPlayer());
         // 检测玩家是否有售出地皮
-        long count = playerNode.getPositions().stream()
+        List<PositionDto> collect = playerNode.getPositions().stream()
                 .filter(item -> !item.getPositionStatus())
-                .count();
+                .collect(Collectors.toList());
+        long count = collect.size();
         // 当前点位是否有拥有者
         boolean buildBtnStatus = StrUtil.equalsIgnoreCase(position.getOwner(), nickname) && position.getAllowBuy() && position.getUpgradeAllowed();
         boolean buyBtnStatus = StrUtil.isBlank(position.getOwner()) && position.getAllowBuy();
@@ -1381,6 +1382,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
             tipsList.forEach(item -> sb.append(item).append("\n"));
             tipsArea.setText(sb.toString());
             tipsArea.updateUI();
+            tipsArea.selectAll();
         });
     }
 
