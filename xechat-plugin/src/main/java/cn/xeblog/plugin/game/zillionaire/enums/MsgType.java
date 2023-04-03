@@ -68,9 +68,9 @@ public enum MsgType {
      */
     BROKE_EXIT,
     /**
-     * 支付其他
+     * 支付给其他人
      */
-    PAY_OTHER,
+    PAY_TO_OTHERS,
     /**
      * 通过
      */

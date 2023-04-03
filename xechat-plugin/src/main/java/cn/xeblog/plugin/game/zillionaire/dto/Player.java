@@ -56,7 +56,7 @@ public class Player {
         boolean nullFlag = null == position;
         sb.append("<html>")
                 .append("玩家: ").append(playerNode.getPlayer()).append(white)
-                .append("状态: ").append(playerNode.getStatus() ? "正常" : "入狱").append(br)
+                .append("状态: ").append(playerNode.getStatus() ? "正常" : "休息").append(br)
                 .append("位置: ").append(nullFlag ? 0 : position.getPosition()).append(white)
                 .append("名称: ").append(nullFlag ? "起点" : position.getName()).append(br)
                 .append("现金: ").append(playerNode.getCash()).append(white)

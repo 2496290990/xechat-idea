@@ -86,4 +86,5 @@ public class AiPlayerAction extends PlayerAction{
         // 给AI留2000块备用
         return playerNode.getCash() - money >= 2000;
     }
+
 }

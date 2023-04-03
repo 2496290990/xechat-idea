@@ -6,7 +6,6 @@ import cn.xeblog.commons.entity.game.zillionaire.dto.*;
 import cn.xeblog.plugin.game.zillionaire.dto.Player;
 import cn.xeblog.plugin.game.zillionaire.dto.PlayerNode;
 
-import javax.swing.text.Position;
 import java.util.*;
 
 /**
@@ -38,38 +37,12 @@ public class CalcUtil {
     }
 
     /**
-     * 计算用户与城市质检的距离
-     * @param userList          用户列表
-     * @param positionDto       城市
-     * @return  List            距离最近的用户
-     */
-    public static List<String> calcUserDistance(List<PlayerDto> userList, PositionDto positionDto) {
-        // 创建一个map用来存储距离和用户
-        Map<Integer, List<String>> distanceMap = new HashMap<>(userList.size());
-        // 计算用户并且将之放到map中
-        for (PlayerDto player : userList) {
-            // 用户与城市的距离
-            Integer distance = calcDistance(player, positionDto);
-            List<String> usernameList = distanceMap.get(distance);
-            if (CollUtil.isEmpty(usernameList)) {
-                usernameList = Collections.singletonList(player.getUsername());
-            } else {
-                usernameList.add(player.getUsername());
-            }
-        }
-        // 将map的key排序拿取最小的记录
-        List<Integer> distanceList = new ArrayList<>(distanceMap.keySet());
-        distanceList.sort(Integer::compareTo);
-        return distanceMap.get(distanceList.get(0));
-    }
-
-    /**
      * 计算用户与城市质检的位置
      * @param player        用户
      * @param position      城市位置
      * @return  Integer     距离
      */
-    private static Integer calcDistance(PlayerDto player, PositionDto position) {
+    private static Integer calcDistance(PlayerNode player, PositionDto position) {
         // 玩家位置
         Integer userPosition = player.getPosition();
         // 城市位置
@@ -122,6 +95,18 @@ public class CalcUtil {
 
         if (position instanceof CompanyDto) {
             return ((CompanyDto) position).getPrice();
+        }
+        return 0;
+    }
+
+    /**
+     * 获取升级建筑费用
+     * @param position
+     * @return
+     */
+    public static Integer calcPositionUpgrade(PositionDto position) {
+        if (position instanceof CityDto) {
+            return ((CityDto) position).getBuildMoney();
         }
         return 0;
     }
@@ -183,5 +168,86 @@ public class CalcUtil {
             return Arrays.asList(positions);
         }
         return null;
+    }
+
+    /**
+     * 获取现金最多的玩家
+     * @param playerMap     玩家集合
+     * @return
+     */
+    public static List<Player> getMaxCashPlayer(Map<String, Player> playerMap) {
+        Map<Integer, List<Player>> cashPlayerMap = new HashMap<>();
+        for (String playerName : playerMap.keySet()) {
+            Player player = playerMap.get(playerName);
+            Integer cash = player.getPlayerNode().getCash();
+            addToMap(cashPlayerMap, cash, player);
+        }
+        //  将所有玩家的房间数正序排列
+        List<Integer> cashList = new ArrayList<>(cashPlayerMap.keySet());
+        // 按照数量正序排列
+        cashList.sort(Integer::compareTo);
+        return cashPlayerMap.get(cashList.get(cashList.size() - 1));
+    }
+
+    /**
+     * 获取房屋最少的玩家
+     * @param playerMap 玩家集合
+     * @param minBuilding true 获取建筑最少的玩家 false获取建筑最多的玩家
+     * @return
+     */
+    public static List<Player> getPlayerBuildings(Map<String, Player> playerMap, Boolean minBuilding) {
+        Map<Integer, List<Player>> buildingPlayerMap = new HashMap<>();
+        for (String playerName : playerMap.keySet()) {
+            Player player = playerMap.get(playerName);
+            PlayerNode playerNode = player.getPlayerNode();
+            List<CityDto> cities = playerNode.getCities();
+            int buildingNum = 0;
+            if (CollUtil.isNotEmpty(cities)) {
+                for (CityDto city : cities) {
+                    buildingNum += city.getLevel();
+                }
+            }
+            addToMap(buildingPlayerMap, buildingNum, player);
+        }
+        //  将所有玩家的房间数正序排列
+        List<Integer> buildingList = new ArrayList<>(buildingPlayerMap.keySet());
+        // 按照数量正序排列
+        buildingList.sort(Integer::compareTo);
+        int index = minBuilding ? 0 : buildingList.size() - 1;
+        return buildingPlayerMap.get(buildingList.get(index));
+    }
+
+    /**
+     * 获取具体指定坐标点最近的玩家集合
+     * @param playerMap 玩家集合
+     * @param position  地址
+     * @return  List    玩家集合
+     */
+    public static List<Player> getMinDistancePlayer(Map<String, Player> playerMap, PositionDto position) {
+        Map<Integer, List<Player>> distancePlayerMap = new HashMap<>();
+        for (String playerName : playerMap.keySet()) {
+            Player player = playerMap.get(playerName);
+            Integer distance = calcDistance(player.getPlayerNode(), position);
+            addToMap(distancePlayerMap, distance, player);
+        }
+        List<Integer> distanceList = new ArrayList<>(distancePlayerMap.keySet());
+        distanceList.sort(Integer::compareTo);
+        return distancePlayerMap.get(distanceList.get(0));
+    }
+
+    /**
+     * 添加到map中
+     * @param map           存储数据的map
+     * @param key           map的键
+     * @param player        玩家
+     */
+    private static void addToMap(Map<Integer, List<Player>> map, Integer key,Player player) {
+        List<Player> players = map.get(key);
+        if (CollUtil.isEmpty(players)) {
+            map.put(key, Collections.singletonList(player));
+        } else {
+            players.add(player);
+            map.put(key, players);
+        }
     }
 }

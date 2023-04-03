@@ -198,7 +198,8 @@ public abstract class PlayerAction {
 
     /**
      * 是否购买
-     * @return
+     * @param money 话费
+     * @return boolean
      */
     public abstract boolean whetherToBuy(Integer money);
 
