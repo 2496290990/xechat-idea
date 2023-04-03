@@ -118,5 +118,4 @@ public class PlayerNode {
             property -= propertyMoney;
         }
     }
-
 }

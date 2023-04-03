@@ -1,6 +1,5 @@
 package cn.xeblog.commons.entity.game.zillionaire.dto;
 
-import cn.xeblog.commons.entity.game.GameDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

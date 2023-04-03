@@ -19,9 +19,9 @@ public enum MsgType {
      */
     DICE_ROLL,
     /**
-     * 买城市
+     * 买地皮
      */
-    BUY_CITY,
+    BUY_POSITION,
     /**
      * 升级建筑
      */

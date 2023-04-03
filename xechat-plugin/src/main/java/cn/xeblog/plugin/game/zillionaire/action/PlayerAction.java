@@ -195,4 +195,11 @@ public abstract class PlayerAction {
     public void gameOver(String msg){
         AlertMessagesUtil.showInfoDialog("提示", msg);
     }
+
+    /**
+     * 是否购买
+     * @return
+     */
+    public abstract boolean whetherToBuy(Integer money);
+
 }

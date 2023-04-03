@@ -80,4 +80,10 @@ public class AiPlayerAction extends PlayerAction{
     public void gameOver(String msg) {
         super.gameOver(msg);
     }
+
+    @Override
+    public boolean whetherToBuy(Integer money) {
+        // 给AI留2000块备用
+        return playerNode.getCash() - money >= 2000;
+    }
 }
