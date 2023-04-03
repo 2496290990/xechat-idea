@@ -11,6 +11,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author eleven
@@ -182,9 +183,9 @@ public abstract class PlayerAction {
 
     /**
      * 卖房子
-     * @param toll 过路费
+     * Map  key 地皮坐标点  value 售卖的房子数量
      */
-    public abstract void saleBuild(Integer toll);
+    public abstract Map<Integer, Integer> saleBuild();
 
     /**
      * 投掷色子

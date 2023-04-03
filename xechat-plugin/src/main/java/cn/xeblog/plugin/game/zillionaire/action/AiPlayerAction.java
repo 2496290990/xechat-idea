@@ -2,11 +2,13 @@ package cn.xeblog.plugin.game.zillionaire.action;
 
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.map.TableMap;
 import cn.hutool.core.util.RandomUtil;
 import cn.xeblog.commons.entity.game.zillionaire.dto.CityDto;
 import cn.xeblog.commons.entity.game.zillionaire.dto.CompanyDto;
 import cn.xeblog.commons.entity.game.zillionaire.dto.StationDto;
 import cn.xeblog.plugin.game.zillionaire.dto.PlayerNode;
+import com.google.common.collect.Table;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -23,10 +25,10 @@ public class AiPlayerAction extends PlayerAction{
     }
 
     @Override
-    public void saleBuild(Integer toll) {
+    public Map<Integer, Integer> saleBuild() {
         // 获取差额
         PlayerNode playerNode = getPlayerNode();
-        int debt = toll - playerNode.getCash();
+        int debt = Math.abs(playerNode.getCash());
         List<CityDto> cities = playerNode.getCities();
         List<StationDto> stations = playerNode.getStations();
         List<CompanyDto> companies = playerNode.getCompanies();
@@ -63,8 +65,28 @@ public class AiPlayerAction extends PlayerAction{
         }
 
         if (CollUtil.isNotEmpty(cities)) {
-
+            cities.forEach(item -> {
+                Integer toll = item.getToll();
+                List<Integer> list = costPositionMap.get(toll);
+                if (CollUtil.isEmpty(list)) {
+                    costPositionMap.put(toll, Collections.singletonList(item.getPosition()));
+                } else {
+                    list.add(item.getPosition());
+                    costPositionMap.put(toll, list);
+                }
+            });
         }
+        // =============点位价值计算完毕=======================
+        List<Integer> costList = new ArrayList<>(costPositionMap.keySet());
+        int lastPositions;
+        costList.sort(Integer::compareTo);
+        for (Integer cost : costList) {
+            // TODO: 2023/4/3 带完善卖房子计划 
+            //do {
+            //    costPositionMap.get()
+            //} while (true);
+        }
+        return null;
     }
 
     /**

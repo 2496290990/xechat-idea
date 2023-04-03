@@ -244,10 +244,9 @@ public class CalcUtil {
     private static void addToMap(Map<Integer, List<Player>> map, Integer key,Player player) {
         List<Player> players = map.get(key);
         if (CollUtil.isEmpty(players)) {
-            map.put(key, Collections.singletonList(player));
-        } else {
-            players.add(player);
-            map.put(key, players);
+            players = new ArrayList<>();
         }
+        players.add(player);
+        map.put(key, players);
     }
 }

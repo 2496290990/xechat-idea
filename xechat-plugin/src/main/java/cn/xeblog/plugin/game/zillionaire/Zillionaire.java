@@ -30,11 +30,11 @@ import lombok.extern.slf4j.Slf4j;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
+import com.intellij.ui.components.JBScrollPane;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
-import java.util.Queue;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -70,7 +70,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
     /**
      * 提示标签
      */
-    private JLabel tipsLabel;
+    private JTextArea tipsArea;
     /** 玩家主要的面板 */
     private JPanel playerMainPanel;
     /** 玩家头部面板 */
@@ -98,7 +98,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
     /** 过按钮 */
     JButton passBtn;
 
-    private Queue<String> tipsQueue = new ArrayDeque<>(5);
+    private List<String> tipsList = new ArrayList<>();
     /**
      * 当前玩家
      */
@@ -144,6 +144,8 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
     private Integer housePenalty = 200;
     /** 出狱许可证玩家 */
     private String outJailLicence;
+    /** 临时操作提权的玩家 */
+    private List<String> tempPlayerList;
 
 
     static {
@@ -246,6 +248,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         selectedPosition = new ArrayList<>();
         positionMainPanel = new JPanel();
         outJailLicence = null;
+        tempPlayerList = new ArrayList<>();
     }
 
     private void initBtnStatus(){
@@ -550,17 +553,20 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
     private void initPlayAreaCenterPanel(JPanel centerPanel) {
         centerPanel.setLayout(new GridLayout(4,1));
         JPanel textPanel = new JPanel();
-        tipsLabel = new JLabel("测试刷新游戏页面");
-        tipsLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        tipsLabel.setPreferredSize(new Dimension(280, 80));
-        textPanel.add(tipsLabel);
+        textPanel.setPreferredSize(new Dimension(300, 80));
+        tipsArea = new JTextArea("测试刷新游戏页面");
+        tipsArea.setLineWrap(true);
+        tipsArea.setPreferredSize(new Dimension(300, 80));
+        JBScrollPane scrollPane = new JBScrollPane(tipsArea);//创建滚动条面板
+        scrollPane.setBounds(20,20,100,50);
+        textPanel.add(scrollPane);
 
         JBScrollPane positionScroll = new JBScrollPane(positionMainPanel);
         positionScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         positionScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
 
         centerPanel.setBorder(new LineBorder(new Color(255, 100, 0), 1));
-        addAll(centerPanel, textPanel, positionScroll, randomLabel, centerGameButton());
+        addAll(centerPanel, new JScrollPane(tipsArea), positionScroll, randomLabel, centerGameButton());
     }
 
     private JPanel centerGameButton() {
@@ -721,7 +727,11 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
      */
     private void refreshPositions(Player player){
         PlayerNode playerNode = player.getPlayerNode();
-        if (StrUtil.equalsIgnoreCase(playerNode.getPlayer(), currentPlayer.getPlayer())) {
+        PlayerAction playerAction = aiPlayerActionMap.get(currentPlayer.getPlayer());
+        boolean robotControl = isHomeowner() && playerAction != null;
+        boolean actionFlag = StrUtil.equalsIgnoreCase(playerNode.getPlayer(), currentPlayer.getPlayer());
+        // 当前是活动玩家并且非机器人
+        if (actionFlag && ! robotControl) {
             List<PositionDto> positionRefreshList = CalcUtil.getUserPositionRefreshList(playerNode);
             if (CollUtil.isNotEmpty(positionRefreshList)) {
                 positionRefreshList.forEach(item -> {
@@ -811,7 +821,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         }
 
         mainPanel.setMinimumSize(new Dimension(width, 350));
-        tipsLabel.setPreferredSize(new Dimension(topWidth, 40));
+        tipsArea.setPreferredSize(new Dimension(topWidth, 40));
 
         mainPanel.updateUI();
     }
@@ -864,8 +874,8 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
     }
 
     private void showTips(String tips) {
-        tipsLabel.setText("<html>" + tips + "</html>");
-        tipsLabel.updateUI();
+        tipsArea.setText(tips);
+        tipsArea.updateUI();
     }
 
 
@@ -874,25 +884,21 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         if (status == 0){
             return;
         }
+
+        if (status == 2 && CollUtil.isNotEmpty(tempPlayerList)) {
+            String join = String.join(",", tempPlayerList);
+            refreshTips(String.format("%s 玩家正在出售房产，请等待", join));
+        }
+
         String playerName = body.getPlayer();
         Player player = playerMap.get(playerName);
         PlayerNode playerNode = player.getPlayerNode();
         body.setCurrentPlayer(playerNode);
         PlayerNode nextPlayerNode = playerNode.getNextPlayer();
-        Player nextPlayer = null;
-        PlayerAction aiPlayerAction = null;
-        if (nextPlayerNode != null) {
-            nextPlayer = playerMap.get(nextPlayerNode.getPlayer());
-            aiPlayerAction = aiPlayerActionMap.get(nextPlayerNode.getPlayer());
-        }
-
-        boolean isHomeowner = isHomeowner();
-        boolean isMe = playerNode == currentPlayer;
-        boolean controlRobot = isHomeowner && aiPlayerAction != null;
 
         switch (body.getMsgType()) {
             case JOIN_ROBOTS:
-                joinRobots(body, isHomeowner);
+                joinRobots(body, isHomeowner());
                 break;
             case DICE_ROLL:
                 diceRoll(body);
@@ -929,6 +935,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
                 break;
             case PAY_TOLL:
                 payToll(body);
+                break;
             default:
                 break;
         }
@@ -1319,11 +1326,12 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
             status = 2;
             // 更新出售按钮状态
             refreshBtnStatus(saleBtn, true);
-            // TODO: 2023/4/3 完善玩家欠款状态
             PlayerAction playerAction = aiPlayerActionMap.get(playerNode.getPlayer());
             if (isHomeowner() && playerAction != null) {
-                // todo 获取AI要卖那些房子
+                AiPlayerAction aiPlayerAction = new AiPlayerAction(playerNode);
+                Map<Integer, Integer> saleMap = aiPlayerAction.saleBuild();
             } else {
+                tempPlayerList.add(playerNode.getPlayer());
                 if (StrUtil.equalsIgnoreCase(GameAction.getNickname(), playerNode.getPlayer())) {
                     refreshBtnStatus(saleBtn, true);
                 }
@@ -1354,6 +1362,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         String playerName = body.getPlayer();
         Player player = playerMap.get(playerName);
         Integer tax = actionId  == 4 ? incomeTax : propertyTax;
+        sendRefreshTipsMsg(playerName, "玩家缴纳 %s %d元", actionId == 4 ? "所得税" : "财产税", tax);
         subPlayerCash(player, player.getPlayerNode(), tax);
     }
 
@@ -1362,16 +1371,17 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
      * @param body
      */
     private void refreshTips(MonopolyGameDto body){
-        if (tipsQueue.size() == 5) {
-            tipsQueue.poll();
-        }
-        tipsQueue.add(String.valueOf(body.getData()));
-        StringBuilder sb = new StringBuilder();
-        sb.append("<html>");
-        tipsQueue.forEach(item -> sb.append(item).append("<br />"));
-        sb.append("</html>");
-        tipsLabel.setText(sb.toString());
-        tipsLabel.updateUI();
+        refreshTips(String.valueOf(body.getData()));
+    }
+
+    private void refreshTips(String str){
+        invoke(() -> {
+            tipsList.add(str);
+            StringBuilder sb = new StringBuilder();
+            tipsList.forEach(item -> sb.append(item).append("\n"));
+            tipsArea.setText(sb.toString());
+            tipsArea.updateUI();
+        });
     }
 
     /**
@@ -1404,7 +1414,6 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         sendRefreshTipsMsg(playerName, "投掷了骰子");
         String name = position.getName();
         sendRefreshTipsMsg(playerName, String.format("%s向前行走了%d步,当前位置%s", playerName, step, name));
-        refreshBtnStatus(false, null, null, null, null, position.getAllowBuy());
         // 上一次的圈数
         int lastCylinderNumber = lastPosition / ALL_STEP;
         int currentCylinderNumber = currentPosition / ALL_STEP;
@@ -1417,11 +1426,6 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         AiPlayerAction aiPlayerAction = null;
         // 如果当前点位允许购买并且当前没有拥有者
         String owner = position.getOwner();
-        // 当前玩家操作释放通过按钮
-        if (StrUtil.equalsIgnoreCase(playerName, currentPlayer.getPlayer())) {
-            refreshBtnStatus(passBtn, true);
-        }
-
         if (robotControl) {
             aiPlayerAction = new AiPlayerAction(currentPlayer);
 
@@ -1441,6 +1445,11 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
                 }
             }
         } else {
+            refreshBtnStatus(false, null, null, null, null, position.getAllowBuy());
+            // 当前玩家操作释放通过按钮
+            if (StrUtil.equalsIgnoreCase(playerName, currentPlayer.getPlayer())) {
+                refreshBtnStatus(passBtn, true);
+            }
             if (StrUtil.isBlank(owner) && position.getAllowBuy()) {
                 // 更新购买按钮状态
                 refreshBtnStatus(null, true, null, null, null, null);
@@ -1494,6 +1503,9 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
             }
         }
 
+        if (robotControl) {
+            sendMsg(PASS, playerName, null);
+        }
     }
 
     /**
