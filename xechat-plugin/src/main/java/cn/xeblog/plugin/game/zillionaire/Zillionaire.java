@@ -884,7 +884,6 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         Player player = playerMap.get(playerName);
         PlayerNode playerNode = player.getPlayerNode();
         body.setCurrentPlayer(playerNode);
-        PlayerNode nextPlayerNode = playerNode.getNextPlayer();
 
         switch (body.getMsgType()) {
             case JOIN_ROBOTS:
@@ -929,6 +928,8 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
             case UPGRADE_BUILDING:
                 upgradeBuilding(body);
                 break;
+            case DICE_ROLL_AGAIN:
+                allDiceRollAgain();
             default:
                 break;
         }
@@ -1171,6 +1172,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
                 break;
             case 8:
                 // 大家转转盘，点数最大的人拿取点数X10的金额
+                sendMsg(DICE_ROLL_AGAIN, playerName, null);
                 break;
             case 9:
                 // 玩家下回合暂停一次
@@ -1214,6 +1216,21 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
     }
 
     /**
+     * 所有玩家重新投掷
+     */
+    private void allDiceRollAgain() {
+        // 如果是人机的话自动投掷骰子
+        if (isHomeowner()) {
+            // TODO: 2023/4/4 房主帮助人机投掷 
+        }
+        int yesOption = JOptionPane.showConfirmDialog(null, "点数最大的玩家获得点数 * 10的渐进", "游戏提示", JOptionPane.YES_OPTION);
+        if (yesOption == JOptionPane.YES_OPTION) {
+            sendMsg(AGAIN_RESULT, GameAction.getNickname(),RandomUtil.randomInt(1, 12));
+        }
+
+    }
+
+    /**
      * 随机命运卡
      * @param playerName  玩家名称
      * @param player      玩家
@@ -1238,7 +1255,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
             case 1:
                 // 免费盖一栋房子
                 if (CollUtil.isEmpty(playerNode.getCities())) {
-                    sendRefreshTipsMsg(playerName, "玩家暂无地皮获得2000元奖金");
+                    sendRefreshTipsMsg(playerName, "【%s】玩家暂无地皮获得2000元奖金", playerName);
                     playerNode.upgradeCashAnProperty(2000, 2000, true);
                 } else {
                     freeNewBuilding(Collections.singletonList(player));
@@ -1505,20 +1522,20 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
                 }
             }
         } else {
-            refreshBtnStatus(false, null, null, null, null, position.getAllowBuy());
+            refreshBtnStatus(randomBtn, false);
             // 当前玩家操作释放通过按钮
             if (StrUtil.equalsIgnoreCase(playerName, currentPlayer.getPlayer())) {
                 refreshBtnStatus(passBtn, true);
             }
             if (StrUtil.isBlank(owner) && position.getAllowBuy()) {
                 // 更新购买按钮状态
-                refreshBtnStatus(null, true, null, null, null, null);
+                refreshBtnStatus(buyBtn, true);
             }
             // 本人的地皮并且支持购买升级
             if (StrUtil.equalsIgnoreCase(owner, playerName) &&
                     position.getAllowBuy() &&
                     position.getUpgradeAllowed()) {
-                refreshBtnStatus(null, true, null, null, null, null);
+                refreshBtnStatus(buildBtn, true);
             }
 
         }

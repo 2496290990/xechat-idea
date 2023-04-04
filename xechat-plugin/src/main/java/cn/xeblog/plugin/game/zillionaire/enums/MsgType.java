@@ -75,5 +75,9 @@ public enum MsgType {
      * 通过
      */
     PASS,
+    /**
+     * 再一次结果
+     */
+    AGAIN_RESULT
     ;
 }
