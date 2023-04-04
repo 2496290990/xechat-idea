@@ -7,6 +7,7 @@ import cn.xeblog.commons.entity.game.GameDTO;
 import cn.xeblog.commons.entity.game.GameRoom;
 import cn.xeblog.commons.entity.game.zillionaire.dto.*;
 import cn.xeblog.commons.enums.Game;
+import cn.xeblog.commons.util.ThreadUtils;
 import cn.xeblog.plugin.action.GameAction;
 import cn.xeblog.plugin.annotation.DoGame;
 import cn.xeblog.plugin.cache.DataCache;
@@ -145,6 +146,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
     private String outJailLicence;
     /** 临时操作提权的玩家 */
     private List<String> tempPlayerList;
+    private static final long aiThinkingTime = 500L;
 
 
     static {
@@ -1013,7 +1015,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
             return;
         }
 
-        sendRefreshTipsMsg(playerName, "%s: 购买了【%s】 地皮", playerName, position.getName());
+        sendRefreshTipsMsg(playerName, "【%s】:  购买了【%s】 地皮", playerName, position.getName());
         position.setOwner(playerName);
         // 更换map中的数据
         positionMap.put(position.getPosition(), position);
@@ -1041,11 +1043,10 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         boolean robotControl = isHomeowner() && playerAction != null;
         // 人机玩家
         if (robotControl) {
-            invoke(() -> {
-                // 获取AI步数
-                Integer step = aiPlayerAction.diceRoll();
-                sendMsg(DICE_ROLL, currentPlayer.getPlayer(), step);
-            }, 1000);
+            ThreadUtils.spinMoment(aiThinkingTime);
+            // 获取AI步数
+            Integer step = aiPlayerAction.diceRoll();
+            sendMsg(DICE_ROLL, currentPlayer.getPlayer(), step);
 
         } else {
             String playerName = currentPlayer.getPlayer();
@@ -1129,7 +1130,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         } else {
             chanceCard = RandomUtil.randomEle(chanceCards);
         }
-        sendRefreshTipsMsg(playerName,"%s,%s", chanceCard.getTitle(), chanceCard.getAction());
+        sendRefreshTipsMsg(playerName,"【机会】 %s,%s", chanceCard.getTitle(), chanceCard.getAction());
         switch (chanceCard.getId()) {
             case 0:
                 // 玩家得600元
@@ -1222,7 +1223,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         List<LuckEntity> destinyCards = ZillionaireUtil.destinyCards;
         Collections.shuffle(destinyCards);
         LuckEntity destinyCard = RandomUtil.randomEle(destinyCards);
-        sendRefreshTipsMsg(playerName,"%s,%s", destinyCard.getTitle(), destinyCard.getAction());
+        sendRefreshTipsMsg(playerName,"【命运】%s,%s", destinyCard.getTitle(), destinyCard.getAction());
         switch (destinyCard.getId()) {
             case 0:
                 // 从巴黎直达伦敦 过起点的话领2000
@@ -1487,23 +1488,21 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         String owner = position.getOwner();
         if (robotControl) {
             if (StrUtil.isBlank(owner) && position.getAllowBuy()) {
-                invoke(() -> {
-                    boolean whetherToBuy = new AiPlayerAction(currentPlayer).whetherToBuy(CalcUtil.calcPositionPrice(position));
-                    if (whetherToBuy) {
-                        sendMsg(BUY_POSITION, currentPlayer.getPlayer(), position);
-                    }
-                },  1000);
+                ThreadUtils.spinMoment(aiThinkingTime);
+                boolean whetherToBuy = new AiPlayerAction(currentPlayer).whetherToBuy(CalcUtil.calcPositionPrice(position));
+                if (whetherToBuy) {
+                    sendMsg(BUY_POSITION, playerName, position);
+                }
             }
             // 本人的地皮并且支持购买升级
             if (StrUtil.equalsIgnoreCase(owner, playerName) &&
                     position.getAllowBuy() &&
                     position.getUpgradeAllowed()) {
-                invoke(() -> {
-                    boolean upgradeFlag = new AiPlayerAction(currentPlayer).whetherToBuy(CalcUtil.calcPositionUpgrade(position));
-                    if (upgradeFlag) {
-                        sendMsg(UPGRADE_BUILDING, currentPlayer.getPlayer(), position);
-                    }
-                }, 1000);
+                ThreadUtils.spinMoment(aiThinkingTime);
+                boolean upgradeFlag = new AiPlayerAction(currentPlayer).whetherToBuy(CalcUtil.calcPositionUpgrade(position));
+                if (upgradeFlag) {
+                    sendMsg(UPGRADE_BUILDING, currentPlayer.getPlayer(), position);
+                }
             }
         } else {
             refreshBtnStatus(false, null, null, null, null, position.getAllowBuy());
