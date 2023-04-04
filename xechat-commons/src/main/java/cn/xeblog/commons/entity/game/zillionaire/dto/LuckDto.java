@@ -12,6 +12,7 @@ public class LuckDto extends PositionDto{
 
     public void superConstructor(Integer position, String name, Color color){
         super.setPosition(position);
+        super.setPositionStatus(true);
         super.setIsCity(false);
         super.setAllowBuy(false);
         super.setUpgradeAllowed(false);

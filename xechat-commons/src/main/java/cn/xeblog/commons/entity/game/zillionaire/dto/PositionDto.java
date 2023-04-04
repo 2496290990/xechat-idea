@@ -70,5 +70,6 @@ public class PositionDto{
         this.positionStatus = true;
         this.allowBuy = false;
         this.color = Color.BLACK;
+        this.positionStatus = true;
     }
 }

@@ -97,7 +97,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
     /** 过按钮 */
     JButton passBtn;
 
-    private List<String> tipsList = new ArrayList<>();
+    private Integer tipsRows = 10;
     /**
      * 当前玩家
      */
@@ -553,14 +553,16 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
     private void initPlayAreaCenterPanel(JPanel centerPanel) {
         centerPanel.setLayout(new GridLayout(4,1));
         JPanel textPanel = new JPanel();
-        textPanel.setPreferredSize(new Dimension(300, 80));
-        tipsArea = new JTextArea("测试刷新游戏页面");
+        //textPanel.setPreferredSize(new Dimension(300, 80));
+        tipsArea = new JTextArea("游戏开始\n");
+        tipsArea.setRows(10);
+        tipsArea.setColumns(50);
         tipsArea.setLineWrap(true);
         tipsArea.setPreferredSize(new Dimension(300, 80));
         JBScrollPane scrollPane = new JBScrollPane(tipsArea);//创建滚动条面板
         scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-        scrollPane.setBounds(20,20,100,50);
+        //scrollPane.setBounds(0,0,300,80);
         textPanel.add(scrollPane);
 
         JBScrollPane positionScroll = new JBScrollPane(positionMainPanel);
@@ -938,9 +940,20 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
             case PAY_TOLL:
                 payToll(body);
                 break;
+            case UPGRADE_BUILDING:
+                upgradeBuilding(body);
+                break;
             default:
                 break;
         }
+    }
+
+    /**
+     * 升级建筑
+     * @param body
+     */
+    private void upgradeBuilding(MonopolyGameDto body) {
+        // TODO: 2023/4/4 完善升级建筑代码
     }
 
     private void payToll(MonopolyGameDto body) {
@@ -958,7 +971,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         ownerPlayerNode.upgradeCashAnProperty(toll, toll, true);
         ownerPlayer.setPlayerNode(ownerPlayerNode);
         ownerPlayer.refreshTips(positionMap.get(ownerPlayerNode.getPosition()));
-        sendRefreshTipsMsg(owner, "%s 获得 %s 缴纳的过路费 %d", owner, player, toll);
+        sendRefreshTipsMsg(owner, "%s 获得 %s 缴纳的过路费 %d", owner, playerNode.getPlayer(), toll);
     }
 
     private void buyPosition(MonopolyGameDto body) {
@@ -992,9 +1005,12 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         boolean robotControl = isHomeowner() && playerAction != null;
         // 人机玩家
         if (robotControl) {
-            // 获取AI步数
-            Integer step = aiPlayerAction.diceRoll();
-            sendMsg(DICE_ROLL, currentPlayer.getPlayer(), step);
+            invoke(() -> {
+                // 获取AI步数
+                Integer step = aiPlayerAction.diceRoll();
+                sendMsg(DICE_ROLL, currentPlayer.getPlayer(), step);
+            }, 500);
+
         } else {
             String playerName = currentPlayer.getPlayer();
             Player player = playerMap.get(playerName);
@@ -1352,7 +1368,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
      * 游戏结束
      */
     private void gameOver() {
-        // TODO: 2023/3/31  游戏结束
+
     }
 
     /**
@@ -1377,14 +1393,12 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
     }
 
     private void refreshTips(String str){
-        invoke(() -> {
-            tipsList.add(str);
-            StringBuilder sb = new StringBuilder();
-            tipsList.forEach(item -> sb.append(item).append("\n"));
-            tipsArea.setText(sb.toString());
-            tipsArea.updateUI();
-            tipsArea.selectAll();
-        });
+        tipsRows++;
+        str += "\n";
+        tipsArea.setRows( Math.max(tipsRows, 10));
+        tipsArea.append(str);
+        tipsArea.updateUI();
+        tipsArea.selectAll();
     }
 
     /**
@@ -1430,22 +1444,24 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         // 如果当前点位允许购买并且当前没有拥有者
         String owner = position.getOwner();
         if (robotControl) {
-            aiPlayerAction = new AiPlayerAction(currentPlayer);
-
             if (StrUtil.isBlank(owner) && position.getAllowBuy()) {
-                boolean whetherToBuy = aiPlayerAction.whetherToBuy(CalcUtil.calcPositionPrice(position));
-                if (whetherToBuy) {
-                    sendMsg(BUY_POSITION, currentPlayer.getPlayer(), position);
-                }
+                invoke(() -> {
+                    boolean whetherToBuy = new AiPlayerAction(currentPlayer).whetherToBuy(CalcUtil.calcPositionPrice(position));
+                    if (whetherToBuy) {
+                        sendMsg(BUY_POSITION, currentPlayer.getPlayer(), position);
+                    }
+                },  500);
             }
             // 本人的地皮并且支持购买升级
             if (StrUtil.equalsIgnoreCase(owner, playerName) &&
                     position.getAllowBuy() &&
                     position.getUpgradeAllowed()) {
-                boolean upgradeFlag = aiPlayerAction.whetherToBuy(CalcUtil.calcPositionUpgrade(position));
-                if (upgradeFlag) {
-                    sendMsg(UPGRADE_BUILDING, currentPlayer.getPlayer(), position);
-                }
+                invoke(() -> {
+                    boolean upgradeFlag = new AiPlayerAction(currentPlayer).whetherToBuy(CalcUtil.calcPositionUpgrade(position));
+                    if (upgradeFlag) {
+                        sendMsg(UPGRADE_BUILDING, currentPlayer.getPlayer(), position);
+                    }
+                }, 500);
             }
         } else {
             refreshBtnStatus(false, null, null, null, null, position.getAllowBuy());
@@ -1467,7 +1483,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         }
 
         // 如果是别人的房产
-        if (StrUtil.isNotBlank(owner) && !StrUtil.equalsIgnoreCase(owner, playerName)) {
+        if (StrUtil.isNotBlank(owner) && !StrUtil.equalsIgnoreCase(owner, playerName) && position.getAllowBuy()) {
             sendMsg(PAY_TOLL,playerName, position);
         }
 

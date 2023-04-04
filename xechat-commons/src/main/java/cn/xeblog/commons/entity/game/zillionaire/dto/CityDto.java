@@ -74,6 +74,7 @@ public class CityDto extends PositionDto{
         super.setUpgradeAllowed(true);
         super.setName(name);
         super.setColor(color);
+        super.setPositionStatus(true);
     }
 
     public Integer getToll(){

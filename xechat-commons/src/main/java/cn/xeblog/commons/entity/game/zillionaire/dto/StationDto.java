@@ -51,6 +51,7 @@ public class StationDto extends PositionDto{
         super.setIsCity(false);
         super.setUpgradeAllowed(false);
         super.setColor(Color.BLACK);
+        super.setPositionStatus(true);
     }
 
     public Integer getToll(){

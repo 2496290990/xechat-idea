@@ -16,6 +16,7 @@ public class CompanyDto extends PositionDto{
 
     public void superConstructor(Integer position, String name){
         super.setPosition(position);
+        super.setPositionStatus(true);
         super.setIsCity(false);
         super.setAllowBuy(true);
         super.setUpgradeAllowed(false);
