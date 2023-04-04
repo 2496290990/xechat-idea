@@ -1424,7 +1424,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         String playerName = body.getPlayer();
         Player player = playerMap.get(playerName);
         Integer tax = actionId  == 4 ? incomeTax : propertyTax;
-        sendRefreshTipsMsg(playerName, "玩家缴纳 %s %d元", actionId == 4 ? "所得税" : "财产税", tax);
+        sendRefreshTipsMsg(playerName, "【%s】:玩家缴纳 %s %d元", playerName, actionId == 4 ? "所得税" : "财产税", tax);
         subPlayerCash(player, player.getPlayerNode(), tax);
     }
 
@@ -1472,7 +1472,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         player.refreshTips(position);
         sendRefreshTipsMsg(playerName, "投掷了骰子");
         String name = position.getName();
-        sendRefreshTipsMsg(playerName, "%s向前行走了%d步,当前位置%s", playerName, step, name);
+        sendRefreshTipsMsg(playerName, "【%s】向前行走了%d步,当前位置%s", playerName, step, name);
         // 上一次的圈数
         int lastCylinderNumber = lastPosition / ALL_STEP;
         int currentCylinderNumber = currentPosition / ALL_STEP;
