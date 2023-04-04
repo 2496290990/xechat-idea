@@ -1201,7 +1201,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
                 minDistancePlayer.forEach(item -> subPlayerCash(item, item.getPlayerNode(), 500));
                 break;
             case 14:
-                // 房子最少名玩家盖一栋
+                // 房子最少的玩家免费盖一栋
                 List<Player> minBuildingPlayers = CalcUtil.getPlayerBuildings(playerMap, true);
                 freeNewBuilding(minBuildingPlayers);
                 break;
@@ -1330,6 +1330,14 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
      * @param players
      */
     private void freeNewBuilding(List<Player> players){
+        List<String> playerNameList = players.stream()
+                .map(Player::getPlayerNode)
+                .map(PlayerNode::getPlayer)
+                .collect(Collectors.toList());
+        if (playerNameList.contains(GameAction.getNickname())) {
+            String str = String.format("%s玩家抽中机会卡,房子最少的玩家免费修建一栋房子" , currentPlayer.getPlayer());
+            AlertMessagesUtil.showInfoDialog("游戏提示", str);
+        }
 
     }
 
@@ -1638,7 +1646,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
      * @param data          消息
      */
     private void sendRefreshTipsMsg(String playerName, Object data){
-        sendMsg(REFRESH_TIPS, playerName, String.format("%d 【%s】: %s", tipsRows, playerName, data));
+        sendMsg(REFRESH_TIPS, playerName, String.format("【%s】: %s", playerName, data));
     }
 
     /**
