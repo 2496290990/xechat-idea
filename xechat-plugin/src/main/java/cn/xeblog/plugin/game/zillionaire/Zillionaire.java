@@ -603,30 +603,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
             sendMsg(DICE_ROLL, nickname, randomInt);
         });
         buildBtn.addActionListener(e -> {
-            // 获取玩家当前的位置
-            Integer userPosition = playerNode.getPosition();
-            PositionDto position = positionMap.get(userPosition);
-            // 只有城市允许升级
-            if (position.getAllowBuy() && position.getUpgradeAllowed()) {
-                Integer positionPrice = CalcUtil.calcPositionPrice(position);
-                CityDto city = (CityDto)position;
-                Integer buildMoney = city.getBuildMoney();
-                Integer cash = playerNode.getCash();
-                if (cash >= buildMoney) {
-                    playerNode.setCash(cash - buildMoney);
-                    playerNode.setProperty(playerNode.getProperty() - buildMoney / 2);
-                    player.refreshTips(position);
-                    sendRefreshTipsMsg(nickname,
-                            String.format("%s: 升级了【%s】的房屋,当前等级 %d, 过路费 %d",
-                                    nickname, position.getName(), city.getLevel(), city.getToll()
-                            )
-                    );
-                    // 购买之后禁止购买
-                    refreshBtnStatus(buyBtn, playerNode.getCash() >= buildMoney);
-                    // 刷新回合结束按钮
-                    refreshBtnStatus(passBtn, true);
-                }
-            }
+            sendMsg(UPGRADE_BUILDING, playerNode.getPlayer(), playerNode.getPosition());
         });
 
         buyBtn.addActionListener(e -> {
@@ -877,8 +854,15 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         }
     }
 
+    private void showTips(String formatStr, Object... data) {
+        tipsArea.setRows(++tipsRows);
+        tipsArea.append(String.format(formatStr, data) + "\n");
+        tipsArea.updateUI();
+    }
+
     private void showTips(String tips) {
-        tipsArea.setText(tips);
+        tipsArea.setRows(++tipsRows);
+        tipsArea.append(tips + "\n");
         tipsArea.updateUI();
     }
 
@@ -953,7 +937,43 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
      * @param body
      */
     private void upgradeBuilding(MonopolyGameDto body) {
-        // TODO: 2023/4/4 完善升级建筑代码
+        String playerName = body.getPlayer();
+        Player player = playerMap.get(playerName);
+        PlayerNode playerNode = player.getPlayerNode();
+        Integer userPosition = playerNode.getPosition();
+        PositionDto position = positionMap.get(userPosition);
+        if (!position.getUpgradeAllowed()) {
+            showTips("当前地皮不允许升级");
+            return;
+        }
+        String positionOwner = position.getOwner();
+        if (StrUtil.isNotBlank(positionOwner) && StrUtil.equalsIgnoreCase(positionOwner, playerName)) {
+            showTips("当前地皮非本玩家所有，不允许升级");
+            return;
+        }
+        // 查找对应的
+        long count = playerNode.getCities().stream()
+                .filter(item -> item.getPosition().equals(position.getPosition()))
+                .count();
+        Integer price = CalcUtil.calcPositionPrice(position);
+
+        if (count == 0 && StrUtil.isBlank(positionOwner) && playerNode.getCash() >= price) {
+            // 玩家未拥有该地皮 自动购买
+            sendMsg(BUY_POSITION, playerName, position);
+            return;
+        }
+
+        playerNode.getCities().stream()
+                .forEach( item -> {
+                    if (item.getPosition().equals(position.getPosition())) {
+                        item.setLevel(item.getLevel() + 1);
+                        positionMap.put(position.getPosition(), item);
+                        sendRefreshTipsMsg(playerName,"玩家升级了%s地皮的房屋，当前地皮等级%d,过路费%d",
+                                position.getName(), item.getLevel(), item.getToll());
+                    }
+                });
+        player.setPlayerNode(playerNode);
+        player.refreshTips(position);
     }
 
     private void payToll(MonopolyGameDto body) {
@@ -977,15 +997,22 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
     private void buyPosition(MonopolyGameDto body) {
         String playerName = body.getPlayer();
         PositionDto position = (PositionDto)body.getData();
+        Player player = playerMap.get(playerName);
+        PlayerNode playerNode = player.getPlayerNode();
+        Integer price = CalcUtil.calcPositionPrice(position);
+        if (playerNode.getCash() < price) {
+            showTips("玩家现金不足以购买地皮");
+            return;
+        }
         sendRefreshTipsMsg(playerName, "%s: 购买了【%s】 地皮", playerName, position.getName());
         position.setOwner(playerName);
         // 更换map中的数据
         positionMap.put(position.getPosition(), position);
-        Player player = playerMap.get(playerName);
+
         player = CalcUtil.buyPosition(player, position);
         playerMap.put(playerName, player);
         // 如果是当前玩家在玩的话刷新当前
-        if (StrUtil.equalsIgnoreCase(player.getPlayerNode().getPlayer(), currentPlayer.getPlayer())) {
+        if (StrUtil.equalsIgnoreCase(playerNode.getPlayer(), currentPlayer.getPlayer())) {
             refreshPositions(player);
         }
     }
@@ -1393,10 +1420,8 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
     }
 
     private void refreshTips(String str){
-        tipsRows++;
-        str += "\n";
-        tipsArea.setRows( Math.max(tipsRows, 10));
-        tipsArea.append(str);
+        tipsArea.setRows( Math.max(++tipsRows, 10));
+        tipsArea.append(str + "\n");
         tipsArea.updateUI();
         tipsArea.selectAll();
     }

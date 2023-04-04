@@ -249,4 +249,33 @@ public class CalcUtil {
         players.add(player);
         map.put(key, players);
     }
+
+    /**
+     * 是否允许升级
+     * @param playerNode    玩家节点
+     * @param position      点位数据
+     * @return
+     */
+    public static boolean allowUpgrade(PlayerNode playerNode, PositionDto position) {
+        // 点位自身是否允许升级
+        Boolean upgradeAllowed = position.getUpgradeAllowed();
+        // 点位自身不允许升级
+        if (!upgradeAllowed) {
+            return false;
+        }
+        Optional<CityDto> first = playerNode.getCities()
+                .stream()
+                .filter(item -> item.getPosition().equals(position.getPosition()))
+                .findFirst();
+        // 查找不到玩家有当前房产不允许升级
+        if (first.isEmpty()) {
+            return false;
+        }
+        // 当前房屋五级满级不允许升级
+        CityDto city = first.get();
+        if (city.getLevel() == 5) {
+            return false;
+        }
+        return true;
+    }
 }
