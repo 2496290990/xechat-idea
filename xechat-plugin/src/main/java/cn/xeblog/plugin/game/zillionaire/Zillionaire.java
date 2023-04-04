@@ -947,7 +947,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
             return;
         }
         String positionOwner = position.getOwner();
-        if (StrUtil.isNotBlank(positionOwner) && StrUtil.equalsIgnoreCase(positionOwner, playerName)) {
+        if (!StrUtil.equalsIgnoreCase(positionOwner, playerName)) {
             showTips("当前地皮非本玩家所有，不允许升级");
             return;
         }
@@ -974,6 +974,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
                 });
         player.setPlayerNode(playerNode);
         player.refreshTips(position);
+        refreshPositions(player);
     }
 
     private void payToll(MonopolyGameDto body) {
@@ -1004,6 +1005,14 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
             showTips("玩家现金不足以购买地皮");
             return;
         }
+        // 修复重复购买bug
+        long count = playerNode.getPositions().stream()
+                .filter(item -> item.getPosition().equals(position.getPosition()))
+                .count();
+        if (count == 1) {
+            return;
+        }
+
         sendRefreshTipsMsg(playerName, "%s: 购买了【%s】 地皮", playerName, position.getName());
         position.setOwner(playerName);
         // 更换map中的数据
@@ -1036,7 +1045,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
                 // 获取AI步数
                 Integer step = aiPlayerAction.diceRoll();
                 sendMsg(DICE_ROLL, currentPlayer.getPlayer(), step);
-            }, 500);
+            }, 1000);
 
         } else {
             String playerName = currentPlayer.getPlayer();
@@ -1455,7 +1464,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         player.refreshTips(position);
         sendRefreshTipsMsg(playerName, "投掷了骰子");
         String name = position.getName();
-        sendRefreshTipsMsg(playerName, String.format("%s向前行走了%d步,当前位置%s", playerName, step, name));
+        sendRefreshTipsMsg(playerName, "%s向前行走了%d步,当前位置%s", playerName, step, name);
         // 上一次的圈数
         int lastCylinderNumber = lastPosition / ALL_STEP;
         int currentCylinderNumber = currentPosition / ALL_STEP;
@@ -1475,7 +1484,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
                     if (whetherToBuy) {
                         sendMsg(BUY_POSITION, currentPlayer.getPlayer(), position);
                     }
-                },  500);
+                },  1000);
             }
             // 本人的地皮并且支持购买升级
             if (StrUtil.equalsIgnoreCase(owner, playerName) &&
@@ -1486,7 +1495,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
                     if (upgradeFlag) {
                         sendMsg(UPGRADE_BUILDING, currentPlayer.getPlayer(), position);
                     }
-                }, 500);
+                }, 1000);
             }
         } else {
             refreshBtnStatus(false, null, null, null, null, position.getAllowBuy());
@@ -1629,7 +1638,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
      * @param data          消息
      */
     private void sendRefreshTipsMsg(String playerName, Object data){
-        sendMsg(REFRESH_TIPS, playerName, playerName + ": " + data);
+        sendMsg(REFRESH_TIPS, playerName, String.format("%d 【%s】: %s", tipsRows, playerName, data));
     }
 
     /**

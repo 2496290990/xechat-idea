@@ -63,7 +63,7 @@ public class PositionDto{
     public PositionDto(Integer position, String name, Integer action) {
         this.position = position;
         this.name = name;
-        this.owner = "--";
+        this.owner = null;
         this.action = action;
         this.isCity = false;
         this.upgradeAllowed = false;
