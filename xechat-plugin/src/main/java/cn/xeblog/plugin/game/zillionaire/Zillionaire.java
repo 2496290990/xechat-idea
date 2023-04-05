@@ -36,6 +36,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import static cn.xeblog.plugin.game.zillionaire.enums.MsgType.*;
@@ -146,8 +147,10 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
     private String outJailLicence;
     /** 临时操作提权的玩家 */
     private List<String> tempPlayerList;
+    /** Ai思考时长 */
     private static final long aiThinkingTime = 500L;
-
+    /** 所有人重新投掷结果 */
+    private ConcurrentHashMap<String, Integer> againResultMap;
 
     static {
         aiPlayerList = new ArrayList<>();
@@ -250,6 +253,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         positionMainPanel = new JPanel();
         outJailLicence = null;
         tempPlayerList = new ArrayList<>();
+        againResultMap = new ConcurrentHashMap<>();
     }
 
     private void initBtnStatus(){
@@ -257,8 +261,6 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         // 获取当前玩家
         Player player = playerMap.get(nickname);
         PlayerNode playerNode = player.getPlayerNode();
-        // 获取玩家当前的位置
-        PositionDto position = positionMap.get(playerNode.getPosition());
         boolean actionFlag = StrUtil.equalsIgnoreCase(nickname, currentPlayer.getPlayer());
         // 检测玩家是否有售出地皮
         List<PositionDto> collect = playerNode.getPositions().stream()
@@ -266,9 +268,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
                 .collect(Collectors.toList());
         long count = collect.size();
         // 当前点位是否有拥有者
-        boolean buildBtnStatus = StrUtil.equalsIgnoreCase(position.getOwner(), nickname) && position.getAllowBuy() && position.getUpgradeAllowed();
-        boolean buyBtnStatus = StrUtil.isBlank(position.getOwner()) && position.getAllowBuy();
-        refreshBtnStatus(actionFlag, buyBtnStatus, buildBtnStatus, true, count > 0 ,false);
+        refreshBtnStatus(actionFlag, false, false, true, count > 0 ,false);
     }
 
     /**
@@ -547,6 +547,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         jPanel.setLayout(new GridLayout(1, 11));
         initPositionUi(jPanel, 20, 31, true);
     }
+
     private void initPlayAreaLeftPanel(JPanel jPanel) {
         jPanel.setLayout(new GridLayout(9, 1));
         initPositionUi(jPanel, 31, 40, true );
@@ -648,8 +649,6 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         return buttonPanel;
     }
 
-
-
     /**
      * 初始化坐标点位UI
      * @param jPanel    组件
@@ -714,7 +713,9 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         boolean robotControl = isHomeowner() && playerAction != null;
         boolean actionFlag = StrUtil.equalsIgnoreCase(playerNode.getPlayer(), currentPlayer.getPlayer());
         // 当前是活动玩家并且非机器人
-        if (actionFlag && ! robotControl) {
+        if (actionFlag && !robotControl) {
+            // 清空原来的所用数据
+            positionMainPanel.removeAll();
             List<PositionDto> positionRefreshList = CalcUtil.getUserPositionRefreshList(playerNode);
             if (CollUtil.isNotEmpty(positionRefreshList)) {
                 positionRefreshList.forEach(item -> {
@@ -930,6 +931,10 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
                 break;
             case DICE_ROLL_AGAIN:
                 allDiceRollAgain();
+                break;
+            case AGAIN_RESULT:
+                againResult(body);
+                break;
             default:
                 break;
         }
@@ -969,10 +974,16 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         playerNode.getCities().stream()
                 .forEach( item -> {
                     if (item.getPosition().equals(position.getPosition())) {
-                        item.setLevel(item.getLevel() + 1);
-                        positionMap.put(position.getPosition(), item);
-                        sendRefreshTipsMsg(playerName,"玩家升级了%s地皮的房屋，当前地皮等级%d,过路费%d",
-                                position.getName(), item.getLevel(), item.getToll());
+                        if (item.getLevel()  <= 4) {
+                            item.setLevel(item.getLevel() + 1);
+                            positionMap.put(position.getPosition(), item);
+                            sendRefreshTipsMsg(playerName, "玩家升级了%s地皮的房屋，当前地皮等级%d,过路费%d",
+                                    position.getName(), item.getLevel(), item.getToll());
+                        } else {
+                            item.setUpgradeAllowed(false);
+                            positionMap.put(position.getPosition(), item);
+                            sendRefreshTipsMsg(playerName, "当前地皮建筑已满级，禁止升级");
+                        }
                     }
                 });
         player.setPlayerNode(playerNode);
@@ -1055,7 +1066,6 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
             PlayerNode playerNode = player.getPlayerNode();
             // 玩家状态正常暂未入狱
             if (playerNode.getStatus()) {
-                initBtnStatus();
                 List<PositionDto> positions = playerNode.getPositions();
                 if (CollUtil.isNotEmpty(positions)) {
                     // 已售出的地皮数量
@@ -1072,6 +1082,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
                 currentPlayer = currentPlayer.getNextPlayer();
                 sendRefreshTipsMsg(currentPlayer.getPlayer(), "玩家回合开始");
             }
+            initBtnStatus();
         }
     }
 
@@ -1221,13 +1232,44 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
     private void allDiceRollAgain() {
         // 如果是人机的话自动投掷骰子
         if (isHomeowner()) {
-            // TODO: 2023/4/4 房主帮助人机投掷 
+            for (String aiPlayerName : aiPlayerActionMap.keySet()) {
+                sendMsg(AGAIN_RESULT, aiPlayerName, RandomUtil.randomInt(1, 12));
+            }
         }
+
         int yesOption = JOptionPane.showConfirmDialog(null, "点数最大的玩家获得点数 * 10的渐进", "游戏提示", JOptionPane.YES_OPTION);
         if (yesOption == JOptionPane.YES_OPTION) {
             sendMsg(AGAIN_RESULT, GameAction.getNickname(),RandomUtil.randomInt(1, 12));
         }
+    }
 
+    private void againResult(MonopolyGameDto body) {
+        String player = body.getPlayer();
+        Integer result = (Integer) body.getData();
+        sendRefreshTipsMsg(player, "【%s】: 投掷结果为 %d", player, result);
+        againResultMap.put(player, result);
+        if (againResultMap.size() == userList.size()) {
+            List<Integer> results = new ArrayList<>(againResultMap.values());
+            results.sort(Integer::compareTo);
+            int maxResult = results.get(results.size() - 1);
+            List<String> maxPlayer = new ArrayList<>();
+            againResultMap.forEach((k, v) -> {
+                if (maxResult == v) {
+                    maxPlayer.add(k);
+                }
+            });
+            int addMoney = maxResult * 10;
+            sendRefreshTipsMsg("", "玩家投掷最大点数为【%d】, 【%s】获得 %d 元", 
+                    maxResult, String.join(",", maxPlayer), addMoney);
+            for (String item : maxPlayer) {
+                Player addMoneyPlayer = playerMap.get(item);
+                PlayerNode playerNode = addMoneyPlayer.getPlayerNode();
+                playerNode.upgradeCashAnProperty(addMoney, addMoney, true);
+                addMoneyPlayer.setPlayerNode(playerNode);
+                addMoneyPlayer.refreshTips(positionMap.get(playerNode.getPosition()));
+            }
+
+        }
     }
 
     /**
