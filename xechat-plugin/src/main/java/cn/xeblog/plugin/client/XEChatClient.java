@@ -12,7 +12,7 @@ import io.netty.channel.socket.nio.NioSocketChannel;
  */
 public class XEChatClient {
 
-    private static final String HOST = "localhost";
+    private static final String HOST = "chargeduck.lesscoding.net";
     private static final int PORT = 1024;
 
     public static void run(String host, int port, AbstractChannelInitializer channelInitializer, ClientConnectConsumer consumer) {

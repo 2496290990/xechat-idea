@@ -632,6 +632,9 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
                     refreshBtnStatus(buyBtn, false);
                 }
 
+            } else {
+                showTips("当前位置不允许购买");
+                refreshBtnStatus(buildBtn, false);
             }
         });
 
@@ -925,7 +928,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
 
         if (status == 4 && hasTempUser) {
             String join = String.join(",", tempPlayerList);
-            refreshTips(String.format("%s 4玩家在思考拆除房屋，请等待", join));
+            refreshTips(String.format("%s 玩家在思考拆除房屋，请等待", join));
         }
 
         if (status == 5 && hasTempUser) {
@@ -1008,7 +1011,6 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         PlayerNode playerNode = player.getPlayerNode();
         Integer actionId = body.getActionId();
         CityDto city = (CityDto) body.getData();
-
         // 房子最多的玩家拆一栋不给钱
         if (actionId == 1) {
             playerNode.getCities()
@@ -1048,8 +1050,9 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
             // 售卖房子给钱
             Integer buildMoney = city.getBuildMoney();
             playerNode.upgradeCashAndProperty(buildMoney, buildMoney, true);
+            // 移除临时提权玩家
+            removeTempPlayer(body);
         }
-
         updatePlayerMap(player, playerNode);
     }
 
@@ -1132,10 +1135,14 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         Player player = playerMap.get(playerName);
         PlayerNode playerNode = player.getPlayerNode();
         subPlayerCash(player, playerNode, toll);
+        sendRefreshTipsMsg(owner, "【%s】 获得 【%s】 缴纳的过路费 %d", owner, playerNode.getPlayer(), toll);
+        Integer ownerCash = ownerPlayerNode.getCash();
+        Integer property = ownerPlayerNode.getProperty();
+        sendRefreshPropertyTipsMsg(playerName,  ownerCash, ownerCash + toll, property, property + toll);
+        sendRefreshPropertyTipsMsg(owner, ownerCash, ownerCash + toll, property, property + toll);
         ownerPlayerNode.upgradeCashAndProperty(toll, toll, true);
         ownerPlayer.setPlayerNode(ownerPlayerNode);
         ownerPlayer.refreshTips(positionMap.get(ownerPlayerNode.getPosition()));
-        sendRefreshTipsMsg(owner, "%s 获得 %s 缴纳的过路费 %d", owner, playerNode.getPlayer(), toll);
     }
 
     private void buyPosition(MonopolyGameDto body) {
@@ -1160,8 +1167,14 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         position.setOwner(playerName);
         // 更换map中的数据
         positionMap.put(position.getPosition(), position);
-
+        Integer cash = playerNode.getCash();
+        Integer property = playerNode.getProperty();
         player = CalcUtil.buyPosition(player, position);
+        sendRefreshPropertyTipsMsg(playerName,
+                cash,
+                player.getPlayerNode().getCash(),
+                property,
+                player.getPlayerNode().getProperty());
         playerMap.put(playerName, player);
         // 如果是当前玩家在玩的话刷新当前
         if (StrUtil.equalsIgnoreCase(playerNode.getPlayer(), currentPlayer.getPlayer())) {
@@ -1650,8 +1663,9 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
     private void subPlayerCash(Player player, PlayerNode playerNode, Integer money) {
         int property = playerNode.getProperty();
         int cash = playerNode.getCash();
+        String playerName = playerNode.getPlayer();
         if (money > property) {
-            sendRefreshTipsMsg(playerNode.getPlayer(), "玩家当前总资产%d,待支付%d,资产不足游戏结束", property, money);
+            sendRefreshTipsMsg(playerName, "玩家当前总资产%d,待支付%d,资产不足游戏结束", property, money);
             gameOver();
         }
         // 玩家总资产等于扣款金额 全部资产售卖，房产等级归零
@@ -1666,12 +1680,14 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
                 item.setPositionStatus(false);
                 item.setLevel(0);
             });
-            sendRefreshTipsMsg(playerNode.getPlayer(), "玩家当前总资产与待支付金额相同，地皮房产清空");
+            sendRefreshTipsMsg(playerName, "玩家当前总资产与待支付金额相同，地皮房产清空");
+            sendRefreshPropertyTipsMsg(playerName, cash, 0, property, 0);
         }
 
         if (money == cash) {
             playerNode.setCash(0);
-            sendRefreshTipsMsg(playerNode.getPlayer(), "玩家当前现金与待支付金额相同，地皮房产清空");
+            sendRefreshTipsMsg(playerName, "玩家当前现金与待支付金额相同，现金清空");
+            sendRefreshPropertyTipsMsg(playerName, cash, 0, property, property - cash);
         }
         // 待支付金额超过现金额度但是小于总资产数量
         if (money > cash && money < property) {
@@ -1680,13 +1696,13 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
             status = 2;
             // 更新出售按钮状态
             refreshBtnStatus(saleBtn, true);
-            PlayerAction playerAction = aiPlayerActionMap.get(playerNode.getPlayer());
+            PlayerAction playerAction = aiPlayerActionMap.get(playerName);
             if (isHomeowner() && playerAction != null) {
                 AiPlayerAction aiPlayerAction = new AiPlayerAction(playerNode);
                 Map<Integer, Integer> saleMap = aiPlayerAction.saleBuild();
             } else {
-                tempPlayerList.add(playerNode.getPlayer());
-                if (StrUtil.equalsIgnoreCase(GameAction.getNickname(), playerNode.getPlayer())) {
+                tempPlayerList.add(playerName);
+                if (StrUtil.equalsIgnoreCase(GameAction.getNickname(), playerName)) {
                     refreshBtnStatus(saleBtn, true);
                 }
             }
@@ -1939,6 +1955,19 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         sendMsg(REFRESH_TIPS, playerName, String.format("【%s】: %s", playerName, data));
     }
 
+    /**
+     * 刷新日志展示玩家金钱
+     * @param playerName        玩家姓名
+     * @param lastCash          上一次的现金
+     * @param currentCash       当前现金
+     * @param lastProperty      上一次的资产
+     * @param currentProperty   当前资产
+     */
+    private void sendRefreshPropertyTipsMsg(String playerName, Integer lastCash, Integer currentCash, Integer lastProperty, Integer currentProperty) {
+        sendRefreshTipsMsg(playerName,
+                "【%s】 现金:%d -> %d, 资产 %d -> %d",
+                playerName, lastCash, currentCash, lastProperty, currentProperty);
+    }
     /**
      * 发送刷新提示消息
      * @param playerName        玩家姓名
