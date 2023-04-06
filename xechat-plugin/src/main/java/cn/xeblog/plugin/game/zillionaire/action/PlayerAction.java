@@ -204,4 +204,15 @@ public abstract class PlayerAction {
      */
     public abstract boolean whetherToBuy(Integer money);
 
+    /**
+     * 获取要拆除的建的地皮坐标
+     * @return
+     */
+    public abstract Integer getPullDownBuilding();
+
+    /**
+     * 获取免费升级的地皮坐标
+     * @return
+     */
+    public abstract Integer getFreeBuildingPosition();
 }

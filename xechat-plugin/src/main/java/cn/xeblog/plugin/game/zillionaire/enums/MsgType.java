@@ -78,6 +78,15 @@ public enum MsgType {
     /**
      * 再一次结果
      */
-    AGAIN_RESULT
+    AGAIN_RESULT,
+
+    /**
+     * 删除临时提权玩家
+     */
+    REMOVE_TEMP_PLAYER,
+    /**
+     * 摧毁
+     */
+    PULL_DOWN,
     ;
 }

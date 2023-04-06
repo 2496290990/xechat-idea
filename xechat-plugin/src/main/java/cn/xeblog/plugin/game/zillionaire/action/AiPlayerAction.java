@@ -2,13 +2,11 @@ package cn.xeblog.plugin.game.zillionaire.action;
 
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.map.TableMap;
 import cn.hutool.core.util.RandomUtil;
 import cn.xeblog.commons.entity.game.zillionaire.dto.CityDto;
 import cn.xeblog.commons.entity.game.zillionaire.dto.CompanyDto;
 import cn.xeblog.commons.entity.game.zillionaire.dto.StationDto;
 import cn.xeblog.plugin.game.zillionaire.dto.PlayerNode;
-import com.google.common.collect.Table;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -107,6 +105,60 @@ public class AiPlayerAction extends PlayerAction{
     public boolean whetherToBuy(Integer money) {
         // 给AI留2000块备用
         return playerNode.getCash() - money >= 2000;
+    }
+
+    /**
+     * 人机被机会卡 房产最多的玩家免费拆一栋选中的逻辑
+     * v1 :
+     *     按照地皮的过路费正序排列，过路费最少的房产拆除
+     *     todo 这里需要由金盏花来编写AI逻辑
+     *     根据房产拆除房子之后减少的价值，
+     * @return
+     */
+    @Override
+    public Integer getPullDownBuilding() {
+        List<CityDto> cities = playerNode.getCities();
+        // 有房子的建筑
+        List<CityDto> hasBuildingCities = cities.stream()
+                .filter(item -> item.getLevel() > 0)
+                .collect(Collectors.toList());
+        hasBuildingCities.sort((prev, next) -> {
+            Integer prevToll = prev.getToll();
+            Integer nextToll = next.getToll();
+            // 如果过路费相同不同的话，直接返回
+            if (prevToll.intValue() != nextToll.intValue()) {
+                return prevToll.compareTo(nextToll);
+            } else {
+                // 如果过路费不同的话则按照扣减一个房子的过路费大小排雷
+                Integer prevSubOneToll = prev.getToll(prev.getLevel() - 1);
+                Integer nextSubOneToll = next.getToll(prev.getLevel() - 1);
+                return prevSubOneToll.compareTo(nextSubOneToll);
+            }
+        });
+        return hasBuildingCities.get(0).getPosition();
+    }
+
+    @Override
+    public Integer getFreeBuildingPosition() {
+        List<CityDto> cities = playerNode.getCities();
+        // 有房子的建筑
+        List<CityDto> allowUpgradeCities = cities.stream()
+                .filter(item -> item.getLevel() < 5)
+                .collect(Collectors.toList());
+        allowUpgradeCities.sort((prev, next) -> {
+            Integer prevToll = prev.getToll();
+            Integer nextToll = next.getToll();
+            // 如果过路费相同不同的话，直接返回
+            if (prevToll.intValue() != nextToll.intValue()) {
+                return prevToll.compareTo(nextToll);
+            } else {
+                // 如果过路费不同的话则按照扣减一个房子的过路费大小排雷
+                Integer prevSubOneToll = prev.getToll(prev.getLevel() + 1);
+                Integer nextSubOneToll = next.getToll(prev.getLevel() + 1);
+                return prevSubOneToll.compareTo(nextSubOneToll);
+            }
+        });
+        return allowUpgradeCities.get(0).getPosition();
     }
 
 }

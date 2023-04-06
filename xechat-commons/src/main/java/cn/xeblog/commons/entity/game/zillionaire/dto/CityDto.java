@@ -78,6 +78,10 @@ public class CityDto extends PositionDto{
     }
 
     public Integer getToll(){
+        return getToll(level);
+    }
+
+    public Integer getToll(Integer level) {
         switch (level) {
             case 1:
                 return firstToll;
@@ -90,7 +94,7 @@ public class CityDto extends PositionDto{
             case 5:
                 return fifthToll;
             default:
-                return zeroToll;
+                return level > 5 ? fifthToll : zeroToll;
         }
     }
 }

@@ -7,6 +7,7 @@ import cn.xeblog.plugin.game.zillionaire.dto.Player;
 import cn.xeblog.plugin.game.zillionaire.dto.PlayerNode;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author eleven
@@ -277,5 +278,16 @@ public class CalcUtil {
             return false;
         }
         return true;
+    }
+
+    /**
+     * 获取有建筑的房子
+     * @param cities
+     * @return
+     */
+    public static List<CityDto> getHasBuildingCities(List<CityDto> cities) {
+        return cities.stream()
+                .filter(item -> item.getLevel() != 0)
+                .collect(Collectors.toList());
     }
 }

@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.swing.*;
+import java.util.Map;
 
 /**
  * @author eleven
@@ -47,6 +48,10 @@ public class Player {
     public void refreshTips(PositionDto position) {
         tipsLabel.setText(getTipsString(position));
         tipsLabel.updateUI();
+    }
+
+    public void refreshTips(Map<Integer, PositionDto> positionMap) {
+        refreshTips(positionMap.get(playerNode.getPosition()));
     }
 
     private String getTipsString(PositionDto position) {

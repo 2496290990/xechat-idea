@@ -109,7 +109,7 @@ public class PlayerNode {
      * @param addFlag           添加标记 true 增加 false 减少
      * @return
      */
-    public void upgradeCashAnProperty(Integer cashMoney, Integer propertyMoney, Boolean addFlag) {
+    public void upgradeCashAndProperty(Integer cashMoney, Integer propertyMoney, Boolean addFlag) {
         if (addFlag) {
             cash += cashMoney;
             property += propertyMoney;
