@@ -407,7 +407,6 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
                     List<String> aiList = joinedAIList.subList(0, nums);
                     aiList.forEach(ai -> aiPlayerActionMap.put(ai, null));
                     sendMsg(JOIN_ROBOTS, GameAction.getNickname(), new ArrayList<>(aiList));
-                    initUserPanel();
                 }
                 showGamePanel();
             }, 500);
@@ -422,7 +421,6 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
             gameMode = GameMode.getMode(gameRoom.getGameMode());
             userList.addAll(gameRoom.getUsers().keySet());
         } else {
-
             userList.add(GameAction.getNickname());
         }
 
@@ -445,7 +443,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
     private void showGamePanel() {
         mainPanel.removeAll();
         mainPanel.setLayout(new BorderLayout());
-        mainPanel.setMinimumSize(new Dimension(490, 350));
+        mainPanel.setMinimumSize(new Dimension(490, 360));
 
         JPanel panel = new JPanel();
         panel.setPreferredSize(new Dimension(480, 300));
@@ -534,16 +532,15 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
                 }
             }
         });
-        addAll(mainBottomPanel, helpBtn, cheatCode, cheatCodeBtn, backButton);
+
         gameOverButton = getGameOverButton();
         gameOverButton.setVisible(false);
-        mainBottomPanel.add(gameOverButton);
 
         Box hBox = Box.createHorizontalBox();
         hBox.add(new JLabel("Window: "));
         hBox.add(getWindowModeComboBox());
         hBox.add(Box.createHorizontalStrut(5));
-        mainBottomPanel.add(hBox);
+        addAll(mainBottomPanel, helpBtn, cheatCode, cheatCodeBtn, backButton, gameOverButton, hBox);
 
         mainPanel.add(mainTopPanel, BorderLayout.NORTH);
         mainPanel.add(panel, BorderLayout.CENTER);
