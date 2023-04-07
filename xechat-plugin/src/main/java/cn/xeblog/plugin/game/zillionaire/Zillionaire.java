@@ -185,7 +185,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         mainPanel.setLayout(null);
         mainPanel.setEnabled(true);
         mainPanel.setVisible(true);
-        mainPanel.setMinimumSize(new Dimension(400, 400));
+        mainPanel.setPreferredSize(new Dimension(400, 400));
         startPanel = new JPanel();
         startPanel.setBounds(10, 10, 120, 260);
         mainPanel.add(startPanel);
@@ -349,9 +349,8 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
                     aiList.forEach(ai -> aiPlayerActionMap.put(ai, null));
                     sendMsg(JOIN_ROBOTS, GameAction.getNickname(), new ArrayList<>(aiList));
                     initUserPanel();
-                } else {
-                    showGamePanel();
                 }
+                showGamePanel();
             }, 500);
         }
     }
@@ -734,7 +733,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
         return userListPanel;
     }
 
-    private Border positionSelectedBorder = BorderFactory.createLineBorder(new Color(255, 255, 255), 2);
+    private Border positionSelectedBorder = BorderFactory.createLineBorder(new Color(255, 0, 0), 2);
 
     /**
      * 刷新地皮UI
