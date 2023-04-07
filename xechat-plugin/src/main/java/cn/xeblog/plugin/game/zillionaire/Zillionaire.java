@@ -814,7 +814,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
                 positionRefreshList.forEach(item -> {
                     JPanel positionPanel = getPositionPanel(item);
                     positionMainPanel.add(positionPanel);
-                    if (choosePosition != null && choosePosition.getPosition() == item.getPosition()) {
+                    if (choosePosition != null && choosePosition.getPosition().equals(item.getPosition())) {
                         positionPanel.setBorder(positionSelectedBorder);
                     } else {
                         positionPanel.setBorder(BorderFactory.createLineBorder(item.getColor()));
@@ -1079,7 +1079,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
             playerNode.getCities()
                     .stream()
                     .forEach(item -> {
-                        if (item.getPosition() == city.getPosition()) {
+                        if (item.getPosition().equals(city.getPosition())) {
                             item.setLevel(item.getLevel() - 1);
                             positionMap.put(item.getPosition(), item);
                         }
@@ -1089,7 +1089,6 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
             removeTempPlayer(body);
         } else if (actionId == 0) {
             playerNode.getCities()
-                    .stream()
                     .forEach(item -> {
                         if (item.getPosition().equals(city.getPosition())) {
                             item.setLevel(item.getLevel() - 1);
