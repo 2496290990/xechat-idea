@@ -1,11 +1,9 @@
 package cn.xeblog.plugin.util;
 
-import cn.hutool.core.util.ArrayUtil;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.messages.AlertMessagesManager;
 
 import javax.swing.*;
-import java.util.Collections;
 
 /**
  * @author LYF

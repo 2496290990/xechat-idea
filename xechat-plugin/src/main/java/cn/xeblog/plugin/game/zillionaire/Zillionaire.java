@@ -23,7 +23,6 @@ import cn.xeblog.plugin.game.zillionaire.enums.WindowMode;
 import cn.xeblog.plugin.game.zillionaire.ui.PositionUi;
 import cn.xeblog.plugin.game.zillionaire.utils.CalcUtil;
 import cn.xeblog.plugin.game.zillionaire.utils.ZillionaireUtil;
-import cn.xeblog.plugin.util.AlertMessagesUtil;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.components.JBScrollPane;
 import lombok.extern.slf4j.Slf4j;
@@ -482,7 +481,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
         backButton = getBackButton();
         helpBtn = new JButton("帮助说明");
         helpBtn.addActionListener(e -> {
-            AlertMessagesUtil.showInfoDialog("游戏说明", "游戏规则:\n" +
+            JOptionPane.showMessageDialog(null,  "游戏规则:\n" +
                     "1. 每次开始的时候先投骰子，然后移动玩家位置。\n" +
                     "2. 如果到达位置的地皮没有人买则可以买地皮，如果是自己的地皮就可以盖房子，别人的地皮就需要给她钱 \n" +
                     "3. 机会和命运需要抽卡牌，财产税和所得税会扣钱\n" +
@@ -491,7 +490,9 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
                     "6. 停车场也会休息一轮,路过监狱不会休息\n" +
                     "8. 现金不够的时候可以卖房卖地，半价出售\n" +
                     "9. 如果一名玩家拥有同颜色的所有地皮则该颜色的空地过路费翻倍\n" +
-                    "10. 经过自来水公司和电力公司需要投掷骰子，一个公司则点数*10 两个则点数*100\n"
+                    "10. 经过自来水公司和电力公司需要投掷骰子，一个公司则点数*10 两个则点数*100\n",
+                    "游戏提示",
+                    JOptionPane.YES_OPTION
 
             );
         });
@@ -501,7 +502,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
             String cheatCodeStr = cheatCode.getText();
             if (StrUtil.isNotBlank(cheatCodeStr)) {
                 if (StrUtil.equalsIgnoreCase("↑↑↓↓←←→→BABA", cheatCodeStr)) {
-                    AlertMessagesUtil.showInfoDialog("游戏提示", "你这不对劲哦");
+                    alertGameMessage( "你这不对劲哦");
                 }
 
                 if (StrUtil.equalsIgnoreCase("PANZER", cheatCodeStr)) {
@@ -516,19 +517,19 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
                 }
 
                 if (StrUtil.equalsIgnoreCase("ALLIN", cheatCodeStr)) {
-                    AlertMessagesUtil.showInfoDialog("游戏提示", "想啥呢小伙子，还梭哈");
+                    alertGameMessage("想啥呢小伙子，还梭哈");
                 }
 
                 if (cheatCodeStr.contains("clean cash")) {
-                    AlertMessagesUtil.showInfoDialog("游戏提示", "过于影响游戏平衡暂未开发");
+                    alertGameMessage( "过于影响游戏平衡暂未开发");
                 }
 
                 if (cheatCodeStr.contains("clean property")) {
-                    AlertMessagesUtil.showInfoDialog("游戏提示", "过于影响游戏平衡暂未开发");
+                    alertGameMessage("过于影响游戏平衡暂未开发");
                 }
                 if (cheatCodeStr.contains("Occupy the house")) {
                     sendRefreshTipsMsg(GameAction.getName(), GameAction.getNickname() + "妄想随机清空一位玩家的房产，获得警告一次");
-                    AlertMessagesUtil.showInfoDialog("游戏提示", "警告一次！");
+                    alertGameMessage( "警告一次！");
                 }
             }
         });
@@ -548,6 +549,10 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
         mainPanel.add(initUserPanel(), BorderLayout.EAST);
         mainPanel.updateUI();
 
+    }
+
+    private void alertGameMessage(String str){
+        JOptionPane.showMessageDialog(null, str, "游戏提示", JOptionPane.YES_OPTION);
     }
 
     /**
@@ -698,7 +703,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
             if (pullDown) {
                 // 房子最多的玩家拆一栋房子
                 if (choosePosition == null) {
-                    AlertMessagesUtil.showInfoDialog("游戏提示", "请选择一块地皮");
+                    alertGameMessage("请选择一块地皮");
                     return;
                 }
 
@@ -710,11 +715,11 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
                             sendMsg(PULL_DOWN, playerNode.getPlayer(), 1, chooseCity);
                         }
                     } else {
-                        AlertMessagesUtil.showInfoDialog("游戏提示", "请选择一块有建筑的点位");
+                        alertGameMessage("请选择一块有建筑的点位");
                         return;
                     }
                 } else {
-                    AlertMessagesUtil.showInfoDialog("游戏提示", "请选择一块允许升级的地区点位");
+                    alertGameMessage("请选择一块允许升级的地区点位");
                     return;
                 }
             } else {
@@ -726,9 +731,9 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
             // TODO: 2023/3/29 开发赎回功能
         });
         passBtn.addActionListener(e -> {
-            AlertMessagesUtil.showInfoDialog("提示", "玩家跳过");
+            sendRefreshTipsMsg(nickname, "【%s】: 玩家跳过", nickname);
             if (playerNode.getCash() < 0) {
-                AlertMessagesUtil.showInfoDialog("提示", "玩家存在欠款，不允许跳过");
+                sendRefreshTipsMsg(nickname, "【%s】: 玩家存在欠款，不允许跳过", nickname);
                 return;
             }
             sendMsg(PASS, playerNode.getPlayer(), null);
@@ -968,7 +973,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
             return;
         }
         if (status == -1) {
-            AlertMessagesUtil.showInfoDialog("游戏提示", "当前游戏已结束，请重新开始游戏");
+            alertGameMessage("当前游戏已结束，请重新开始游戏");
             return;
         }
         /** 游戏状态 -1结束 0初始化 1游戏中 2玩家正在出售房产  3玩家正在思考免费升级房屋 4玩家在思考拆除房屋 5玩家正在重新投掷骰子*/
@@ -1606,7 +1611,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
         List<String> playerNameList = getPlayerNamesByPlayersAndAddToTemp(players);
         if (playerNameList.contains(GameAction.getNickname())) {
             String str = String.format("%s玩家抽中机会卡,房子最少的玩家免费修建一栋房子", currentPlayer.getPlayer());
-            AlertMessagesUtil.showInfoDialog("游戏提示", str);
+            alertGameMessage(str);
         }
         status = 3;
         for (Player player : players) {
@@ -1673,7 +1678,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
         List<String> playerNameList = getPlayerNamesByPlayersAndAddToTemp(players);
         if (playerNameList.contains(GameAction.getNickname())) {
             String str = String.format("%s玩家抽中机会卡,房子最少的玩家免费修建一栋房子", currentPlayer.getPlayer());
-            AlertMessagesUtil.showInfoDialog("游戏提示", str);
+            alertGameMessage(str);
         }
         status = 4;
         for (Player player : players) {
