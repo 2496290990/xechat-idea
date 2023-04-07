@@ -240,7 +240,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
         mainPanel.setLayout(null);
         mainPanel.setEnabled(true);
         mainPanel.setVisible(true);
-        mainPanel.setPreferredSize(new Dimension(400, 400));
+        mainPanel.setMinimumSize(new Dimension(400, 400));
         startPanel = new JPanel();
         startPanel.setBounds(10, 10, 120, 260);
         mainPanel.add(startPanel);
