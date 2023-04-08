@@ -20,7 +20,9 @@ public enum Game {
     PUSH_BOX("推箱子", false),
     CHINESE_CHESS("中国象棋", false),
     /** 大富翁 */
-    ZILLIONAIRE("大富翁", true);
+    ZILLIONAIRE("大富翁", true),
+    /** UNO */
+    UNO("UNO", true);
 
     /**
      * 游戏名称
