@@ -349,7 +349,7 @@ public class UNO extends AbstractGame<UNOGameDto> {
         for (String playerName : userList) {
             List<Card> randomCards = CalcUtil.randomCard(allCards, 7);
             allCards.removeAll(randomCards);
-            sendMsg(ALLOC_CARDS, playerName, randomCards);
+            sendMsg(INIT_ALLOC_CARDS, playerName, randomCards);
         }
     }
 
