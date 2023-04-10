@@ -1,5 +1,6 @@
 package cn.xeblog.plugin.game.uno.entity;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.xeblog.commons.entity.game.uno.Card;
 import lombok.Data;
 
@@ -47,6 +48,6 @@ public class PlayerNode {
     private PlayerNode nextPlayer;
 
     public int getCardsTotal() {
-        return cards.size();
+        return CollUtil.isEmpty(cards) ? 0 : cards.size();
     }
 }

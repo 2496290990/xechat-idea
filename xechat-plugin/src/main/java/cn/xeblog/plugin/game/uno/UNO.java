@@ -1,7 +1,10 @@
 package cn.xeblog.plugin.game.uno;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.xeblog.commons.entity.game.GameDTO;
 import cn.xeblog.commons.entity.game.GameRoom;
+import cn.xeblog.commons.entity.game.uno.Card;
 import cn.xeblog.commons.enums.Game;
 import cn.xeblog.plugin.action.GameAction;
 import cn.xeblog.plugin.annotation.DoGame;
@@ -15,13 +18,20 @@ import cn.xeblog.plugin.game.uno.entity.UNOGameDto;
 import cn.xeblog.plugin.game.uno.enums.GameMode;
 import cn.xeblog.plugin.game.uno.enums.MsgType;
 import cn.xeblog.plugin.game.uno.enums.PlayerMode;
+import cn.xeblog.plugin.game.uno.utils.CalcUtil;
+import cn.xeblog.plugin.game.uno.utils.CardUtil;
 import com.intellij.openapi.ui.ComboBox;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.swing.*;
+import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static cn.xeblog.plugin.game.uno.enums.MsgType.*;
 
@@ -81,7 +91,7 @@ public class UNO extends AbstractGame<UNOGameDto> {
     /**
      * 玩家卡牌主面板
      */
-    private JPanel cardPanel;
+    private JPanel cardsPanel;
     /**
      * 队友卡牌面板
      */
@@ -108,6 +118,16 @@ public class UNO extends AbstractGame<UNOGameDto> {
 
     private PlayerAction helpPlayerAction;
 
+    private List<Card> allCards;
+    /**
+     * 弃牌堆
+     */
+    private List<Card> discardPile;
+    /**
+     * 判断队列
+     */
+    private ArrayDeque<Card> judgeDeque;
+
     /**
      * 状态 -1 游戏结束 0初始化 1游戏中
      */
@@ -116,6 +136,12 @@ public class UNO extends AbstractGame<UNOGameDto> {
     private Integer tipsRows;
 
     private Map<String, String> teamMap;
+
+    private List<Card> selectedCards;
+    /**
+     * uno
+     */
+    private Map<String, Boolean> unoMap;
 
     static {
         aiPlayerList = new ArrayList<>();
@@ -155,23 +181,41 @@ public class UNO extends AbstractGame<UNOGameDto> {
                     List<String> aiList = joinedAIList.subList(0, nums);
                     aiList.forEach(ai -> aiPlayerActionMap.put(ai, null));
                     sendMsg(JOIN_ROBOTS, GameAction.getNickname(), new ArrayList<>(aiList));
-                    initUserPanel();
+                    //initUserPanel();
                 }
+                initPlayerTeam();
+                // 初始化发牌
+                initAllocCards();
                 showGamePanel();
             }, 500);
         }
     }
 
+    /**
+     * 初始化玩家团队
+     */
+    private void initPlayerTeam() {
+        Collections.shuffle(userList);
+        if (playerMode.equals(PlayerMode.DOUBLE)) {
+            // 如果是双人模式的话就要加载玩家队伍了
+            teamMap.put(userList.get(0), userList.get(2));
+            teamMap.put(userList.get(1), userList.get(3));
+            teamMap.put(userList.get(2), userList.get(0));
+            teamMap.put(userList.get(3), userList.get(1));
+        }
+    }
 
 
     private void showGamePanel() {
         mainPanel.removeAll();
         mainPanel.setLayout(new BorderLayout());
         mainPanel.setMinimumSize(new Dimension(490, 350));
-        mainPanel.add(new JTextField("上"), BorderLayout.NORTH);
-        mainPanel.add(new JTextField("右"), BorderLayout.EAST);
-        mainPanel.add(new JTextField("下"), BorderLayout.SOUTH);
-        mainPanel.add(new JTextField("左"), BorderLayout.WEST);
+        if (userList.size() == 4) {
+            mainPanel.add(initUserPanel(0), BorderLayout.SOUTH);
+            mainPanel.add(initUserPanel(1), BorderLayout.SOUTH);
+            mainPanel.add(initUserPanel(2), BorderLayout.SOUTH);
+            mainPanel.add(initUserPanel(3), BorderLayout.SOUTH);
+        }
         mainPanel.add(initCenter(), BorderLayout.CENTER);
     }
 
@@ -185,7 +229,14 @@ public class UNO extends AbstractGame<UNOGameDto> {
         return centerPanel;
     }
 
-    private void initUserPanel() {
+    private JPanel initUserPanel(Integer index) {
+        String playerName = userList.get(index);
+        Player player = playerMap.get(playerName);
+        JPanel panel = player.getPanel();
+        JLabel tipsLabel = new JLabel(String.format("【%s】: 手牌 %d", playerName, player.getPlayerNode().getCardsTotal()));
+        panel.add(tipsLabel);
+        player.setTipsLabel(tipsLabel);
+        return panel;
     }
 
     /**
@@ -224,7 +275,7 @@ public class UNO extends AbstractGame<UNOGameDto> {
             node.setPlayerName(roomUserList.get(i));
             node.setAlias("Machine 0" + (i + 1));
             playerMap.put(node.getPlayerName(), new Player(node, new JPanel()));
-
+            unoMap.put(node.getPlayerName(), false);
             if (GameAction.getNickname().equals(node.getPlayerName())) {
                 currentPlayer = node;
                 helpPlayerAction = new AiPlayerAction(currentPlayer);
@@ -270,9 +321,8 @@ public class UNO extends AbstractGame<UNOGameDto> {
         } else {
             userList.add(GameAction.getNickname());
         }
-        System.out.println(gameMode);
-        System.out.println(playerMode);
-
+        // 根据游戏模式获取卡牌
+        allCards = CardUtil.initCards(gameMode);
         buildPlayerNode();
         showGamePanel();
         status = 1;
@@ -287,6 +337,19 @@ public class UNO extends AbstractGame<UNOGameDto> {
         // 玩家不够4名的时候或者房间为空直接开始游戏的
         if (gameRoom == null || userList.size() < 4) {
             allPlayersGameStarted();
+        } else {
+            initAllocCards();
+        }
+    }
+
+    /**
+     * 初始化分牌
+     */
+    private void initAllocCards(){
+        for (String playerName : userList) {
+            List<Card> randomCards = CalcUtil.randomCard(allCards, 7);
+            allCards.removeAll(randomCards);
+            sendMsg(ALLOC_CARDS, playerName, randomCards);
         }
     }
 
@@ -370,7 +433,211 @@ public class UNO extends AbstractGame<UNOGameDto> {
 
     @Override
     public void handle(UNOGameDto body) {
+        if (status == 0){
+            return;
+        }
+        String playerName = body.getPlayerName();
+        Player player = playerMap.get(playerName);
+        PlayerNode playerNode = player.getPlayerNode();
 
+        switch (body.getMsgType()) {
+            case REFRESH_TIPS_MSG:
+                refreshTipsMsg(body);
+                break;
+            case JOIN_ROBOTS:
+                joinRobots(body);
+                break;
+            case OUT_CARDS:
+                outCards(body);
+                break;
+            case UNO:
+                uno(body);
+                break;
+            case CATCH:
+                catchUnUNO(body);
+                break;
+            case QUESTION:
+                question(body);
+                break;
+            case INIT_ALLOC_CARDS:
+                initAllocCards(body);
+                break;
+            case ALLOC_CARDS:
+                allocCards(body);
+            default:
+                break;
+        }
+    }
+
+    private void allocCards(UNOGameDto body) {
+        Integer nums = (Integer) body.getData();
+        String playerName = body.getPlayerName();
+        // 剩余数量
+        int size = allCards.size();
+        if (nums > size) {
+            addCards(playerName, allCards);
+            allCards.addAll(discardPile);
+            discardPile.clear();
+            List<Card> addCards = CalcUtil.randomCard(allCards, nums - size);
+            addCards(playerName, addCards);
+            allCards.removeAll(addCards);
+        } else if (nums == size) {
+            addCards(playerName, allCards);
+            allCards.clear();
+            allCards.addAll(discardPile);
+            allCards.sort(Card::compareTo);
+            discardPile.clear();
+        } else {
+            List<Card> addCards = CalcUtil.randomCard(allCards, nums);
+            addCards(playerName, addCards);
+            allCards.removeAll(addCards);
+        }
+    }
+
+    /**
+     * 分牌
+     * @param body
+     */
+    private void initAllocCards(UNOGameDto body) {
+        // 获取分牌结果
+        List<Card> allocCards = (List<Card>) body.getData();
+        String playerName = body.getPlayerName();
+        addCards(playerName, allocCards);
+    }
+
+    private void addCards(String playerName, List<Card> addCards) {
+        Player player = playerMap.get(playerName);
+        PlayerNode playerNode = player.getPlayerNode();
+        List<Card> playerCards = playerNode.getCards();
+        playerCards.addAll(addCards);
+        // 添加卡牌之后进行重新排序
+        playerCards.sort(Card::compareTo);
+        playerNode.setCards(playerCards);
+        player.setPlayerNode(playerNode);
+        player.refreshTips();
+        if (StrUtil.equalsIgnoreCase(playerName, GameAction.getNickname())) {
+            refreshPlayerCards(player);
+        }
+    }
+
+    /**
+     * 刷新玩家卡牌
+     * @param player
+     */
+    private void refreshPlayerCards(Player player) {
+        PlayerNode playerNode = player.getPlayerNode();
+        List<Card> cards = playerNode.getCards();
+        cards.sort(Card::compareTo);
+        PlayerAction playerAction = aiPlayerActionMap.get(currentPlayer.getPlayerName());
+        boolean robotControl = isHomeowner() && playerAction != null;
+        boolean actionFlag = StrUtil.equalsIgnoreCase(playerNode.getPlayerName(), currentPlayer.getPlayerName());
+        if (actionFlag && !robotControl) {
+            cardsPanel.removeAll();
+            if (CollUtil.isNotEmpty(cards)) {
+                cards.forEach(item -> {
+
+                    JPanel cardPanel = getCardPanel(item);
+                    if (selectedCards.contains(item)) {
+                        cardPanel.setBorder(new LineBorder(Color.WHITE, 2));
+                    }
+                    cardPanel.addMouseListener(new MouseAdapter() {
+                        @Override
+                        public void mouseClicked(MouseEvent e) {
+                            if (item.getValue().equalsIgnoreCase("CLEAR")) {
+                                selectedCards.clear();
+                                if (item.getValue().equalsIgnoreCase("CLEAR")) {
+                                    // 同颜色的卡牌
+                                    List<Card> sameColorCards = cards.stream()
+                                            .filter(c -> c.getColor().equals(item.getColor()))
+                                            .collect(Collectors.toList());
+                                    selectedCards.addAll(sameColorCards);
+                                } else {
+                                    selectedCards.add(item);
+                                }
+                                refreshPlayerCards(player);
+                            }
+                        }
+                    });
+                });
+            }
+        }
+    }
+
+    private JPanel getCardPanel(Card card) {
+        JPanel cardPanel = new JPanel();
+        cardPanel.setBorder(new LineBorder(card.getColor(), 1));
+        cardPanel.setBackground(new Color(0x2B, 0x2B,0x2B));
+        cardPanel.setPreferredSize(new Dimension(100, 70));
+        cardPanel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        JLabel nameLabel = new JLabel();
+        nameLabel.setText(card.getValue());
+        nameLabel.setForeground(card.getColor());
+        nameLabel.setPreferredSize(new Dimension(100, 70));
+        cardPanel.add(nameLabel);
+        return cardPanel;
+    }
+
+    /**
+     * 质疑 +4
+     * @param body
+     */
+    private void question(UNOGameDto body) {
+    }
+
+    /**
+     * 抓玩家没有uno
+     * @param body
+     */
+    private void catchUnUNO(UNOGameDto body) {
+    }
+
+    private void uno(UNOGameDto body) {
+    }
+
+    /**
+     * 初牌
+     * @param body
+     */
+    private void outCards(UNOGameDto body) {
+        // 获取出牌的数据
+        List<Card> outCards = (List<Card>) body.getData();
+        List<Card> clearList = outCards.stream()
+                .filter(item -> item.getValue().equalsIgnoreCase("CLEAR"))
+                .collect(Collectors.toList());
+        // 新的弃牌
+        Card newDiscard = CollUtil.isNotEmpty(clearList) ? clearList.get(0) : outCards.get(0);
+        // 拉出来第一个弃牌
+        judgeDeque.poll();
+        // 添加新的弃牌
+        judgeDeque.add(newDiscard);
+        // 将出牌放置到弃牌堆之中
+        discardPile.addAll(outCards);
+        String playerName = body.getPlayerName();
+        Player player = playerMap.get(playerName);
+        PlayerNode playerNode = player.getPlayerNode();
+        if (CollUtil.isEmpty(playerNode.getCards())) {
+            status = -1;
+            gameOverButton.setEnabled(true);
+        }
+    }
+
+    /**
+     * 刷新数据
+     * @param body
+     */
+    private void refreshTipsMsg(UNOGameDto body) {
+    }
+
+    /**
+     * 加入机器人
+     * @param body
+     */
+    private void joinRobots(UNOGameDto body) {
+        List<String> robotList = (List<String>) body.getData();
+        userList.addAll(robotList);
+        buildPlayerNode();
+        showGamePanel();
     }
 
     private void initValue() {
@@ -385,6 +652,9 @@ public class UNO extends AbstractGame<UNOGameDto> {
         unoBtn = new JButton("UNO");
         catchBtn = new JButton("抓");
         teamMap = new HashMap<>(4);
+        discardPile = new ArrayList<>();
+        judgeDeque = new ArrayDeque<>(2);
+        unoMap = new HashMap<>(4);
     }
 
     private void sendMsg(MsgType msgType, String player, Object data) {

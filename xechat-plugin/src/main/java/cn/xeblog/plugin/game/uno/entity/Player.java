@@ -1,6 +1,10 @@
 package cn.xeblog.plugin.game.uno.entity;
 
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import javax.swing.*;
 
 /**
@@ -8,6 +12,9 @@ import javax.swing.*;
  * @date 2023/4/10 9:47
  * @apiNote
  */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Player {
     /**
      * 玩家节点
@@ -33,7 +40,7 @@ public class Player {
     }
 
     public void refreshTips() {
-        tipsLabel.setText("");
+        tipsLabel.setText("剩余:" + playerNode.getCardsTotal());
         tipsLabel.updateUI();
     }
 }

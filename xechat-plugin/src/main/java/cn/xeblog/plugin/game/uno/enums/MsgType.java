@@ -25,5 +25,13 @@ public enum MsgType {
      * 质疑
      */
     QUESTION,
+    /**
+     * 分牌
+     */
+    ALLOC_CARDS,
+    /**
+     * 初始化分牌
+     */
+    INIT_ALLOC_CARDS,
     ;
 }

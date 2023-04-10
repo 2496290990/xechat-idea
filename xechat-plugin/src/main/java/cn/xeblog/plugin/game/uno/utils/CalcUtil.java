@@ -1,11 +1,16 @@
 package cn.xeblog.plugin.game.uno.utils;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.xeblog.commons.entity.game.uno.Card;
+import cn.xeblog.plugin.game.uno.entity.Player;
+import cn.xeblog.plugin.game.uno.entity.PlayerNode;
 import cn.xeblog.plugin.game.uno.enums.GameMode;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author eleven
@@ -28,6 +33,37 @@ public class CalcUtil {
             num--;
         }
         return result;
+    }
+
+    /**
+     * 获取质疑结果
+     * @param judgeDeque        判断牌堆
+     * @param player            玩家
+     * @return Boolean          质疑结果
+     */
+    public static Boolean question(ArrayDeque<Card> judgeDeque, Player player) {
+        return question(judgeDeque, player.getPlayerNode());
+    }
+
+    /**
+     * 返回质疑结果
+     * @param judgeDeque        判断牌堆
+     * @param playerNode        玩家节点
+     * @return  Boolean         质疑结果
+     */
+    public static Boolean question(ArrayDeque<Card> judgeDeque, PlayerNode playerNode) {
+        Card card = judgeDeque.peekFirst();
+        List<Card> cards = playerNode.getCards();
+        cards = cards.stream()
+                .filter(item -> !item.getIsFunctionCard())
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(cards)) {
+            return false;
+        }
+        long count = cards.stream()
+                .filter(item -> card.getColor().equals(item.getColor()) || card.getValue().equalsIgnoreCase(item.getValue()))
+                .count();
+        return count > 0;
     }
 
     public static void main(String[] args) {
