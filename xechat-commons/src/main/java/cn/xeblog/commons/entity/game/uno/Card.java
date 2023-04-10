@@ -1,6 +1,8 @@
 package cn.xeblog.commons.entity.game.uno;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.awt.*;
 
@@ -18,10 +20,51 @@ import java.awt.*;
  *
  */
 @Data
-public class Card {
+@NoArgsConstructor
+@AllArgsConstructor
+public class Card implements Comparable<Card>{
+    /**
+     * 评分
+     */
     private Integer score;
 
+    /**
+     * 值
+     */
     private String value;
 
+    /**
+     * 颜色
+     */
     private Color color;
+
+    /**
+     * 是否功能牌
+     */
+    private Boolean isFunctionCard;
+
+    @Override
+    public int compareTo(Card card) {
+        if (!color.equals(card.getColor())) {
+            return colorSort(color).compareTo(colorSort(card.getColor()));
+        }
+        return card.getScore().compareTo(score);
+    }
+
+    private Integer colorSort(Color color) {
+        if (color.equals(Color.RED)) {
+            return 1;
+        }
+        if (color.equals(Color.YELLOW)) {
+            return 2;
+        }
+        if (color.equals(Color.GREEN)) {
+            return 3;
+        }
+        if (color.equals(Color.BLUE)) {
+            return 4;
+        }
+
+        return 0;
+    }
 }
