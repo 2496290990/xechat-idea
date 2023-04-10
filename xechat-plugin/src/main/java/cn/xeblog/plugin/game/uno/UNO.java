@@ -655,6 +655,7 @@ public class UNO extends AbstractGame<UNOGameDto> {
         discardPile = new ArrayList<>();
         judgeDeque = new ArrayDeque<>(2);
         unoMap = new HashMap<>(4);
+        tipsRows = 0;
     }
 
     private void sendMsg(MsgType msgType, String player, Object data) {
@@ -664,6 +665,7 @@ public class UNO extends AbstractGame<UNOGameDto> {
     private void sendMsg(MsgType msgType, String player, Integer action , Object data) {
         UNOGameDto dto = new UNOGameDto();
         dto.setMsgType(msgType);
+        dto.setPlayerName(player);
         dto.setData(data);
         dto.setActionId(action);
         dto.setCurrentPlayer(currentPlayer);
