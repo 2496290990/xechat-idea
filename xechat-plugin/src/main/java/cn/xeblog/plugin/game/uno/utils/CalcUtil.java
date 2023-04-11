@@ -1,6 +1,7 @@
 package cn.xeblog.plugin.game.uno.utils;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.xeblog.commons.entity.game.uno.Card;
 import cn.xeblog.plugin.game.uno.entity.Player;
 import cn.xeblog.plugin.game.uno.entity.PlayerNode;
@@ -64,6 +65,19 @@ public class CalcUtil {
                 .filter(item -> card.getColor().equals(item.getColor()) || card.getValue().equalsIgnoreCase(item.getValue()))
                 .count();
         return count > 0;
+    }
+
+    public static Boolean canOut(List<Card> selectedCards) {
+        if (CollUtil.isEmpty(selectedCards)) {
+            return false;
+        }
+        long clear = selectedCards.stream()
+                .filter(item -> StrUtil.equalsIgnoreCase(item.getValue(), "CLEAR"))
+                .count();
+        if (clear > 0) {
+            return true;
+        }
+        return selectedCards.size() == 1;
     }
 
     public static void main(String[] args) {

@@ -14,6 +14,14 @@ import java.util.List;
  */
 public class CardUtil {
 
+    public static final String SKIP = "⊘";
+    public static final String REVERSE_LEFT = "↺";
+    public static final String REVERSE_RIGHT = "↻";
+    public static final String CHANGE = "⊕ ";
+    public static final String CLEAR = "";
+    public static final String ADD_2 = "+2";
+    public static final String ADD_4 = "+4";
+
     /**
      * 初始化卡牌组
      * @param gameMode 游戏模式
@@ -69,7 +77,7 @@ public class CardUtil {
         List<Card> commonsCards = new ArrayList<>();
         List<Color> colorList = colorList();
         List<String> functionCards = new ArrayList<>();
-        Collections.addAll(functionCards, "SKIP", "REVERSE", "+2");
+        Collections.addAll(functionCards, SKIP, REVERSE_LEFT, "+2");
         Map<String, Integer> commonsMap = commonsMap();
         for (Color color : colorList) {
             for (String key : commonsMap.keySet()) {
@@ -114,7 +122,7 @@ public class CardUtil {
      */
     private static List<Card> zeroAndFunctionCard() {
         List<Card> result = new ArrayList<>(12);
-        Card changeColor = new Card(50, "Change", Color.BLACK, true);
+        Card changeColor = new Card(50, "CHANGE", Color.BLACK, true);
         Card add4 = new Card(50, "+4", Color.BLACK, true);
         Collections.addAll(result,
                 new Card(0, "0", Color.RED, false),

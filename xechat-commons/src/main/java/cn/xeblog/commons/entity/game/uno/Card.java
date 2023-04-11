@@ -9,20 +9,18 @@ import java.awt.*;
 /**
  * @author eleven
  * @date 2023/4/8 22:20
- * @apiNote
- *  红黄蓝绿
- *  0 一张
- *  1 2 3 4 5 6 7 8 9 禁止 reverse +2 两张
- *  黑色
- *  换颜色  +4 各四张
- *  欢乐模式
- *  CLEAR 每种颜色两张
- *
+ * @apiNote 红黄蓝绿
+ * 0 一张
+ * 1 2 3 4 5 6 7 8 9 禁止 reverse +2 两张
+ * 黑色
+ * 换颜色  +4 各四张
+ * 欢乐模式
+ * CLEAR 每种颜色两张
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Card implements Comparable<Card>{
+public class Card implements Comparable<Card> {
     /**
      * 评分
      */
@@ -66,5 +64,37 @@ public class Card implements Comparable<Card>{
         }
 
         return 0;
+    }
+
+    public String getToolTipText() {
+        switch (getValue().toUpperCase()) {
+            case "CHANGE":
+                return "CHANGE 改变下次出牌的颜色";
+            case "+2":
+                return "使下家摸两张牌并跳过一回合";
+            case "+4":
+                return "改变下次出牌颜色并使下家摸四张牌跳过当前回合，如果下家质疑成功则你摸6张";
+            case "REVERSE":
+                return "翻转出牌顺序";
+            case "CLEAR":
+                return "清空所有同颜色的牌";
+            case "SKIP" :
+                return "下家跳过";
+            default:
+                return getColorStr() + " - " + value;
+        }
+    }
+
+    public String getColorStr() {
+        if (color.equals(Color.RED)) {
+            return "红色";
+        } else if (color.equals(Color.YELLOW)) {
+            return "黄色";
+        } else if (color.equals(Color.GREEN)) {
+            return "绿色";
+        } else if (color.equals(Color.BLUE)) {
+            return "蓝色";
+        }
+        return "黑色";
     }
 }

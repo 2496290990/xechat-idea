@@ -40,7 +40,7 @@ public class Player {
     }
 
     public void refreshTips() {
-        tipsLabel.setText("剩余:" + playerNode.getCardsTotal());
+        tipsLabel.setText(String.format("【%s】 手牌:%d", playerNode.getPlayerName(), playerNode.getCardsTotal()));
         tipsLabel.updateUI();
     }
 }

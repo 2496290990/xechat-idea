@@ -50,4 +50,19 @@ public class PlayerNode {
     public int getCardsTotal() {
         return CollUtil.isEmpty(cards) ? 0 : cards.size();
     }
+
+    public PlayerNode() {
+
+    }
+
+    @Override
+    public String toString() {
+        return "PlayerNode{" +
+                "playerName='" + playerName + '\'' +
+                ", alias='" + alias + '\'' +
+                ", status=" + status +
+                ", cards=" + cards +
+                ", cardsTotal=" + cardsTotal +
+                '}';
+    }
 }

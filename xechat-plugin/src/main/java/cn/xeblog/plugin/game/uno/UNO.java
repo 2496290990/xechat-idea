@@ -21,6 +21,7 @@ import cn.xeblog.plugin.game.uno.enums.PlayerMode;
 import cn.xeblog.plugin.game.uno.utils.CalcUtil;
 import cn.xeblog.plugin.game.uno.utils.CardUtil;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.ui.components.JBScrollPane;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.swing.*;
@@ -181,11 +182,8 @@ public class UNO extends AbstractGame<UNOGameDto> {
                     List<String> aiList = joinedAIList.subList(0, nums);
                     aiList.forEach(ai -> aiPlayerActionMap.put(ai, null));
                     sendMsg(JOIN_ROBOTS, GameAction.getNickname(), new ArrayList<>(aiList));
-                    //initUserPanel();
                 }
                 initPlayerTeam();
-                // 初始化发牌
-                initAllocCards();
                 showGamePanel();
             }, 500);
         }
@@ -212,9 +210,10 @@ public class UNO extends AbstractGame<UNOGameDto> {
         mainPanel.setMinimumSize(new Dimension(490, 350));
         if (userList.size() == 4) {
             mainPanel.add(initUserPanel(0), BorderLayout.SOUTH);
-            mainPanel.add(initUserPanel(1), BorderLayout.SOUTH);
-            mainPanel.add(initUserPanel(2), BorderLayout.SOUTH);
-            mainPanel.add(initUserPanel(3), BorderLayout.SOUTH);
+            mainPanel.add(initUserPanel(1), BorderLayout.EAST);
+            mainPanel.add(initUserPanel(2), BorderLayout.NORTH);
+            mainPanel.add(initUserPanel(3), BorderLayout.WEST);
+            initAllocCards();
         }
         mainPanel.add(initCenter(), BorderLayout.CENTER);
     }
@@ -223,9 +222,22 @@ public class UNO extends AbstractGame<UNOGameDto> {
         JPanel centerPanel = new JPanel();
         if (playerMode.equals(PlayerMode.DOUBLE)) {
         }
-        tipsArea = new JTextArea("游戏开始");
-        tipsArea.setRows(Math.max(tipsRows, 10));
-        centerPanel.add(tipsArea);
+        JPanel textPanel = new JPanel();
+        //textPanel.setPreferredSize(new Dimension(300, 80));
+        tipsArea = new JTextArea("游戏开始\n");
+        tipsArea.setRows(10);
+        tipsArea.setColumns(50);
+        tipsArea.setLineWrap(true);
+        JBScrollPane scrollPane = new JBScrollPane(tipsArea);//创建滚动条面板
+        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+        //scrollPane.setBounds(0,0,300,80);
+        textPanel.add(scrollPane);
+
+        JBScrollPane cardsScroll = new JBScrollPane(cardsPanel);
+        cardsScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        cardsScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+        addAll(centerPanel, cardsScroll);
         return centerPanel;
     }
 
@@ -274,6 +286,8 @@ public class UNO extends AbstractGame<UNOGameDto> {
             node =  new PlayerNode();
             node.setPlayerName(roomUserList.get(i));
             node.setAlias("Machine 0" + (i + 1));
+            node.setCardsTotal(0);
+            node.setCards(new ArrayList<>());
             playerMap.put(node.getPlayerName(), new Player(node, new JPanel()));
             unoMap.put(node.getPlayerName(), false);
             if (GameAction.getNickname().equals(node.getPlayerName())) {
@@ -337,8 +351,6 @@ public class UNO extends AbstractGame<UNOGameDto> {
         // 玩家不够4名的时候或者房间为空直接开始游戏的
         if (gameRoom == null || userList.size() < 4) {
             allPlayersGameStarted();
-        } else {
-            initAllocCards();
         }
     }
 
@@ -346,10 +358,14 @@ public class UNO extends AbstractGame<UNOGameDto> {
      * 初始化分牌
      */
     private void initAllocCards(){
-        for (String playerName : userList) {
-            List<Card> randomCards = CalcUtil.randomCard(allCards, 7);
-            allCards.removeAll(randomCards);
-            sendMsg(INIT_ALLOC_CARDS, playerName, randomCards);
+        if (userList.size() == 4) {
+            Map<String, List<Card>> initCard = new HashMap<>();
+            for (String playerName : userList) {
+                List<Card> randomCards = CalcUtil.randomCard(allCards, 7);
+                allCards.removeAll(randomCards);
+                initCard.put(playerName, randomCards);
+            }
+            sendMsg(INIT_ALLOC_CARDS, GameAction.getNickname(), initCard);
         }
     }
 
@@ -500,9 +516,8 @@ public class UNO extends AbstractGame<UNOGameDto> {
      */
     private void initAllocCards(UNOGameDto body) {
         // 获取分牌结果
-        List<Card> allocCards = (List<Card>) body.getData();
-        String playerName = body.getPlayerName();
-        addCards(playerName, allocCards);
+        Map<String, List<Card>> initCard = (Map<String, List<Card>>) body.getData();
+        initCard.forEach((k,v) -> addCards(k, v));
     }
 
     private void addCards(String playerName, List<Card> addCards) {
@@ -540,11 +555,12 @@ public class UNO extends AbstractGame<UNOGameDto> {
                     if (selectedCards.contains(item)) {
                         cardPanel.setBorder(new LineBorder(Color.WHITE, 2));
                     }
+                    cardsPanel.add(cardPanel);
                     cardPanel.addMouseListener(new MouseAdapter() {
                         @Override
                         public void mouseClicked(MouseEvent e) {
+                            selectedCards.clear();
                             if (item.getValue().equalsIgnoreCase("CLEAR")) {
-                                selectedCards.clear();
                                 if (item.getValue().equalsIgnoreCase("CLEAR")) {
                                     // 同颜色的卡牌
                                     List<Card> sameColorCards = cards.stream()
@@ -554,26 +570,36 @@ public class UNO extends AbstractGame<UNOGameDto> {
                                 } else {
                                     selectedCards.add(item);
                                 }
-                                refreshPlayerCards(player);
+                            } else {
+                                selectedCards.add(item);
+                                cardPanel.setBorder(new LineBorder(Color.WHITE, 2));
                             }
+                            refreshPlayerCards(player);
                         }
                     });
                 });
             }
+            cardsPanel.updateUI();
         }
     }
+    Color ideaLineColor = new Color(0x47, 0x57, 0x65);
+    Color ideaEditorColor = new Color(0x2b, 0x2b, 0x2b);
+    Color ideaGrayColor = new Color(0xAF, 0xB1, 0xB3);
+    Font functionFont = new Font("", 1, 18);
+    Font numFont = new Font("", 1, 28);
 
     private JPanel getCardPanel(Card card) {
         JPanel cardPanel = new JPanel();
+        cardPanel.setToolTipText(card.getToolTipText());
         cardPanel.setBorder(new LineBorder(card.getColor(), 1));
-        cardPanel.setBackground(new Color(0x2B, 0x2B,0x2B));
-        cardPanel.setPreferredSize(new Dimension(100, 70));
+        cardPanel.setBackground(ideaLineColor);
+        cardPanel.setPreferredSize(new Dimension(60, 80));
         cardPanel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-        JLabel nameLabel = new JLabel();
-        nameLabel.setText(card.getValue());
+        JLabel nameLabel = new JLabel(card.getValue(), JLabel.CENTER);
         nameLabel.setForeground(card.getColor());
-        nameLabel.setPreferredSize(new Dimension(100, 70));
+        nameLabel.setFont(card.getIsFunctionCard() ? functionFont : numFont);
+        nameLabel.setPreferredSize(new Dimension(60, 80));
         cardPanel.add(nameLabel);
         return cardPanel;
     }
@@ -656,6 +682,8 @@ public class UNO extends AbstractGame<UNOGameDto> {
         judgeDeque = new ArrayDeque<>(2);
         unoMap = new HashMap<>(4);
         tipsRows = 0;
+        cardsPanel = new JPanel();
+        selectedCards = new ArrayList<>();
     }
 
     private void sendMsg(MsgType msgType, String player, Object data) {
