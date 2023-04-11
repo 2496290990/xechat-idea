@@ -99,6 +99,10 @@ public class UNO extends AbstractGame<UNOGameDto> {
      */
     private JPanel outCardsPanel;
     /**
+     * 推断类型
+     */
+    private JPanel judgeCardsPanel;
+    /**
      * 队友卡牌面板
      */
     private JPanel teammateCardsPanel;
@@ -144,6 +148,11 @@ public class UNO extends AbstractGame<UNOGameDto> {
     private Map<String, String> teamMap;
 
     private List<Card> selectedCards;
+
+    /**
+     * 出牌
+     */
+    private List<Card> outCards;
     /**
      * uno
      */
@@ -223,6 +232,17 @@ public class UNO extends AbstractGame<UNOGameDto> {
         mainPanel.add(initCenter(), BorderLayout.CENTER);
     }
 
+    /**
+     * 初始化牌堆
+     */
+    private void initDisCard() {
+        Card disCard = null;
+        while (!disCard.getIsFunctionCard()) {
+            disCard = CalcUtil.randomCard(allCards, 1).get(0);
+            sendMsg(INIT_DISCARD, GameAction.getNickname(), disCard);
+        }
+    }
+
     private JPanel initCenter() {
         JPanel centerPanel = new JPanel();
         if (playerMode.equals(PlayerMode.DOUBLE)) {
@@ -236,24 +256,34 @@ public class UNO extends AbstractGame<UNOGameDto> {
             centerPanel.setLayout(new GridLayout(3, 1));
         }
 
+        JPanel outPanel = new JPanel();
         // 出牌区域
         JBScrollPane outCardsScroll = new JBScrollPane(outCardsPanel);
         outCardsScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         outCardsScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-        centerPanel.add(outCardsScroll);
 
+        // 出牌区域
+        JBScrollPane judgeCardsScroll = new JBScrollPane(judgeCardsPanel);
+        judgeCardsScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        judgeCardsScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+
+        outPanel.add(outCardsScroll, BorderLayout.CENTER);
+        outPanel.add(judgeCardsScroll, BorderLayout.EAST);
+
+        cardsPanel.add(outPanel);
         // 玩家手牌
         JBScrollPane cardsScroll = new JBScrollPane(cardsPanel);
         cardsScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         cardsScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
         centerPanel.add(cardsScroll);
-
+        centerPanel.add(initBtnPanel());
 
         return centerPanel;
     }
 
     private JPanel initBtnPanel() {
         JPanel btnPanel = new JPanel();
+        btnPanel.setPreferredSize(new Dimension(490, 50));
         allocBtn = new JButton("摸牌");
         outBtn = new JButton("出牌");
         tipsBtn = new JButton("提示");
@@ -263,6 +293,7 @@ public class UNO extends AbstractGame<UNOGameDto> {
             // 摸排之后不允许出牌
             sendMsg(ALLOC_CARDS, GameAction.getNickname(), 0,1);
             refreshBtnStatus(outBtn, false);
+            refreshBtnStatus(allocBtn, false);
         });
 
         outBtn.addActionListener(e -> {
@@ -270,11 +301,17 @@ public class UNO extends AbstractGame<UNOGameDto> {
                 JOptionPane.showMessageDialog(null, "请选择要出的卡牌", "游戏提示", JOptionPane.YES_OPTION);
                 return;
             }
-            sendMsg(OUT_CARDS, GameAction.getNickname(), selectedCards);
-            // 清空已选中的牌面
-            selectedCards.clear();
+            boolean canOut = CalcUtil.canOut(selectedCards, judgeDeque);
+            if (canOut) {
+                sendMsg(OUT_CARDS, GameAction.getNickname(), selectedCards);
+                // 清空已选中的牌面
+                selectedCards.clear();
+            } else {
+                JOptionPane.showMessageDialog(null, "请选择正确的卡牌", "游戏提示", JOptionPane.YES_OPTION);
+                return;
+            }
         });
-
+        addAll(btnPanel, allocBtn, outBtn, tipsBtn, catchBtn);
         return btnPanel;
     }
 
@@ -406,13 +443,13 @@ public class UNO extends AbstractGame<UNOGameDto> {
         buildPlayerNode();
         showGamePanel();
         status = 1;
-        showTips("请等待...");
+        // showTips("请等待...");
 
-        if (userList.size() < 2) {
-            showTips("正在加入机器人...");
-        } else {
-            showTips("等待开始...");
-        }
+        // if (userList.size() < 2) {
+            // showTips("正在加入机器人...");
+        // } else {
+            // showTips("等待开始...");
+        // }
 
         // 玩家不够4名的时候或者房间为空直接开始游戏的
         if (gameRoom == null || userList.size() < 4) {
@@ -546,9 +583,58 @@ public class UNO extends AbstractGame<UNOGameDto> {
                 break;
             case ALLOC_CARDS:
                 allocCards(body);
+                break;
+            case INIT_DISCARD:
+                initDisCard(body);
             default:
                 break;
         }
+    }
+
+    /**
+     * 初始化分牌
+     * @param body
+     */
+    private void initDisCard(UNOGameDto body) {
+        Card disCard = (Card) body.getData();
+        addToJudgeDeque(disCard);
+        addToDiscardPile(Collections.singletonList(disCard));
+    }
+
+    /**
+     * 刷新出牌区域
+     * @param disCard
+     */
+    private void addToDiscardPile(List<Card> disCard) {
+        discardPile.clear();
+        discardPile.addAll(disCard);
+        refreshOtherCardPanel(outCardsPanel, discardPile);
+    }
+
+    /**
+     * 将弃牌添加到判断牌堆中
+     * @param card  弃牌
+     */
+    private void addToJudgeDeque(Card card) {
+        // 如果当前判断牌堆的数量是2的话，抛弃第一个
+        if (judgeDeque.size() == 2) {
+            judgeDeque.poll();
+        }
+        // 将新的弃牌防止到判断牌堆当中
+        judgeDeque.add(card);
+        // 刷新弃牌堆
+        refreshOtherCardPanel(judgeCardsPanel, judgeDeque);
+    }
+
+    /**
+     * 刷新其他的游戏面板
+     * @param jPanel        要刷新的卡牌面板
+     * @param cardList      卡牌集合
+     */
+    private void refreshOtherCardPanel(JPanel jPanel, Collection<Card> cardList) {
+        jPanel.removeAll();
+        cardList.forEach(item -> jPanel.add(getCardPanel(item)));
+        jPanel.updateUI();
     }
 
     private void allocCards(UNOGameDto body) {
@@ -584,6 +670,9 @@ public class UNO extends AbstractGame<UNOGameDto> {
         // 获取分牌结果
         Map<String, List<Card>> initCard = (Map<String, List<Card>>) body.getData();
         initCard.forEach((k,v) -> addCards(k, v));
+        if(isHomeowner()) {
+            initDisCard();
+        }
     }
 
     private void addCards(String playerName, List<Card> addCards) {
@@ -729,11 +818,8 @@ public class UNO extends AbstractGame<UNOGameDto> {
                 .filter(item -> item.getValue().equalsIgnoreCase("CLEAR"))
                 .collect(Collectors.toList());
         // 新的弃牌
-        Card newDiscard = CollUtil.isNotEmpty(clearList) ? clearList.get(0) : outCards.get(0);
-        // 拉出来第一个弃牌
-        judgeDeque.poll();
-        // 添加新的弃牌
-        judgeDeque.add(newDiscard);
+        Card discard = CollUtil.isNotEmpty(clearList) ? clearList.get(0) : outCards.get(0);
+        addToJudgeDeque(discard);
         // 将出牌放置到弃牌堆之中
         discardPile.addAll(outCards);
         String playerName = body.getPlayerName();
@@ -783,6 +869,8 @@ public class UNO extends AbstractGame<UNOGameDto> {
         tipsRows = 0;
         cardsPanel = new JPanel();
         outCardsPanel = new JPanel();
+        outCards = new ArrayList<>();
+        judgeCardsPanel = new JPanel();
         teammateCardsPanel = new JPanel();
         selectedCards = new ArrayList<>();
     }

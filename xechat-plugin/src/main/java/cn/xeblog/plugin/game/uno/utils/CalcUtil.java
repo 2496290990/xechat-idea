@@ -7,6 +7,7 @@ import cn.xeblog.plugin.game.uno.entity.Player;
 import cn.xeblog.plugin.game.uno.entity.PlayerNode;
 import cn.xeblog.plugin.game.uno.enums.GameMode;
 
+import java.awt.*;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -67,17 +68,37 @@ public class CalcUtil {
         return count > 0;
     }
 
-    public static Boolean canOut(List<Card> selectedCards) {
+    public static Boolean canOut(List<Card> selectedCards, ArrayDeque<Card> judgeDeque) {
         if (CollUtil.isEmpty(selectedCards)) {
             return false;
         }
-        long clear = selectedCards.stream()
-                .filter(item -> StrUtil.equalsIgnoreCase(item.getValue(), "CLEAR"))
-                .count();
-        if (clear > 0) {
-            return true;
+
+        int size = selectedCards.size();
+        Card peekLast = judgeDeque.peekLast();
+        Color judgeColor = peekLast.getColor();
+        if (size == 1) {
+            Card outCard = selectedCards.get(0);
+            String outCardValue = outCard.getValue();
+            // 如果是 +4或者是变换颜色的话允许出牌
+            if (StrUtil.equals(outCardValue, "+4") || StrUtil.equalsIgnoreCase(outCardValue, "CHANGE")) {
+                return true;
+            }
+            // 如果要出的牌和最后一张的颜色相同的允许出牌
+            if (outCard.getColor().equals(judgeColor)){
+                return true;
+            }
+
+            // 如果值一样的花允许出牌
+            if (outCard.getValue().equalsIgnoreCase(peekLast.getValue())) {
+                return true;
+            }
         }
-        return selectedCards.size() == 1;
+
+        if (size > 1) {
+            selectedCards.sort(Card::compareTo);
+            return selectedCards.get(0).getColor().equals(judgeColor);
+        }
+        return false;
     }
 
     public static void main(String[] args) {

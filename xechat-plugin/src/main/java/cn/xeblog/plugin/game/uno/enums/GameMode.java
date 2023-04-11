@@ -1,7 +1,6 @@
 package cn.xeblog.plugin.game.uno.enums;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.Getter;
 
 /**

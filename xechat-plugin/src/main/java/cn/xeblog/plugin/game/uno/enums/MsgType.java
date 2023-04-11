@@ -33,5 +33,9 @@ public enum MsgType {
      * 初始化分牌
      */
     INIT_ALLOC_CARDS,
+    /**
+     * init丢弃
+     */
+    INIT_DISCARD
     ;
 }
