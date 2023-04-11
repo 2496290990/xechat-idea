@@ -29,7 +29,6 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -69,6 +68,8 @@ public class UNO extends AbstractGame<UNOGameDto> {
     private JButton backButton;
     /** 游戏说明 */
     private JButton helpBtn;
+
+    private JButton allocBtn;
     /**
      * 出btn
      */
@@ -93,6 +94,10 @@ public class UNO extends AbstractGame<UNOGameDto> {
      * 玩家卡牌主面板
      */
     private JPanel cardsPanel;
+    /**
+     * 出牌面板卡板
+     */
+    private JPanel outCardsPanel;
     /**
      * 队友卡牌面板
      */
@@ -183,7 +188,6 @@ public class UNO extends AbstractGame<UNOGameDto> {
                     aiList.forEach(ai -> aiPlayerActionMap.put(ai, null));
                     sendMsg(JOIN_ROBOTS, GameAction.getNickname(), new ArrayList<>(aiList));
                 }
-                initPlayerTeam();
                 showGamePanel();
             }, 500);
         }
@@ -194,7 +198,7 @@ public class UNO extends AbstractGame<UNOGameDto> {
      */
     private void initPlayerTeam() {
         Collections.shuffle(userList);
-        if (playerMode.equals(PlayerMode.DOUBLE)) {
+        if (playerMode.equals(PlayerMode.DOUBLE) && userList.size() == 4) {
             // 如果是双人模式的话就要加载玩家队伍了
             teamMap.put(userList.get(0), userList.get(2));
             teamMap.put(userList.get(1), userList.get(3));
@@ -214,6 +218,7 @@ public class UNO extends AbstractGame<UNOGameDto> {
             mainPanel.add(initUserPanel(2), BorderLayout.NORTH);
             mainPanel.add(initUserPanel(3), BorderLayout.WEST);
             initAllocCards();
+            initPlayerTeam();
         }
         mainPanel.add(initCenter(), BorderLayout.CENTER);
     }
@@ -221,25 +226,86 @@ public class UNO extends AbstractGame<UNOGameDto> {
     private JPanel initCenter() {
         JPanel centerPanel = new JPanel();
         if (playerMode.equals(PlayerMode.DOUBLE)) {
+            centerPanel.setLayout(new GridLayout(4, 1));
+            // 队友卡牌
+            JBScrollPane teammateCardsScroll = new JBScrollPane(teammateCardsPanel);
+            teammateCardsScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            teammateCardsScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+            centerPanel.add(teammateCardsScroll);
+        } else {
+            centerPanel.setLayout(new GridLayout(3, 1));
         }
-        JPanel textPanel = new JPanel();
-        //textPanel.setPreferredSize(new Dimension(300, 80));
-        tipsArea = new JTextArea("游戏开始\n");
-        tipsArea.setRows(10);
-        tipsArea.setColumns(50);
-        tipsArea.setLineWrap(true);
-        JBScrollPane scrollPane = new JBScrollPane(tipsArea);//创建滚动条面板
-        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-        //scrollPane.setBounds(0,0,300,80);
-        textPanel.add(scrollPane);
 
+        // 出牌区域
+        JBScrollPane outCardsScroll = new JBScrollPane(outCardsPanel);
+        outCardsScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        outCardsScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+        centerPanel.add(outCardsScroll);
+
+        // 玩家手牌
         JBScrollPane cardsScroll = new JBScrollPane(cardsPanel);
         cardsScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         cardsScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-        addAll(centerPanel, cardsScroll);
+        centerPanel.add(cardsScroll);
+
+
         return centerPanel;
     }
+
+    private JPanel initBtnPanel() {
+        JPanel btnPanel = new JPanel();
+        allocBtn = new JButton("摸牌");
+        outBtn = new JButton("出牌");
+        tipsBtn = new JButton("提示");
+        catchBtn = new JButton("抓");
+
+        allocBtn.addActionListener(e -> {
+            // 摸排之后不允许出牌
+            sendMsg(ALLOC_CARDS, GameAction.getNickname(), 0,1);
+            refreshBtnStatus(outBtn, false);
+        });
+
+        outBtn.addActionListener(e -> {
+            if(CollUtil.isEmpty(selectedCards)) {
+                JOptionPane.showMessageDialog(null, "请选择要出的卡牌", "游戏提示", JOptionPane.YES_OPTION);
+                return;
+            }
+            sendMsg(OUT_CARDS, GameAction.getNickname(), selectedCards);
+            // 清空已选中的牌面
+            selectedCards.clear();
+        });
+
+        return btnPanel;
+    }
+
+    public void initBtnStatus() {
+        boolean actionFlag = StrUtil.equalsAnyIgnoreCase(GameAction.getNickname(), currentPlayer.getPlayerName());
+        allocBtn.setEnabled(actionFlag);
+        outBtn.setEnabled(actionFlag);
+        tipsBtn.setEnabled(actionFlag);
+    }
+
+    public void refreshBtnStatus(JButton btn, Boolean btnStatus) {
+        btn.setEnabled(btnStatus);
+    }
+
+
+    private JPanel initTipsArea() {
+        //JPanel textPanel = new JPanel();
+        ////textPanel.setPreferredSize(new Dimension(300, 80));
+        //tipsArea = new JTextArea("游戏开始\n");
+        //tipsArea.setRows(10);
+        //tipsArea.setColumns(50);
+        //tipsArea.setLineWrap(true);
+        //JBScrollPane scrollPane = new JBScrollPane(tipsArea);//创建滚动条面板
+        //scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        //scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+        ////scrollPane.setBounds(0,0,300,80);
+        //textPanel.add(scrollPane);
+        return null;
+    }
+
+
 
     private JPanel initUserPanel(Integer index) {
         String playerName = userList.get(index);
@@ -533,6 +599,33 @@ public class UNO extends AbstractGame<UNOGameDto> {
         if (StrUtil.equalsIgnoreCase(playerName, GameAction.getNickname())) {
             refreshPlayerCards(player);
         }
+        refreshTeammateCards(player);
+    }
+
+    /**
+     * 刷新队友的卡牌
+     * @param player
+     */
+    private void refreshTeammateCards(Player player) {
+        // 双人模式进行操作
+        if (playerMode.equals(PlayerMode.DOUBLE)) {
+            String teammateName = player.getPlayerNode().getPlayerName();
+            String playerName = teamMap.get(teammateName);
+            // 如果与传入人员是队友的话
+            if (StrUtil.equalsIgnoreCase(playerName, GameAction.getNickname())) {
+                PlayerNode playerNode = player.getPlayerNode();
+                List<Card> cards = playerNode.getCards();
+                cards.sort(Card::compareTo);
+                teammateCardsPanel.removeAll();
+                if (CollUtil.isNotEmpty(cards)) {
+                    cards.forEach(item -> {
+                        JPanel cardPanel = getCardPanel(item);
+                        teammateCardsPanel.add(cardPanel);
+                    });
+                }
+                teammateCardsPanel.updateUI();
+            }
+        }
     }
 
     /**
@@ -582,24 +675,28 @@ public class UNO extends AbstractGame<UNOGameDto> {
             cardsPanel.updateUI();
         }
     }
+
     Color ideaLineColor = new Color(0x47, 0x57, 0x65);
     Color ideaEditorColor = new Color(0x2b, 0x2b, 0x2b);
     Color ideaGrayColor = new Color(0xAF, 0xB1, 0xB3);
-    Font functionFont = new Font("", 1, 18);
-    Font numFont = new Font("", 1, 28);
+    Font functionFont = new Font("", 1, 9);
+    Font numFont = new Font("", 1, 14);
 
     private JPanel getCardPanel(Card card) {
         JPanel cardPanel = new JPanel();
         cardPanel.setToolTipText(card.getToolTipText());
         cardPanel.setBorder(new LineBorder(card.getColor(), 1));
         cardPanel.setBackground(ideaLineColor);
-        cardPanel.setPreferredSize(new Dimension(60, 80));
+        cardPanel.setPreferredSize(new Dimension(30, 40));
         cardPanel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-        JLabel nameLabel = new JLabel(card.getValue(), JLabel.CENTER);
+        JLabel nameLabel = new JLabel();
+        nameLabel.setText(card.getValue());
+        nameLabel.setHorizontalAlignment(JLabel.CENTER);
+        nameLabel.setVerticalAlignment(JLabel.CENTER);
         nameLabel.setForeground(card.getColor());
         nameLabel.setFont(card.getIsFunctionCard() ? functionFont : numFont);
-        nameLabel.setPreferredSize(new Dimension(60, 80));
+        nameLabel.setPreferredSize(new Dimension(30, 40));
         cardPanel.add(nameLabel);
         return cardPanel;
     }
@@ -642,6 +739,8 @@ public class UNO extends AbstractGame<UNOGameDto> {
         String playerName = body.getPlayerName();
         Player player = playerMap.get(playerName);
         PlayerNode playerNode = player.getPlayerNode();
+        refreshPlayerCards(player);
+        refreshTeammateCards(player);
         if (CollUtil.isEmpty(playerNode.getCards())) {
             status = -1;
             gameOverButton.setEnabled(true);
@@ -683,6 +782,8 @@ public class UNO extends AbstractGame<UNOGameDto> {
         unoMap = new HashMap<>(4);
         tipsRows = 0;
         cardsPanel = new JPanel();
+        outCardsPanel = new JPanel();
+        teammateCardsPanel = new JPanel();
         selectedCards = new ArrayList<>();
     }
 
