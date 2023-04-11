@@ -31,4 +31,4 @@ build
 *.iws
 *.iml
 *.ipr
-rebel.xml
+*/rebel.xml
