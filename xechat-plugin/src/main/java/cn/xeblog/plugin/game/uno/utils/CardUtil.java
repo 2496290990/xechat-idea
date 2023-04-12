@@ -2,6 +2,7 @@ package cn.xeblog.plugin.game.uno.utils;
 
 import cn.xeblog.commons.entity.game.uno.Card;
 import cn.xeblog.plugin.game.uno.enums.GameMode;
+import com.intellij.ui.JBColor;
 
 import java.awt.*;
 import java.util.*;
@@ -14,11 +15,14 @@ import java.util.List;
  */
 public class CardUtil {
 
-    public static final String SKIP = "⊘";
-    public static final String REVERSE_LEFT = "↺";
-    public static final String REVERSE_RIGHT = "↻";
-    public static final String CHANGE = "⊕ ";
-    public static final String CLEAR = "";
+    public static final String ICON_SKIP = "⊘";
+    public static final String ICON_REVERSE_LEFT = "↺";
+    public static final String ICON_REVERSE_RIGHT = "↻";
+    public static final String ICON_CHANGE = "⊕ ";
+    public static final String SKIP = "SKIP";
+    public static final String REVERSE = "REVERSE";
+    public static final String CHANGE = "CHANGE";
+    public static final String CLEAR = "CLEAR";
     public static final String ADD_2 = "+2";
     public static final String ADD_4 = "+4";
 
@@ -52,8 +56,8 @@ public class CardUtil {
         List<Color> colorList = colorList();
         List<Card> result = new ArrayList<>();
         for (Color color : colorList) {
-            result.add(new Card(25, "CLEAR", color, true));
-            result.add(new Card(25, "CLEAR", color, true));
+            result.add(new Card(25, CLEAR, color, true));
+            result.add(new Card(25, CLEAR, color, true));
         }
         return result;
     }
@@ -77,7 +81,7 @@ public class CardUtil {
         List<Card> commonsCards = new ArrayList<>();
         List<Color> colorList = colorList();
         List<String> functionCards = new ArrayList<>();
-        Collections.addAll(functionCards, SKIP, REVERSE_LEFT, "+2");
+        Collections.addAll(functionCards, SKIP, REVERSE, ADD_2);
         Map<String, Integer> commonsMap = commonsMap();
         for (Color color : colorList) {
             for (String key : commonsMap.keySet()) {
@@ -99,9 +103,9 @@ public class CardUtil {
         map.put( "7", 7);
         map.put( "8", 8);
         map.put( "9", 9);
-        map.put( "SKIP", 20);
-        map.put( "REVERSE", 20);
-        map.put( "+2", 20);
+        map.put( SKIP, 20);
+        map.put( REVERSE, 20);
+        map.put( ADD_2, 20);
         return map;
     }
 
@@ -111,7 +115,7 @@ public class CardUtil {
      */
     private static List<Color> colorList(){
         List<Color> colorList = new ArrayList<>();
-        Collections.addAll(colorList, Color.RED, Color.YELLOW, Color.GREEN, Color.BLUE);
+        Collections.addAll(colorList, JBColor.RED, JBColor.YELLOW, JBColor.GREEN, JBColor.BLUE);
         return colorList;
     }
 
@@ -122,16 +126,25 @@ public class CardUtil {
      */
     private static List<Card> zeroAndFunctionCard() {
         List<Card> result = new ArrayList<>(12);
-        Card changeColor = new Card(50, "CHANGE", Color.BLACK, true);
-        Card add4 = new Card(50, "+4", Color.BLACK, true);
+        Card changeColor = new Card(50, CHANGE, JBColor.BLACK, true);
+        Card add4 = new Card(50, ADD_4, JBColor.BLACK, true);
         Collections.addAll(result,
-                new Card(0, "0", Color.RED, false),
-                new Card(0, "0", Color.YELLOW, false),
-                new Card(0, "0", Color.GREEN, false),
-                new Card(0, "0", Color.BLUE, false),
+                new Card(0, "0", JBColor.RED, false),
+                new Card(0, "0", JBColor.YELLOW, false),
+                new Card(0, "0", JBColor.GREEN, false),
+                new Card(0, "0", JBColor.BLUE, false),
                 changeColor, changeColor, changeColor, changeColor,
                 add4, add4, add4, add4
         );
         return result;
+    }
+
+    public static void main(String[] args) {
+        Card disCard = null;
+        List<Card> cardList = initCards(GameMode.HAPPY);
+        do {
+            disCard = CalcUtil.randomOneCard(cardList);
+            System.out.println(disCard);
+        } while (disCard.getIsFunctionCard());
     }
 }

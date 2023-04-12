@@ -97,4 +97,14 @@ public class Card implements Comparable<Card> {
         }
         return "黑色";
     }
+
+    @Override
+    public String toString() {
+        return "Card{" +
+                "score=" + score +
+                ", value='" + value + '\'' +
+                ", color=" + getIsFunctionCard() +
+                ", isFunctionCard=" + isFunctionCard +
+                '}';
+    }
 }

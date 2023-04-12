@@ -37,6 +37,13 @@ public class CalcUtil {
         return result;
     }
 
+    public static Card randomOneCard(List<Card> cards) {
+        Collections.shuffle(cards);
+        Card card = cards.get(0);
+        cards.remove(0);
+        return card;
+    }
+
     /**
      * 获取质疑结果
      * @param judgeDeque        判断牌堆
@@ -80,7 +87,7 @@ public class CalcUtil {
             Card outCard = selectedCards.get(0);
             String outCardValue = outCard.getValue();
             // 如果是 +4或者是变换颜色的话允许出牌
-            if (StrUtil.equals(outCardValue, "+4") || StrUtil.equalsIgnoreCase(outCardValue, "CHANGE")) {
+            if (outCard.getColor().equals(Color.BLACK)) {
                 return true;
             }
             // 如果要出的牌和最后一张的颜色相同的允许出牌

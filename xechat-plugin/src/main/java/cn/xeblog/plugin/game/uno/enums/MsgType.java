@@ -36,6 +36,10 @@ public enum MsgType {
     /**
      * init丢弃
      */
-    INIT_DISCARD
+    INIT_DISCARD,
+    /**
+     * 改变颜色
+     */
+    CHANGE_COLOR,
     ;
 }
