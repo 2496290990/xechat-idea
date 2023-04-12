@@ -2,7 +2,6 @@ package cn.xeblog.plugin.game.uno.utils;
 
 import cn.xeblog.commons.entity.game.uno.Card;
 import cn.xeblog.plugin.game.uno.enums.GameMode;
-import com.intellij.ui.JBColor;
 
 import java.awt.*;
 import java.util.*;
@@ -115,7 +114,7 @@ public class CardUtil {
      */
     private static List<Color> colorList(){
         List<Color> colorList = new ArrayList<>();
-        Collections.addAll(colorList, JBColor.RED, JBColor.YELLOW, JBColor.GREEN, JBColor.BLUE);
+        Collections.addAll(colorList, Color.RED, Color.YELLOW, Color.GREEN, Color.BLUE);
         return colorList;
     }
 
@@ -126,13 +125,13 @@ public class CardUtil {
      */
     private static List<Card> zeroAndFunctionCard() {
         List<Card> result = new ArrayList<>(12);
-        Card changeColor = new Card(50, CHANGE, JBColor.BLACK, true);
-        Card add4 = new Card(50, ADD_4, JBColor.BLACK, true);
+        Card changeColor = new Card(50, CHANGE, Color.BLACK, true);
+        Card add4 = new Card(50, ADD_4, Color.BLACK, true);
         Collections.addAll(result,
-                new Card(0, "0", JBColor.RED, false),
-                new Card(0, "0", JBColor.YELLOW, false),
-                new Card(0, "0", JBColor.GREEN, false),
-                new Card(0, "0", JBColor.BLUE, false),
+                new Card(0, "0", Color.RED, false),
+                new Card(0, "0", Color.YELLOW, false),
+                new Card(0, "0", Color.GREEN, false),
+                new Card(0, "0", Color.BLUE, false),
                 changeColor, changeColor, changeColor, changeColor,
                 add4, add4, add4, add4
         );

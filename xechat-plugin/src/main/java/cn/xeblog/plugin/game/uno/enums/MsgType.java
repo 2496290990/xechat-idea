@@ -41,5 +41,9 @@ public enum MsgType {
      * 改变颜色
      */
     CHANGE_COLOR,
+    /**
+     * 通过
+     */
+    PASS
     ;
 }

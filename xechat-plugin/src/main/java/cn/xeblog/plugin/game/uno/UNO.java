@@ -21,7 +21,6 @@ import cn.xeblog.plugin.game.uno.enums.PlayerMode;
 import cn.xeblog.plugin.game.uno.utils.CalcUtil;
 import cn.xeblog.plugin.game.uno.utils.CardUtil;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBScrollPane;
 import lombok.extern.slf4j.Slf4j;
 
@@ -306,8 +305,6 @@ public class UNO extends AbstractGame<UNOGameDto> {
             boolean canOut = CalcUtil.canOut(selectedCards, judgeDeque);
             if (canOut) {
                 sendMsg(OUT_CARDS, GameAction.getNickname(), selectedCards);
-                // 清空已选中的牌面
-                selectedCards.clear();
             } else {
                 JOptionPane.showMessageDialog(null, "请选择正确的卡牌", "游戏提示", JOptionPane.YES_OPTION);
                 return;
@@ -442,6 +439,8 @@ public class UNO extends AbstractGame<UNOGameDto> {
         }
         // 根据游戏模式获取卡牌
         allCards = CardUtil.initCards(gameMode);
+        allCards.forEach(item -> item.setId(allCards.indexOf(item)));
+        allCards.forEach(item -> item.setId(allCards.indexOf(item)));
         buildPlayerNode();
         showGamePanel();
         status = 1;
@@ -559,8 +558,6 @@ public class UNO extends AbstractGame<UNOGameDto> {
         }
         String playerName = body.getPlayerName();
         Player player = playerMap.get(playerName);
-        PlayerNode playerNode = player.getPlayerNode();
-
         switch (body.getMsgType()) {
             case REFRESH_TIPS_MSG:
                 refreshTipsMsg(body);
@@ -588,8 +585,12 @@ public class UNO extends AbstractGame<UNOGameDto> {
                 break;
             case INIT_DISCARD:
                 initDisCard(body);
+                break;
             case CHANGE_COLOR:
                 changeColor(body);
+                break;
+            case PASS:
+                pass(body);
                 break;
             default:
                 break;
@@ -597,10 +598,53 @@ public class UNO extends AbstractGame<UNOGameDto> {
     }
 
     /**
+     * 换人
+     * @param body
+     */
+    private void pass(UNOGameDto body) {
+        String playerName = body.getPlayerName();
+        Player player = playerMap.get(playerName);
+        PlayerNode playerNode = player.getPlayerNode();
+        currentPlayer = anticlockwise ? playerNode.getNextPlayer() : playerNode.getPrevPlayer();
+        // 如果是本人操作的话
+        String currentPlayerName = currentPlayer.getPlayerName();
+        if (StrUtil.equalsIgnoreCase(currentPlayerName, GameAction.getNickname())) {
+            // 有能出的牌
+            Boolean hashCanOut = CalcUtil.hasCanOutCards(currentPlayer, judgeDeque);
+            // 是否AI
+            Boolean robotControl = robotControl(currentPlayerName);
+            // 没有能出的牌
+            if (!hashCanOut) {
+                if (!robotControl) {
+                    JOptionPane.showMessageDialog(null, "暂无可出的牌，自动摸牌", "游戏提示", JOptionPane.YES_OPTION);
+                    sendMsg(ALLOC_CARDS, currentPlayerName, 1);
+                }
+                sendMsg(PASS, currentPlayerName, null);
+            }
+            // 如果是AI的话自动出牌
+            if (robotControl) {
+                List<Card> aiOutCards = CalcUtil.showTips(currentPlayer.getCards(), judgeDeque, gameMode);
+                sendMsg(OUT_CARDS, currentPlayerName, aiOutCards);
+            }
+        }
+    }
+
+    /**
+     * 是否AI控制
+     * @param playerName
+     * @return
+     */
+    private Boolean robotControl(String playerName) {
+        return isHomeowner() && aiPlayerActionMap.get(playerName) != null;
+    }
+
+    /**
      * 改变颜色
      * @param body
      */
     private void changeColor(UNOGameDto body) {
+        Color color = (Color) body.getData();
+        refreshOtherCardPanel(outCardsPanel, outCards, color);
     }
 
     /**
@@ -610,17 +654,18 @@ public class UNO extends AbstractGame<UNOGameDto> {
     private void initDisCard(UNOGameDto body) {
         Card disCard = (Card) body.getData();
         addToJudgeDeque(disCard);
-        addToDiscardPile(Collections.singletonList(disCard));
+        addToOutCards(Collections.singletonList(disCard));
     }
 
     /**
      * 刷新出牌区域
      * @param disCard
      */
-    private void addToDiscardPile(List<Card> disCard) {
-        discardPile.clear();
+    private void addToOutCards(List<Card> disCard) {
+        outCards.clear();
+        outCards.addAll(disCard);
         discardPile.addAll(disCard);
-        refreshOtherCardPanel(outCardsPanel, discardPile);
+        refreshOtherCardPanel(outCardsPanel, outCards);
     }
 
     /**
@@ -643,6 +688,31 @@ public class UNO extends AbstractGame<UNOGameDto> {
     private void allocCards(UNOGameDto body) {
         Integer nums = (Integer) body.getData();
         String playerName = body.getPlayerName();
+
+        // 只摸一张牌
+        if (nums == 1) {
+            List<Card> addCards = CalcUtil.randomCard(allCards, nums);
+            Boolean canOut = CalcUtil.canOut(addCards, judgeDeque);
+            // 如果摸牌可以出并且是当前玩家
+            if (canOut && StrUtil.equalsIgnoreCase(GameAction.getNickname(), playerName)) {
+                // 如果是AI控制的话直接出了这张牌
+                if (robotControl(playerName)) {
+                    sendMsg(OUT_CARDS, playerName, addCards);
+                } else {
+                    // 如果是玩家的话则提示
+                    String[] choice = {"保留", "打出"};
+                    int res = JOptionPane.showOptionDialog(null, "请选择改变的卡牌颜色", "选项对话框",
+                            JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, choice, "打出");
+                    if (res == 0) {
+                        addCards(playerName, addCards);
+                    } else {
+                        sendMsg(OUT_CARDS, playerName, addCards);
+                    }
+                }
+            }
+            return;
+        }
+
         // 剩余数量
         int size = allCards.size();
         if (nums > size) {
@@ -719,10 +789,15 @@ public class UNO extends AbstractGame<UNOGameDto> {
      * @param cardList      卡牌集合
      */
     private void refreshOtherCardPanel(JPanel jPanel, Collection<Card> cardList) {
+        refreshOtherCardPanel(jPanel, cardList, null);
+    }
+
+    private void refreshOtherCardPanel(JPanel jPanel, Collection<Card> cardList, Color color) {
         jPanel.removeAll();
-        cardList.forEach(item -> jPanel.add(getCardPanel(item, null)));
+        cardList.forEach(item -> jPanel.add(getCardPanel(item, color)));
         jPanel.updateUI();
     }
+
     /**
      * 刷新玩家卡牌
      * @param player
@@ -741,7 +816,7 @@ public class UNO extends AbstractGame<UNOGameDto> {
 
                     JPanel cardPanel = getCardPanel(item, null);
                     if (selectedCards.contains(item)) {
-                        cardPanel.setBorder(new LineBorder(JBColor.WHITE, 2));
+                        cardPanel.setBorder(new LineBorder(Color.WHITE, 2));
                     }
                     cardsPanel.add(cardPanel);
                     cardPanel.addMouseListener(new MouseAdapter() {
@@ -756,7 +831,7 @@ public class UNO extends AbstractGame<UNOGameDto> {
                                     selectedCards.addAll(sameColorCards);
                             } else {
                                 selectedCards.add(item);
-                                cardPanel.setBorder(new LineBorder(JBColor.WHITE, 2));
+                                cardPanel.setBorder(new LineBorder(Color.WHITE, 2));
                             }
                             refreshPlayerCards(player);
                         }
@@ -828,27 +903,49 @@ public class UNO extends AbstractGame<UNOGameDto> {
         List<Card> clearList = outCards.stream()
                 .filter(item -> item.getValue().equalsIgnoreCase(CardUtil.CLEAR))
                 .collect(Collectors.toList());
-        // 新的弃牌
-        Card card = outCards.get(0);
-        Card discard = CollUtil.isNotEmpty(clearList) ? clearList.get(0) : card;
-        addToJudgeDeque(discard);
-        // 将出牌放置到弃牌堆之中
-        discardPile.addAll(outCards);
+        Card discard = CollUtil.isNotEmpty(clearList) ? clearList.get(0) : outCards.get(0);
+
         String playerName = body.getPlayerName();
         Player player = playerMap.get(playerName);
         PlayerNode playerNode = player.getPlayerNode();
-        refreshPlayerCards(player);
-        refreshTeammateCards(player);
-        if (CollUtil.isEmpty(playerNode.getCards())) {
-            status = -1;
-            gameOverButton.setEnabled(true);
-        }
 
+        List<Card> playerCards = playerNode.getCards();
+        // 如果是当前用户操作并且出的是 +4 或者CHANGE 展示切换颜色的提示
         if (StrUtil.equalsIgnoreCase(playerName, GameAction.getNickname())) {
-            if (card.getColor().equals(JBColor.BLACK)) {
-                showChangeColorDialog(playerName);
+            if (discard.getColor().equals(Color.BLACK)) {
+                if (robotControl(playerName)) {
+                    // ai自动判断变更颜色
+                    sendMsg(CHANGE_COLOR, playerName, CalcUtil.getChangeColor(playerNode.getCards()));
+                } else {
+                    showChangeColorDialog(playerName);
+                }
             }
         }
+
+        for (Card outCard : outCards) {
+            int index = playerCards.indexOf(outCard);
+            playerCards.remove(index);
+        }
+        if (CollUtil.isEmpty(playerCards)) {
+            gameOver();
+        }
+        playerNode.setCards(playerCards);
+        addToOutCards(outCards);
+        // 添加到弃牌堆
+        addToJudgeDeque(discard);
+        // 刷新自己的卡牌和队友的卡牌展示面板
+        player.refreshTips();
+        refreshPlayerCards(player);
+        refreshTeammateCards(player);
+    }
+
+    /**
+     * 游戏结束
+     */
+    private void gameOver() {
+        status = -1;
+        gameOverButton.setVisible(true);
+        gameOverButton.setEnabled(true);
     }
 
     /**
@@ -863,16 +960,16 @@ public class UNO extends AbstractGame<UNOGameDto> {
                 JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, colorArr, "红色");
         switch (res) {
             case 1 :
-                sendMsg(CHANGE_COLOR, playerName, JBColor.YELLOW);
+                sendMsg(CHANGE_COLOR, playerName, Color.YELLOW);
                 break;
             case 2 :
-                sendMsg(CHANGE_COLOR, playerName, JBColor.GREEN);
+                sendMsg(CHANGE_COLOR, playerName, Color.GREEN);
                 break;
             case 3 :
-                sendMsg(CHANGE_COLOR, playerName, JBColor.BLUE);
+                sendMsg(CHANGE_COLOR, playerName, Color.BLUE);
                 break;
             default:
-                sendMsg(CHANGE_COLOR, playerName, JBColor.RED);
+                sendMsg(CHANGE_COLOR, playerName, Color.RED);
                 break;
         }
     }
@@ -917,6 +1014,7 @@ public class UNO extends AbstractGame<UNOGameDto> {
         judgeCardsPanel = new JPanel();
         teammateCardsPanel = new JPanel();
         selectedCards = new ArrayList<>();
+        anticlockwise = true;
     }
 
     private void sendMsg(MsgType msgType, String player, Object data) {

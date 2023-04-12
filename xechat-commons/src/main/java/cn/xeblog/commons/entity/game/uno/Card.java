@@ -21,6 +21,9 @@ import java.awt.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Card implements Comparable<Card> {
+
+    private Integer id;
+
     /**
      * 评分
      */
@@ -106,5 +109,12 @@ public class Card implements Comparable<Card> {
                 ", color=" + getIsFunctionCard() +
                 ", isFunctionCard=" + isFunctionCard +
                 '}';
+    }
+
+    public Card(Integer score, String value, Color color, Boolean isFunctionCard) {
+        this.score = score;
+        this.value = value;
+        this.color = color;
+        this.isFunctionCard = isFunctionCard;
     }
 }
