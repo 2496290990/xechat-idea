@@ -610,15 +610,14 @@ public class UNO extends AbstractGame<UNOGameDto> {
      */
     private void pass(UNOGameDto body) {
         String playerName = body.getPlayerName();
-        Player player = playerMap.get(playerName);
-        PlayerNode playerNode = player.getPlayerNode();
-        // 如果是本人操作的话
-        String currentPlayerName = currentPlayer.getPlayerName();
+        // 获取下一个人是谁
         currentPlayer = getNextPlayer(playerName).getPlayerNode();
+        // 获取
+        String currentPlayerName = currentPlayer.getPlayerName();
         // 有能出的牌
         Boolean hashCanOut = CalcUtil.hasCanOutCards(currentPlayer, judgeDeque, gameMode);
         // 是否AI
-        Boolean robotControl = robotControl(currentPlayer.getPlayerName());
+        Boolean robotControl = robotControl(currentPlayerName);
         // 没有能出的牌
         if (!hashCanOut) {
             if (!robotControl) {
