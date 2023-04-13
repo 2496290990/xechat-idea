@@ -6,11 +6,12 @@ import cn.xeblog.commons.entity.game.uno.Card;
 import cn.xeblog.plugin.game.uno.entity.Player;
 import cn.xeblog.plugin.game.uno.entity.PlayerNode;
 import cn.xeblog.plugin.game.uno.enums.GameMode;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import lombok.extern.slf4j.Slf4j;
 
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -18,6 +19,7 @@ import java.util.stream.Collectors;
  * @date 2023/4/8 22:25
  * @apiNote
  */
+@Slf4j
 public class CalcUtil {
     /**
      * 获取卡牌
@@ -98,8 +100,8 @@ public class CalcUtil {
     }
 
 
-    public static Boolean hasCanOutCards(PlayerNode playerNode, ArrayDeque<Card> judgeDeque) {
-        return hasCanOutCards(playerNode.getCards(), judgeDeque);
+    public static Boolean hasCanOutCards(PlayerNode playerNode, ArrayDeque<Card> judgeDeque, GameMode gameMode) {
+        return hasCanOutCards(playerNode.getCards(), judgeDeque, gameMode);
     }
 
     /**
@@ -108,7 +110,11 @@ public class CalcUtil {
      * @param judgeDeque    判断牌堆
      * @return
      */
-    public static Boolean hasCanOutCards(List<Card> playerCards, ArrayDeque<Card> judgeDeque) {
+    public static Boolean hasCanOutCards(List<Card> playerCards, ArrayDeque<Card> judgeDeque, GameMode gameMode) {
+        // 欢乐模式
+        if (gameMode.equals(GameMode.HAPPY)) {
+
+        }
         Card judgeCard = judgeDeque.peekLast();
         // 如果玩家手牌存在 +4 CHANGE 黑色牌 或者有同颜色 同数字的牌就可以出
         long count = playerCards.stream()
@@ -153,104 +159,142 @@ public class CalcUtil {
         return false;
     }
 
+    public static List<Card> tips(List<Card> cards, ArrayDeque<Card> judgeDeque, GameMode gameMode) {
+        Card last = judgeDeque.peekLast();
+        // 如果最后一张牌变更过颜色就用变更之后的，苟泽就用原本的颜色就行了
+        Color lastColor = null == last.getChangeColor() ? last.getColor() : last.getChangeColor();
+        // 欢乐模式
+        if (gameMode.equals(GameMode.HAPPY)) {
+            // 如果是换了模式并且是 +2 的话
+            if (StrUtil.equalsIgnoreCase(CardUtil.ADD_2, last.getValue())) {
+                List<Card> add2Cards = outSameValueCards(cards, CardUtil.ADD_2);
+                // 如果有 +2 牌则出+2 否则出+4
+                return CollUtil.isNotEmpty(add2Cards) ?
+                    add2Cards :
+                    outSameValueCards(cards, CardUtil.ADD_4);
+            }
+            // 欢乐模式并且当前牌是+4 则出+4
+            if (StrUtil.equalsIgnoreCase(CardUtil.ADD_4, last.getValue())) {
+                return outSameValueCards(cards, CardUtil.ADD_4);
+            }
+        }
+
+        // 获取同颜色的牌
+        List<Card> sameColorCards = filterCards(cards, (item) -> item.getColor().equals(lastColor));
+        boolean hasSameColorCards = CollUtil.isNotEmpty(sameColorCards);
+        // 首先判断黑色牌 +4 CHANGE
+        if (last.getColor().equals(Color.BLACK)) {
+            // 如果有同颜色的牌则出同颜色牌 否则的话出黑色功能牌
+            return hasSameColorCards ?
+                    outSameColorCards(sameColorCards) :
+                    outBlackCards(cards);
+        }
+        return hasSameColorCards ?
+                outSameColorCards(sameColorCards) :
+                outSameValueCards(cards, last.getValue());
+    }
+
     /**
-     * 获取提示
-     * @param cards         玩家手牌
-     * @param judgeDeque    判断牌堆
-     * @param gameMode      游戏模式
-     * @return List         提示牌面
-     *
-     * 首先，如果是经典模式的话
-     *      1. 获取牌堆最后一张牌的值
-     *          1.1 如果是 +4 或者是 CHANGE的话 走判断颜色逻辑
-     *          1.2 获取有相同值的颜色卡牌数量
-     *              1.2.1 如果颜色卡牌数量相同
-     *                  1.2.1.1 判断颜色分值
-     *                      1.2.1.1 如果颜色分值还一样，那就按照颜色排序然后取出来 与判断牌值相同的牌
-     *                      1.2.1.2 不一样则从分值最高的里边取出来与判断牌值相同的牌
-     *              1.2.2 返回颜色卡牌最多的中牌值相同的
-     * 如果是欢乐模式
-     *      要判断 +2 之后能出+4但是+4之后不能出+2
-     *      判断 CLEAR 能出CLEAR
-     *
+     * 出 一样值的卡牌
+     * @param cards
+     * @return
      */
-    public static List<Card> showTips(List<Card> cards, ArrayDeque<Card> judgeDeque, GameMode gameMode) {
-        Card judgeCard = judgeDeque.peekLast();
-        Color judgeCardColor = judgeCard.getColor();
-        // 相同颜色的牌
-        List<Card> sameColorCards = cards.stream()
-                .filter(item -> item.getColor().equals(judgeCardColor))
+    private static List<Card> outSameValueCards(Collection<Card> cards, String lastValue) {
+        List<Card> sameValueCards = filterCards(cards, (item) -> StrUtil.equalsIgnoreCase(item.getValue(), lastValue));
+        List<Color> colorList = sameValueCards.stream()
+                .map(Card::getColor)
                 .collect(Collectors.toList());
-        // 相同值的牌
-        Set<Card> sameValueCards = cards.stream()
-                .filter(item -> StrUtil.equalsIgnoreCase(item.getValue(), judgeCard.getValue()))
-                .collect(Collectors.toSet());
-        // 如果有值相同的卡牌的话
-        if (CollUtil.isNotEmpty(sameValueCards)) {
-            Map<Color, List<Card>> colorMap = cards.stream()
-                    .collect(Collectors.groupingBy(Card::getColor));
-            Map<Integer, List<Color>> colorCountMap = new HashMap<>();
-            //
-            for (Card sameColorCard : sameColorCards) {
-                Color color = sameColorCard.getColor();
-                // 相同颜色牌的数量
-                int sameColorCount = colorMap.get(color).size();
-                List<Color> colorList = colorCountMap.get(sameColorCount);
-                if (CollUtil.isEmpty(colorList)) {
-                    colorList = new ArrayList<>();
-                }
-                colorList.add(color);
-            }
-            ArrayList<Integer> countList = new ArrayList<>(colorCountMap.keySet());
-            countList.sort(Integer::compareTo);
-            Integer maxCount = countList.get(countList.size() - 1);
-            List<Color> maxColorList = colorCountMap.get(maxCount);
-            // 如果存在同样值的对应颜色卡牌数量一样的话
-            if (maxColorList.size() > 1) {
-                return sameValueAndMaxColorCountMoreThanOne(maxColorList, colorMap);
-            } else {
-
+        int max = 0;
+        List<Card> maxColorCards = new ArrayList<>();
+        for (Color color : colorList) {
+            List<Card> colorCards = filterCards(cards, (item) -> item.getColor().equals(color));
+            if (colorCards.size() > max) {
+                maxColorCards = colorCards;
             }
         }
-        return null;
+        // 获取当前值在最多牌中的坐标
+        int index = valueIndex(maxColorCards, lastValue);
+        return singleCardToList(maxColorCards.get(index));
     }
+
+
     /**
-     * 存在于判断牌相同值的颜色剩余卡牌数量一致，且数量大于一个
+     * 出同颜色的牌
+     * @param sameColorCards
      * @return
      */
-    private static List<Card> sameValueAndMaxColorCountMoreThanOne(List<Color> maxColorList, Map<Color, List<Card>> colorMap) {
-
-        for (Color color : maxColorList) {
-            Integer colorCount = colorCount(colorMap.get(color), color, 0);
+    private static List<Card> outSameColorCards(List<Card> sameColorCards) {
+        // 如果同颜色的卡牌当中存在 CLEAR卡牌则全出
+        int clearIndex = valueIndex(sameColorCards, CardUtil.CLEAR);
+        if (clearIndex != -1) {
+            return sameColorCards;
         }
-        return null;
-    }
-
-    private static void test(List<Card> cards, Card card){
-
+        // 如果不包含CLEAR 就代表是经典模式 按照分值排序出第一张就可以
+        sameColorCards.sort(Card::compareTo);
+        return cardsByIndex(sameColorCards, 0);
     }
 
     /**
-     * 计算颜色值类型
-     * @param cards     卡牌组
-     * @param color     颜色
-     * @param type      类型 0计算数量 1计算分值
+     * 出黑色的功能牌
+     * @param cards     牌堆
      * @return
      */
-    private static Integer colorCount(List<Card> cards, Color color, Integer type) {
-        int sum = 0;
-        for (Card card : cards) {
-            if (card.getColor().equals(color)) {
-                if (type == 0) {
-                    sum++;
-                }
-
-                if (type == 2) {
-                    sum += card.getScore();
-                }
-            }
+    private static List<Card> outBlackCards(List<Card> cards) {
+        // 不存在相同颜色的卡牌
+        int changeIndex = valueIndex(cards, CardUtil.CHANGE);
+        if (changeIndex != -1) {
+            return cardsByIndex(cards, changeIndex);
         }
-        return sum;
+        int add4Index = valueIndex(cards, CardUtil.ADD_4);
+
+        if (add4Index != -1) {
+            return cardsByIndex(cards, add4Index);
+        }
+        return new ArrayList<>();
+    }
+
+    /**
+     * 提示卡牌
+     * @param cards
+     * @param index
+     * @return
+     */
+    private static List<Card> cardsByIndex(List<Card> cards, Integer index) {
+        return singleCardToList(cards.get(index));
+    }
+
+    /**
+     * 单个卡牌转换成集合
+     * @param card      卡牌
+     * @return  List    提示卡牌
+     */
+    private static List<Card> singleCardToList(Card card) {
+        return new ArrayList<>(Collections.singletonList(card));
+    }
+
+    /**
+     * 返回颜色的牌
+     * @param   cards
+     * @param  predicate    判断公式
+     * @return
+     */
+    private static List<Card> filterCards(Collection<Card> cards, Predicate<? super Card> predicate) {
+        List<Card> filterCards = cards.stream()
+                .filter(predicate)
+                .collect(Collectors.toList());
+        log.info("筛选结果为 - {}", filterCards);
+        return filterCards;
+    }
+
+    /**
+     * 根据value获取位置
+     * @param cards  筛选卡牌
+     * @param value 值
+     * @return
+     */
+    private static Integer valueIndex(List<Card> cards, String value) {
+        List<Card> filterCards = filterCards(cards, (item) -> StrUtil.equalsIgnoreCase(item.getValue(), value));
+        return CollUtil.isNotEmpty(filterCards) ? cards.indexOf(filterCards.get(0)) : -1;
     }
 
 

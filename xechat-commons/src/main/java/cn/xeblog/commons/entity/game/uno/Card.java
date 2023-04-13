@@ -44,6 +44,8 @@ public class Card implements Comparable<Card> {
      */
     private Boolean isFunctionCard;
 
+    private Color changeColor;
+
     @Override
     public int compareTo(Card card) {
         if (!color.equals(card.getColor())) {
