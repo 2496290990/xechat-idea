@@ -705,21 +705,24 @@ public class UNO extends AbstractGame<UNOGameDto> {
             List<Card> addCards = CalcUtil.randomCard(allCards, nums);
             Boolean canOut = CalcUtil.canOut(addCards, judgeDeque);
             // 如果摸牌可以出并且是当前玩家
-            if (canOut && StrUtil.equalsIgnoreCase(GameAction.getNickname(), playerName)) {
-                // 如果是AI控制的话直接出了这张牌
-                if (robotControl(playerName)) {
-                    sendMsg(OUT_CARDS, playerName, addCards);
-                } else {
-                    // 如果是玩家的话则提示
-                    String[] choice = {"保留", "打出"};
-                    Card card = addCards.get(0);
-                    String message = String.format("你摸到了一张【%s - %s】卡牌", card.getColorStr(), card.getValue());
-                    int res = JOptionPane.showOptionDialog(null, message, "选项对话框",
-                            JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, choice, "打出");
-                    // 不管是否打出先加上再说
-                    addCards(playerName, addCards);
-                    if (res == 1){
+            if (StrUtil.equalsIgnoreCase(GameAction.getNickname(), playerName)) {
+                // 给玩家添加上当前摸牌
+                addCards(playerName, addCards);
+                if (canOut) {
+                    // 如果是AI控制的话直接出了这张牌
+                    if (robotControl(playerName)) {
                         sendMsg(OUT_CARDS, playerName, addCards);
+                    } else {
+                        // 如果是玩家的话则提示
+                        String[] choice = {"保留", "打出"};
+                        Card card = addCards.get(0);
+                        String message = String.format("你摸到了一张【%s - %s】卡牌", card.getColorStr(), card.getValue());
+                        int res = JOptionPane.showOptionDialog(null, message, "选项对话框",
+                                JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, choice, "打出");
+
+                        if (res == 1){
+                            sendMsg(OUT_CARDS, playerName, addCards);
+                        }
                     }
                 }
             }
