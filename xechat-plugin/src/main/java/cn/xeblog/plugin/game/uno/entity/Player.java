@@ -1,11 +1,10 @@
 package cn.xeblog.plugin.game.uno.entity;
 
 
-import lombok.AllArgsConstructor;
+import cn.xeblog.plugin.game.uno.ui.UserPanel;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.swing.*;
 
 /**
  * @author eleven
@@ -14,20 +13,16 @@ import javax.swing.*;
  */
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class Player {
     /**
      * 玩家节点
      */
     private PlayerNode playerNode;
-    /**
-     * 玩家容器
-     */
-    private JPanel panel;
 
-    public Player(PlayerNode playerNode, JPanel panel) {
+    private UserPanel userPanel;
+
+    public Player(PlayerNode playerNode) {
         this.playerNode = playerNode;
-        this.panel = panel;
     }
 
 

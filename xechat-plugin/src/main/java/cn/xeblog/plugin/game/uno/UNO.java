@@ -240,38 +240,15 @@ public class UNO extends AbstractGame<UNOGameDto> {
         mainPanel.setLayout(new BorderLayout());
         mainPanel.setMaximumSize(new Dimension(400, 300));
         mainPanel.setBounds(0, 0, 400, 300);
+        tipsLabel = new JLabel("UNO!");
+        tipsLabel.setHorizontalTextPosition(JLabel.CENTER);
+        mainPanel.add(tipsLabel, BorderLayout.NORTH);
         if (userList.size() == 4) {
-            mainPanel.add(initUserPanel(0), BorderLayout.SOUTH);
-            mainPanel.add(initUserPanel(1), BorderLayout.EAST);
-            mainPanel.add(initUserPanel(2), BorderLayout.NORTH);
-            mainPanel.add(initUserPanel(3), BorderLayout.WEST);
+            mainPanel.add(initUserPanel(), BorderLayout.EAST);
             initAllocCards();
             initPlayerTeam();
         }
         mainPanel.add(initCenter(), BorderLayout.CENTER);
-    }
-
-    private void showGamePanelV2(){
-        mainPanel.removeAll();
-        mainPanel.setLayout(new BorderLayout());
-        mainPanel.setMaximumSize(new Dimension(400, 300));
-        mainPanel.setBounds(0, 0, 400, 300);
-        if (userList.size() == 4) {
-            mainPanel.add(initTop(), BorderLayout.NORTH);
-            initAllocCards();
-            initPlayerTeam();
-        }
-        mainPanel.add(initCenter(), BorderLayout.CENTER);
-    }
-
-    private JPanel initTop(){
-        JPanel topPanel = new JPanel();
-        topPanel.setMaximumSize(new Dimension(400, 50));
-        mainPanel.add(initUserPanel(0), BorderLayout.SOUTH);
-        mainPanel.add(initUserPanel(1), BorderLayout.EAST);
-        mainPanel.add(initUserPanel(2), BorderLayout.NORTH);
-        mainPanel.add(initUserPanel(3), BorderLayout.WEST);
-        return topPanel;
     }
 
     /**
@@ -393,36 +370,20 @@ public class UNO extends AbstractGame<UNOGameDto> {
     }
 
 
-    private JPanel initTipsArea() {
-        //JPanel textPanel = new JPanel();
-        ////textPanel.setPreferredSize(new Dimension(300, 80));
-        //tipsArea = new JTextArea("游戏开始\n");
-        //tipsArea.setRows(10);
-        //tipsArea.setColumns(50);
-        //tipsArea.setLineWrap(true);
-        //JBScrollPane scrollPane = new JBScrollPane(tipsArea);//创建滚动条面板
-        //scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        //scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-        ////scrollPane.setBounds(0,0,300,80);
-        //textPanel.add(scrollPane);
-        return null;
-    }
-
-
-
-    private JPanel initUserPanel(Integer index) {
-        String playerName = userList.get(index);
-        Player player = playerMap.get(playerName);
-        //JPanel panel = player.getPanel();
-        //JLabel tipsLabel = new JLabel(String.format("【%s】: 手牌 %d", playerName, player.getPlayerNode().getCardsTotal()));
-        //panel.add(tipsLabel);
-        //player.setTipsLabel(tipsLabel);
-        //return panel;
-        JPanel userPanel = new UserPanel().getUserPanel(player.getPlayerNode(), e -> {
-            sendMsg(ALLOC_CARDS, playerName, 2);
-        });
-        player.setPanel(userPanel);
-        return userPanel;
+    private JPanel initUserPanel(){
+        JPanel usersPanel = new JPanel();
+        usersPanel.setPreferredSize(new Dimension(120, 80));
+        for (String playerName : userList) {
+            Player player = playerMap.get(playerName);
+            UserPanel panel = new UserPanel();
+            JPanel userPanel = panel.getUserPanel(player.getPlayerNode(), e -> {
+                sendMsg(ALLOC_CARDS, playerName, 2);
+            });
+            player.setUserPanel(panel);
+            userPanel.setPreferredSize(new Dimension(120, 80));
+            usersPanel.add(userPanel);
+        }
+        return usersPanel;
     }
 
     /**
@@ -462,7 +423,7 @@ public class UNO extends AbstractGame<UNOGameDto> {
             node.setAlias("Machine 0" + (i + 1));
             node.setCardsTotal(0);
             node.setCards(new ArrayList<>());
-            playerMap.put(node.getPlayerName(), new Player(node, new JPanel()));
+            playerMap.put(node.getPlayerName(), new Player(node));
             unoMap.put(node.getPlayerName(), false);
             if (GameAction.getNickname().equals(node.getPlayerName())) {
                 currentPlayer = node;
