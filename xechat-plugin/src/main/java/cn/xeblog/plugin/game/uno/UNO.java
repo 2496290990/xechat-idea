@@ -1,6 +1,7 @@
 package cn.xeblog.plugin.game.uno;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.xeblog.commons.entity.game.GameDTO;
 import cn.xeblog.commons.entity.game.GameRoom;
@@ -11,6 +12,7 @@ import cn.xeblog.plugin.action.GameAction;
 import cn.xeblog.plugin.annotation.DoGame;
 import cn.xeblog.plugin.cache.DataCache;
 import cn.xeblog.plugin.game.AbstractGame;
+import cn.xeblog.plugin.game.landlords.LandlordsGame;
 import cn.xeblog.plugin.game.uno.action.AiPlayerAction;
 import cn.xeblog.plugin.game.uno.action.PlayerAction;
 import cn.xeblog.plugin.game.uno.entity.Player;
@@ -19,6 +21,7 @@ import cn.xeblog.plugin.game.uno.entity.UNOGameDto;
 import cn.xeblog.plugin.game.uno.enums.GameMode;
 import cn.xeblog.plugin.game.uno.enums.MsgType;
 import cn.xeblog.plugin.game.uno.enums.PlayerMode;
+import cn.xeblog.plugin.game.uno.enums.WindowMode;
 import cn.xeblog.plugin.game.uno.utils.CalcUtil;
 import cn.xeblog.plugin.game.uno.utils.CardUtil;
 import com.intellij.openapi.ui.ComboBox;
@@ -96,6 +99,11 @@ public class UNO extends AbstractGame<UNOGameDto> {
      * 玩家卡牌主面板
      */
     private JPanel cardsPanel;
+
+    /**
+     * 提示标签
+     */
+    private JLabel tipsLabel;
     /**
      * 出牌面板卡板
      */
@@ -162,6 +170,8 @@ public class UNO extends AbstractGame<UNOGameDto> {
 
     private Integer addNums;
 
+    private WindowMode windowMode;
+
     static {
         aiPlayerList = new ArrayList<>();
         Collections.addAll(aiPlayerList,
@@ -181,6 +191,8 @@ public class UNO extends AbstractGame<UNOGameDto> {
     }
 
     private static final long aiThinkingTime = 500L;
+    // 玩家展示卡牌区域
+    private JPanel showCardsPanel;
 
     @Override
     protected void allPlayersGameStarted() {
@@ -253,6 +265,7 @@ public class UNO extends AbstractGame<UNOGameDto> {
 
     private JPanel initCenter() {
         JPanel centerPanel = new JPanel();
+        centerPanel.setPreferredSize(new Dimension(400, 300));
         centerPanel.setBorder(new LineBorder(JBColor.RED, 2));
         if (playerMode.equals(PlayerMode.DOUBLE)) {
             centerPanel.setLayout(new GridLayout(4, 1));
@@ -266,6 +279,8 @@ public class UNO extends AbstractGame<UNOGameDto> {
         }
 
         // 出牌区域
+        showCardsPanel = new JPanel(new BorderLayout());
+        showCardsPanel.setPreferredSize(new Dimension(360, 60));
         JBScrollPane outCardsScroll = new JBScrollPane(outCardsPanel);
         outCardsScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         outCardsScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
@@ -275,8 +290,8 @@ public class UNO extends AbstractGame<UNOGameDto> {
         //judgeCardsScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         //judgeCardsScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
         //outPanel.add(judgeCardsScroll, BorderLayout.EAST);
-
-        centerPanel.add(outCardsScroll);
+        showCardsPanel.add(outCardsScroll);
+        centerPanel.add(showCardsPanel);
         // 玩家手牌
         JBScrollPane cardsScroll = new JBScrollPane(cardsPanel);
         cardsScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -622,8 +637,8 @@ public class UNO extends AbstractGame<UNOGameDto> {
         if (!hashCanOut) {
             if (!robotControl) {
                 JOptionPane.showMessageDialog(null, "暂无可出的牌，自动摸牌", "游戏提示", JOptionPane.YES_OPTION);
-                sendMsg(ALLOC_CARDS, currentPlayerName, 1);
             }
+            sendMsg(ALLOC_CARDS, currentPlayerName, 1);
         }
         // 如果是AI的话自动出牌
         if (robotControl) {
@@ -631,8 +646,8 @@ public class UNO extends AbstractGame<UNOGameDto> {
             List<Card> aiOutCards = CalcUtil.tips(currentPlayer.getCards(), judgeDeque, gameMode);
             sendMsg(OUT_CARDS, currentPlayerName, aiOutCards);
         } else if (StrUtil.equalsIgnoreCase(currentPlayerName, GameAction.getNickname())) {
-            // 刷新玩家的按钮状态
-
+            refreshBtnStatus(outBtn, true);
+            refreshBtnStatus(allocBtn, true);
         }
     }
 
@@ -698,7 +713,7 @@ public class UNO extends AbstractGame<UNOGameDto> {
     private void allocCards(UNOGameDto body) {
         Integer nums = (Integer) body.getData();
         String playerName = body.getPlayerName();
-
+        Integer actionId = body.getActionId();
         // 只摸一张牌
         if (nums == 1) {
             List<Card> addCards = CalcUtil.randomCard(allCards, nums);
@@ -748,6 +763,10 @@ public class UNO extends AbstractGame<UNOGameDto> {
             addCards(playerName, addCards);
             allCards.removeAll(addCards);
         }
+        // 如果不为空则要跳过当前玩家
+        if (null != actionId) {
+            sendMsg(PASS, playerName, null);
+        }
     }
 
     /**
@@ -764,7 +783,6 @@ public class UNO extends AbstractGame<UNOGameDto> {
     }
 
     private void addCards(String playerName, List<Card> addCards) {
-        log.info("当前【{}】摸牌 - {}", playerName, addCards);
         log.info("当前【{}】摸牌 - {}", playerName, addCards);
         Player player = playerMap.get(playerName);
         PlayerNode playerNode = player.getPlayerNode();
@@ -943,9 +961,13 @@ public class UNO extends AbstractGame<UNOGameDto> {
         }
 
         String discardValue = discard.getValue();
+        // 如果是反转的话讲顺序变更
         if (StrUtil.equalsIgnoreCase(discardValue, CardUtil.REVERSE)) {
-            // 如果是反转的话讲顺序变更
             anticlockwise = !anticlockwise;
+        }
+        if (StrUtil.equalsIgnoreCase(discardValue, CardUtil.SKIP)) {
+            String nextPlayerName = getNextPlayerName(playerName);
+            sendMsg(PASS, nextPlayerName, null);
         }
 
         // 经典模式
@@ -976,18 +998,40 @@ public class UNO extends AbstractGame<UNOGameDto> {
         sendMsg(PASS, playerName, null);
     }
 
+    /**
+     * 功能牌添加牌
+     * @param playerName    玩家
+     * @param nums          添加数量
+     */
     private void functionCardAdd(String playerName, Integer nums) {
         if (nums == 0) {
             nums = addNums;
         }
+        // 下家玩家名称
+        String nextPlayerName = getNextPlayerName(playerName);
+        sendMsg(ALLOC_CARDS, nextPlayerName, 1, nums);
+        sendMsg(PASS, nextPlayerName, null);
     }
 
+    /**
+     * 获取下一名玩家
+     * @param playerName        当前玩家姓名
+     * @return  Player          下家节点
+     */
     private Player getNextPlayer(String playerName) {
         Player player = playerMap.get(playerName);
         PlayerNode playerNode = player.getPlayerNode();
         // 逆时针就下一个， 顺时针就上一个
         PlayerNode nextPlayer = anticlockwise ? playerNode.getNextPlayer() : playerNode.getPrevPlayer();
         return playerMap.get(nextPlayer.getPlayerName());
+    }
+
+    private PlayerNode getNextPlayerNode(String playerName) {
+        return getNextPlayer(playerName).getPlayerNode();
+    }
+
+    private String getNextPlayerName(String playerName) {
+        return getNextPlayerNode(playerName).getPlayerName();
     }
 
     /**
@@ -1102,5 +1146,19 @@ public class UNO extends AbstractGame<UNOGameDto> {
         for (Component component : child) {
             parent.add(component);
         }
+    }
+
+
+    private void refreshWindowMode(){
+        int width = 490;
+        int topWidth = 200;
+        if (windowMode == WindowMode.ADAPTIVE) {
+            width = 45 * 9;
+        }
+
+        mainPanel.setMinimumSize(new Dimension(width, 350));
+        tipsLabel.setPreferredSize(new Dimension(topWidth, 40));
+        showCardsPanel.setPreferredSize(new Dimension(topWidth, 70));
+        mainPanel.updateUI();
     }
 }
