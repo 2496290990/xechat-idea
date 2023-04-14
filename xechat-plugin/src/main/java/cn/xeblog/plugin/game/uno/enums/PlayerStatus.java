@@ -35,5 +35,4 @@ public enum PlayerStatus {
     private PlayerStatus(String status) {
         this.status = status;
     }
-
 }

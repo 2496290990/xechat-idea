@@ -194,6 +194,7 @@ public class UNO extends AbstractGame<UNOGameDto> {
     // 玩家展示卡牌区域
     private JPanel showCardsPanel;
 
+
     @Override
     protected void allPlayersGameStarted() {
         if (isHomeowner()) {
@@ -238,7 +239,7 @@ public class UNO extends AbstractGame<UNOGameDto> {
     private void showGamePanel() {
         mainPanel.removeAll();
         mainPanel.setLayout(new BorderLayout());
-        mainPanel.setMaximumSize(new Dimension(400, 300));
+        mainPanel.setPreferredSize(new Dimension(400, 300));
         mainPanel.setBounds(0, 0, 400, 300);
         tipsLabel = new JLabel("UNO!");
         tipsLabel.setHorizontalTextPosition(JLabel.CENTER);
@@ -265,12 +266,13 @@ public class UNO extends AbstractGame<UNOGameDto> {
 
     private JPanel initCenter() {
         JPanel centerPanel = new JPanel();
-        centerPanel.setPreferredSize(new Dimension(400, 300));
+        centerPanel.setPreferredSize(new Dimension(300, 225));
         centerPanel.setBorder(new LineBorder(JBColor.RED, 2));
         if (playerMode.equals(PlayerMode.DOUBLE)) {
             centerPanel.setLayout(new GridLayout(4, 1));
             // 队友卡牌
             JBScrollPane teammateCardsScroll = new JBScrollPane(teammateCardsPanel);
+            teammateCardsPanel.setPreferredSize(new Dimension(300, 60));
             teammateCardsScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
             teammateCardsScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
             centerPanel.add(teammateCardsScroll);
@@ -280,8 +282,9 @@ public class UNO extends AbstractGame<UNOGameDto> {
 
         // 出牌区域
         showCardsPanel = new JPanel(new BorderLayout());
-        showCardsPanel.setPreferredSize(new Dimension(360, 60));
+        showCardsPanel.setPreferredSize(new Dimension(300, 60));
         JBScrollPane outCardsScroll = new JBScrollPane(outCardsPanel);
+        outCardsPanel.setPreferredSize(new Dimension(300, 60));
         outCardsScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         outCardsScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
         // 判断牌区域
@@ -294,6 +297,7 @@ public class UNO extends AbstractGame<UNOGameDto> {
         centerPanel.add(showCardsPanel);
         // 玩家手牌
         JBScrollPane cardsScroll = new JBScrollPane(cardsPanel);
+        cardsPanel.setPreferredSize(new Dimension(300, 60));
         cardsScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         cardsScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
         centerPanel.add(cardsScroll);
@@ -533,7 +537,7 @@ public class UNO extends AbstractGame<UNOGameDto> {
         mainPanel.setLayout(null);
         mainPanel.setEnabled(true);
         mainPanel.setVisible(true);
-        mainPanel.setMinimumSize(new Dimension(400, 400));
+        mainPanel.setPreferredSize(new Dimension(400, 400));
         startPanel = new JPanel();
         startPanel.setBounds(10, 10, 120, 260);
         mainPanel.add(startPanel);

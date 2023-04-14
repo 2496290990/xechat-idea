@@ -23,17 +23,13 @@ public class PlayerNode {
      */
     private String alias;
     /**
-     * 状态 true 正常 false 休息一次
-     */
-    private Boolean status;
-    /**
      * 是否喊UNO
      */
-    private Boolean uno;
+    private Boolean uno = false;
     /**
      * 玩家状态
      */
-    private PlayerStatus playerStatus;
+    private PlayerStatus playerStatus = PlayerStatus.WAITING;
 
     /**
      * 卡片
@@ -66,11 +62,14 @@ public class PlayerNode {
 
     @Override
     public String toString() {
+        StringBuilder cardsStr = new StringBuilder();
+        cards.forEach(item -> cardsStr.append(item.getToolTipText()));
         return "PlayerNode{" +
                 "playerName='" + playerName + '\'' +
                 ", alias='" + alias + '\'' +
-                ", status=" + status +
-                ", cards=" + cards +
+                ", uno=" + uno +
+                ", playerStatus=" + playerStatus.name() +
+                ", cards=" + cardsStr.toString() +
                 ", cardsTotal=" + cardsTotal +
                 '}';
     }
