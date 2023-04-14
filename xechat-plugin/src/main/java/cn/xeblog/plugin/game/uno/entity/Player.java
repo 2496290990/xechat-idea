@@ -1,9 +1,11 @@
 package cn.xeblog.plugin.game.uno.entity;
 
 
-import cn.xeblog.plugin.game.uno.ui.UserPanel;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import javax.swing.*;
 
 
 /**
@@ -19,9 +21,10 @@ public class Player {
      */
     private PlayerNode playerNode;
 
-    private UserPanel userPanel;
+    private JPanel panel;
 
-    public Player(PlayerNode playerNode) {
+    public Player(PlayerNode playerNode, JPanel panel) {
+        this.panel = panel;
         this.playerNode = playerNode;
     }
 

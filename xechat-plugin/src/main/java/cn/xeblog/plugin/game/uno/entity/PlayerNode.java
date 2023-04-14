@@ -2,6 +2,7 @@ package cn.xeblog.plugin.game.uno.entity;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.xeblog.commons.entity.game.uno.Card;
+import cn.xeblog.plugin.game.uno.enums.PlayerStatus;
 import lombok.Data;
 
 import java.util.List;
@@ -25,6 +26,14 @@ public class PlayerNode {
      * 状态 true 正常 false 休息一次
      */
     private Boolean status;
+    /**
+     * 是否喊UNO
+     */
+    private Boolean uno;
+    /**
+     * 玩家状态
+     */
+    private PlayerStatus playerStatus;
 
     /**
      * 卡片

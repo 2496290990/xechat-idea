@@ -372,18 +372,34 @@ public class UNO extends AbstractGame<UNOGameDto> {
 
     private JPanel initUserPanel(){
         JPanel usersPanel = new JPanel();
-        usersPanel.setPreferredSize(new Dimension(120, 80));
+        usersPanel.setPreferredSize(new Dimension(140, 80));
         for (String playerName : userList) {
             Player player = playerMap.get(playerName);
-            UserPanel panel = new UserPanel();
-            JPanel userPanel = panel.getUserPanel(player.getPlayerNode(), e -> {
-                sendMsg(ALLOC_CARDS, playerName, 2);
-            });
-            player.setUserPanel(panel);
-            userPanel.setPreferredSize(new Dimension(120, 80));
+            JPanel userPanel = getUserPanel(player.getPlayerNode());
+            player.setPanel(userPanel);
             usersPanel.add(userPanel);
         }
         return usersPanel;
+    }
+
+    private JPanel getUserPanel(PlayerNode playerNode){
+        JPanel userPanel = new JPanel();
+        userPanel.setPreferredSize(new Dimension(140, 90));
+        JLabel nameLabel = new JLabel(String.format("%s 手牌 %d", playerNode.getPlayerName(), playerNode.getCardsTotal()));
+        nameLabel.setPreferredSize(new Dimension(140, 30));
+        String format = String.format("状态 %s", playerNode.getPlayerStatus().name());
+        if (playerNode.getUno()) {
+            format += " UNO";
+        }
+        JLabel statueLabel = new JLabel(format);
+        statueLabel.setPreferredSize(new Dimension(140, 30));
+        JButton catchPlayerBtn = new JButton("抓住你啦");
+        catchPlayerBtn.setPreferredSize(new Dimension(140, 30));
+        catchPlayerBtn.addActionListener(e -> {
+            sendMsg(ALLOC_CARDS, playerNode.getPlayerName(), 2);
+        });
+        addAll(userPanel, nameLabel, statueLabel, catchPlayerBtn);
+        return userPanel;
     }
 
     /**
@@ -423,7 +439,7 @@ public class UNO extends AbstractGame<UNOGameDto> {
             node.setAlias("Machine 0" + (i + 1));
             node.setCardsTotal(0);
             node.setCards(new ArrayList<>());
-            playerMap.put(node.getPlayerName(), new Player(node));
+            playerMap.put(node.getPlayerName(), new Player(node, new JPanel()));
             unoMap.put(node.getPlayerName(), false);
             if (GameAction.getNickname().equals(node.getPlayerName())) {
                 currentPlayer = node;
