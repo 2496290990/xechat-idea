@@ -781,29 +781,29 @@ public class UNO extends AbstractGame<UNOGameDto> {
         List<Card> addCards = handleAllocMap(body);
         String playerName = body.getPlayerName();
         Integer actionId = body.getActionId();
+        // 给玩家添加上当前摸牌
+        addCards(playerName, addCards);
+        Boolean canOut = CalcUtil.canOut(addCards, judgeDeque);
+        log.info("【{}】摸了一张牌, {} ,是否可出: {}", playerName, addCards, canOut);
+        // 是否机器人控制
+        Boolean robotControl = robotControl(playerName);
         // 只摸一张牌
         if (addCards.size() == 1) {
-            Boolean canOut = CalcUtil.canOut(addCards, judgeDeque);
-            // 如果摸牌可以出并且是当前玩家
-            if (StrUtil.equalsIgnoreCase(GameAction.getNickname(), playerName)) {
-                // 给玩家添加上当前摸牌
-                addCards(playerName, addCards);
-                log.info("【{}】摸了一张牌, {} ,是否可出: {}", playerName, addCards, canOut);
-                if (canOut) {
-                    // 如果是AI控制的话直接出了这张牌
-                    if (robotControl(playerName)) {
-                        sendMsg(OUT_CARDS, playerName, addCards);
-                    } else {
-                        // 如果是玩家的话则提示
-                        String[] choice = {"保留", "打出"};
-                        Card card = addCards.get(0);
-                        String message = String.format("你摸到了一张【%s - %s】卡牌", card.getColorStr(), card.getValue());
-                        int res = JOptionPane.showOptionDialog(null, message, "选项对话框",
-                                JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, choice, "打出");
+            // 新摸出来的牌能出
+            if (canOut) {
+                // 是机器人直接出
+                if (robotControl) {
+                    sendMsg(OUT_CARDS, playerName, addCards);
+                } else if (StrUtil.equalsIgnoreCase(GameAction.getNickname(), playerName)) {
+                    // 如果是玩家的话则提示 并且当前玩家和本机的用户名一样 的话提示是否出牌
+                    String[] choice = {"保留", "打出"};
+                    Card card = addCards.get(0);
+                    String message = String.format("你摸到了一张【%s - %s】卡牌", card.getColorStr(), card.getValue());
+                    int res = JOptionPane.showOptionDialog(null, message, "选项对话框",
+                            JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, choice, "打出");
 
-                        if (res == 1){
-                            sendMsg(OUT_CARDS, playerName, addCards);
-                        }
+                    if (res == 1){
+                        sendMsg(OUT_CARDS, playerName, addCards);
                     }
                 }
             }
@@ -811,7 +811,6 @@ public class UNO extends AbstractGame<UNOGameDto> {
             sendMsg(PASS, playerName, null);
             return;
         }
-        addCards(playerName, addCards);
         // 如果不为空则要跳过当前玩家
         if (null != actionId) {
             sendMsg(PASS, playerName, null);
