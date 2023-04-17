@@ -108,7 +108,7 @@ public class Card implements Comparable<Card> {
         return "Card{" +
                 "score=" + score +
                 ", value='" + value + '\'' +
-                ", color=" + getIsFunctionCard() +
+                ", color=" + getColorStr() +
                 ", isFunctionCard=" + isFunctionCard +
                 '}';
     }

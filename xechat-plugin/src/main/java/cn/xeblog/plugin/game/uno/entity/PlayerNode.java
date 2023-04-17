@@ -39,7 +39,9 @@ public class PlayerNode {
     /**
      * 手牌数
      */
-    private int cardsTotal;
+    private Integer cardsTotal;
+
+    private String teamName;
 
 
     /**

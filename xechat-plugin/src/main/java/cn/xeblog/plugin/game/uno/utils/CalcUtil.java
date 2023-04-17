@@ -181,6 +181,7 @@ public class CalcUtil {
 
         // 获取同颜色的牌
         List<Card> sameColorCards = filterCards(cards, (item) -> item.getColor().equals(lastColor));
+        log.info("筛选同颜色的卡片，结果为 -{}", sameColorCards);
         boolean hasSameColorCards = CollUtil.isNotEmpty(sameColorCards);
         // 首先判断黑色牌 +4 CHANGE
         if (last.getColor().equals(Color.BLACK)) {
@@ -201,6 +202,10 @@ public class CalcUtil {
      */
     private static List<Card> outSameValueCards(Collection<Card> cards, String lastValue) {
         List<Card> sameValueCards = filterCards(cards, (item) -> StrUtil.equalsIgnoreCase(item.getValue(), lastValue));
+        if (CollUtil.isEmpty(sameValueCards)) {
+            return new ArrayList<>();
+        }
+        log.info("筛选同值卡牌,结果为-{}", sameValueCards);
         List<Color> colorList = sameValueCards.stream()
                 .map(Card::getColor)
                 .collect(Collectors.toList());
@@ -208,6 +213,7 @@ public class CalcUtil {
         List<Card> maxColorCards = new ArrayList<>();
         for (Color color : colorList) {
             List<Card> colorCards = filterCards(cards, (item) -> item.getColor().equals(color));
+            log.info("筛选同值同颜色卡牌,当前颜色{},结果为-{}", color, sameValueCards);
             if (colorCards.size() > max) {
                 maxColorCards = colorCards;
             }
@@ -282,7 +288,6 @@ public class CalcUtil {
         List<Card> filterCards = cards.stream()
                 .filter(predicate)
                 .collect(Collectors.toList());
-        log.info("筛选结果为 - {}", filterCards);
         return filterCards;
     }
 

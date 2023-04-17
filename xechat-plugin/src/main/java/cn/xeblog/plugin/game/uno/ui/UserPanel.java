@@ -17,20 +17,23 @@ public class UserPanel {
     private JLabel statusLabel;
     private JLabel unoLabel;
     private JPanel userPanel;
+    private JLabel teamFlag;
+    private ActionListener catchAction;
 
-    public JPanel getUserPanel(PlayerNode playerNode, ActionListener actionListener){
-        nameLabel.setText("昵称: " + playerNode.getPlayerName());
-        cardsLabel.setText("手牌: " + playerNode.getCardsTotal());
-        statusLabel.setText("状态: " );
-        unoLabel.setText("UNO: NO");
-        catchBtn.addActionListener(actionListener);
+    public JPanel getUserPanel(PlayerNode playerNode, ActionListener catchAction){
+        nameLabel.setText(String.format("【%s】", playerNode.getPlayerName()));
+        cardsLabel.setText(String.format("手牌: %d", playerNode.getCardsTotal()));
+        statusLabel.setText(String.format("【%s】", playerNode.getPlayerStatus().getStatus()));
+        unoLabel.setText(playerNode.getUno() ? "UNO" : "");
+        teamFlag.setText(playerNode.getTeamName());
+        this.catchAction = catchAction;
+        catchBtn.addActionListener(catchAction);
         return userPanel;
     }
 
     public void refreshUserPanel(PlayerNode playerNode) {
-        nameLabel.setText("昵称: " + playerNode.getPlayerName());
-        cardsLabel.setText("手牌: " + playerNode.getCardsTotal());
-        statusLabel.setText("状态: ");
-        unoLabel.setText("UNO: NO");
+        cardsLabel.setText(String.format("手牌: %d", playerNode.getCardsTotal()));
+        statusLabel.setText(String.format("【%s】", playerNode.getPlayerStatus().getStatus()));
+        unoLabel.setText(playerNode.getUno() ? "UNO" : "");
     }
 }

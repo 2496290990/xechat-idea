@@ -1,11 +1,12 @@
 package cn.xeblog.plugin.game.uno.entity;
 
 
-import lombok.AllArgsConstructor;
+import cn.xeblog.plugin.game.uno.ui.UserPanel;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.swing.*;
+import java.awt.event.ActionListener;
 
 
 /**
@@ -23,10 +24,23 @@ public class Player {
 
     private JPanel panel;
 
+    private UserPanel userPanel;
+
     public Player(PlayerNode playerNode, JPanel panel) {
         this.panel = panel;
         this.playerNode = playerNode;
     }
 
+    public JPanel getUserUI(ActionListener e){
+        userPanel = new UserPanel();
+        return userPanel.getUserPanel(playerNode, e);
+    }
+
+    /**
+     * 刷新面板
+     */
+    public void refreshUserPanel() {
+        userPanel.refreshUserPanel(playerNode);
+    }
 
 }
