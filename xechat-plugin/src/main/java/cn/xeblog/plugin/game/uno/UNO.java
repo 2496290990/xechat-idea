@@ -265,7 +265,7 @@ public class UNO extends AbstractGame<UNOGameDto> {
 
     private JPanel initCenter() {
         JPanel centerPanel = new JPanel();
-        centerPanel.setPreferredSize(new Dimension(400, 300));
+        centerPanel.setPreferredSize(new Dimension(320, 200));
         centerPanel.setBorder(new LineBorder(JBColor.RED, 2));
         if (playerMode.equals(PlayerMode.DOUBLE)) {
             centerPanel.setLayout(new GridLayout(4, 1));
@@ -303,7 +303,7 @@ public class UNO extends AbstractGame<UNOGameDto> {
 
     private JPanel initBtnPanel() {
         JPanel btnPanel = new JPanel();
-        btnPanel.setPreferredSize(new Dimension(490, 50));
+        btnPanel.setPreferredSize(new Dimension(320, 50));
         allocBtn = new JButton("摸牌");
         outBtn = new JButton("出牌");
         tipsBtn = new JButton("提示");
@@ -385,15 +385,15 @@ public class UNO extends AbstractGame<UNOGameDto> {
         JPanel userPanel = new JPanel();
         userPanel.setPreferredSize(new Dimension(140, 90));
         JLabel nameLabel = new JLabel(String.format("%s 手牌 %d", playerNode.getPlayerName(), playerNode.getCardsTotal()));
-        nameLabel.setPreferredSize(new Dimension(140, 30));
+        nameLabel.setPreferredSize(new Dimension(140, 20));
         String format = String.format("状态 %s", playerNode.getPlayerStatus().name());
         if (playerNode.getUno()) {
             format += " UNO";
         }
         JLabel statueLabel = new JLabel(format);
-        statueLabel.setPreferredSize(new Dimension(140, 30));
+        statueLabel.setPreferredSize(new Dimension(140, 20));
         JButton catchPlayerBtn = new JButton("抓住你啦");
-        catchPlayerBtn.setPreferredSize(new Dimension(140, 30));
+        catchPlayerBtn.setPreferredSize(new Dimension(110, 30));
         catchPlayerBtn.addActionListener(e -> {
             sendMsg(ALLOC_CARDS, playerNode.getPlayerName(), 2);
         });
