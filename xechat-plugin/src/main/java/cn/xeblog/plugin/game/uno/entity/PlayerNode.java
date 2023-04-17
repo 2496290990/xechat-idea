@@ -43,6 +43,10 @@ public class PlayerNode {
 
     private String teamName;
 
+    /**
+     * 是否允许抓人
+     */
+    private Boolean canCatch = false;
 
     /**
      * 前一位玩家

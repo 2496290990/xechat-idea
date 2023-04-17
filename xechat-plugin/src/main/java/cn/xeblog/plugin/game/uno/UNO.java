@@ -24,6 +24,7 @@ import cn.xeblog.plugin.game.uno.ui.CardPanel;
 import cn.xeblog.plugin.game.uno.ui.UserPanel;
 import cn.xeblog.plugin.game.uno.utils.CalcUtil;
 import cn.xeblog.plugin.game.uno.utils.CardUtil;
+import com.intellij.codeInsight.intention.impl.IntentionGroup;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBScrollPane;
@@ -191,7 +192,7 @@ public class UNO extends AbstractGame<UNOGameDto> {
         );
     }
 
-    private static final long aiThinkingTime = 500L;
+    private static final long aiThinkingTime = 1000L;
     // 玩家展示卡牌区域
     private JPanel showCardsPanel;
 
@@ -225,7 +226,6 @@ public class UNO extends AbstractGame<UNOGameDto> {
      * 初始化玩家团队
      */
     private void initPlayerTeam() {
-        Collections.shuffle(userList);
         if (playerMode.equals(PlayerMode.DOUBLE) && userList.size() == 4) {
             // 如果是双人模式的话就要加载玩家队伍了
             teamMap.put(userList.get(0), userList.get(2));
@@ -247,7 +247,6 @@ public class UNO extends AbstractGame<UNOGameDto> {
         if (userList.size() == 4) {
             mainPanel.add(initUserPanel(), BorderLayout.EAST);
             initAllocCards();
-            initPlayerTeam();
         }
         mainPanel.add(initCenter(), BorderLayout.CENTER);
     }
@@ -313,7 +312,7 @@ public class UNO extends AbstractGame<UNOGameDto> {
         String nickname = GameAction.getNickname();
         allocBtn.addActionListener(e -> {
             // 摸排之后不允许出牌
-            sendMsg(ALLOC_CARDS, nickname, 0,1);
+            sendMsg(ALLOC_CARDS, nickname, 0,randomAllocCards(1));
             refreshBtnStatus(outBtn, false);
             refreshBtnStatus(allocBtn, false);
         });
@@ -338,6 +337,10 @@ public class UNO extends AbstractGame<UNOGameDto> {
             selectedCards.clear();
             selectedCards.addAll(tips);
             refreshPlayerCards(getPlayer(nickname));
+        });
+
+        catchBtn.addActionListener(e -> {
+            sendMsg(PASS, GameAction.getNickname(), null);
         });
 
         addAll(btnPanel, allocBtn, outBtn, tipsBtn, catchBtn);
@@ -382,9 +385,10 @@ public class UNO extends AbstractGame<UNOGameDto> {
         }
         return usersPanel;
     }
+
     private JPanel getUserUI(Player player) {
         return player.getUserUI(e -> {
-            sendMsg(ALLOC_CARDS, player.getPlayerNode().getPlayerName(), 2);
+            sendMsg(CATCH, player.getPlayerNode().getPlayerName(), randomAllocCards(2));
         });
     }
 
@@ -402,7 +406,7 @@ public class UNO extends AbstractGame<UNOGameDto> {
         JButton catchPlayerBtn = new JButton("抓住你啦");
         catchPlayerBtn.setPreferredSize(new Dimension(110, 30));
         catchPlayerBtn.addActionListener(e -> {
-            sendMsg(ALLOC_CARDS, playerNode.getPlayerName(), 2);
+            sendMsg(ALLOC_CARDS, playerNode.getPlayerName(), randomAllocCards(2));
         });
         addAll(userPanel, nameLabel, statueLabel, catchPlayerBtn);
         return userPanel;
@@ -434,6 +438,9 @@ public class UNO extends AbstractGame<UNOGameDto> {
         playerMap = new HashMap<>();
         // 获取当前房间内的玩家
         List<String> roomUserList = userList;
+        // 创建节点的时候分好组
+        Collections.shuffle(userList);
+        initPlayerTeam();
         // 当前房间玩家总数
         int usersTotal = roomUserList.size();
         // 节点放在外边防止循环创建玩家节点
@@ -658,15 +665,20 @@ public class UNO extends AbstractGame<UNOGameDto> {
             if (!robotControl) {
                 JOptionPane.showMessageDialog(null, "暂无可出的牌，自动摸牌", "游戏提示", JOptionPane.YES_OPTION);
             }
-            sendMsg(ALLOC_CARDS, currentPlayerName, 1);
+            sendMsg(ALLOC_CARDS, currentPlayerName, randomAllocCards(1));
         }
         // 如果是AI的话自动出牌
         if (robotControl) {
             ThreadUtils.spinMoment(aiThinkingTime);
-            List<Card> aiOutCards = CalcUtil.tips(currentPlayer.getCards(), judgeDeque, gameMode);
+            List<Card> currentPlayerCards = currentPlayer.getCards();
+            List<Card> aiOutCards = CalcUtil.tips(currentPlayerCards, judgeDeque, gameMode);
+            Boolean sayUNo = CalcUtil.sayUNo(currentPlayerCards, aiOutCards);
+            if (sayUNo) {
+                sendMsg(UNO, currentPlayerName, null);
+            }
             // 双重判断ai没有能出的牌就摸牌
             if (CollUtil.isEmpty(aiOutCards)) {
-                sendMsg(ALLOC_CARDS, currentPlayerName, 1);
+                sendMsg(ALLOC_CARDS, currentPlayerName, randomAllocCards(1));
             } else {
                 sendMsg(OUT_CARDS, currentPlayerName, aiOutCards);
             }
@@ -733,15 +745,44 @@ public class UNO extends AbstractGame<UNOGameDto> {
         refreshOtherCardPanel(judgeCardsPanel, judgeDeque);
     }
 
+    /**
+     * 发送
+     * @param nums
+     * @return
+     */
+    private Map<String, List<Card>> randomAllocCards(Integer nums) {
+        Map<String, List<Card>> resultMap = new HashMap<>(3);
+        List<Card> addCards = new ArrayList<>();
+        // 剩余数量
+        int size = allCards.size();
+        if (nums > size) {
+            allCards.addAll(discardPile);
+            discardPile.clear();
+            addCards = CalcUtil.randomCard(allCards, nums - size);
+            allCards.removeAll(addCards);
+        } else if (nums == size) {
+            addCards = allCards;
+            allCards.clear();
+            allCards.addAll(discardPile);
+            allCards.sort(Card::compareTo);
+            discardPile.clear();
+        } else {
+            addCards = CalcUtil.randomCard(allCards, nums);
+            allCards.removeAll(addCards);
+        }
+        resultMap.put("allocCards", addCards);
+        resultMap.put("allCards", allCards);
+        resultMap.put("discardPile", discardPile);
+        return resultMap;
+    }
 
 
     private void allocCards(UNOGameDto body) {
-        Integer nums = (Integer) body.getData();
+        List<Card> addCards = handleAllocMap(body);
         String playerName = body.getPlayerName();
         Integer actionId = body.getActionId();
         // 只摸一张牌
-        if (nums == 1) {
-            List<Card> addCards = CalcUtil.randomCard(allCards, nums);
+        if (addCards.size() == 1) {
             Boolean canOut = CalcUtil.canOut(addCards, judgeDeque);
             // 如果摸牌可以出并且是当前玩家
             if (StrUtil.equalsIgnoreCase(GameAction.getNickname(), playerName)) {
@@ -770,31 +811,24 @@ public class UNO extends AbstractGame<UNOGameDto> {
             }
             return;
         }
-
-        // 剩余数量
-        int size = allCards.size();
-        if (nums > size) {
-            addCards(playerName, allCards);
-            allCards.addAll(discardPile);
-            discardPile.clear();
-            List<Card> addCards = CalcUtil.randomCard(allCards, nums - size);
-            addCards(playerName, addCards);
-            allCards.removeAll(addCards);
-        } else if (nums == size) {
-            addCards(playerName, allCards);
-            allCards.clear();
-            allCards.addAll(discardPile);
-            allCards.sort(Card::compareTo);
-            discardPile.clear();
-        } else {
-            List<Card> addCards = CalcUtil.randomCard(allCards, nums);
-            addCards(playerName, addCards);
-            allCards.removeAll(addCards);
-        }
+        addCards(playerName, addCards);
         // 如果不为空则要跳过当前玩家
         if (null != actionId) {
             sendMsg(PASS, playerName, null);
         }
+    }
+
+    /**
+     * 处理随机的增加卡牌数据
+     * @param body
+     * @return
+     */
+    private List<Card> handleAllocMap(UNOGameDto body) {
+        Map<String, List<Card>> bodyData = (Map<String, List<Card>>) body.getData();
+        List<Card> addCards = bodyData.get("allocCards");
+        allCards = bodyData.get("allCards");
+        discardPile = bodyData.get("discardPile");
+        return addCards;
     }
 
     /**
@@ -898,6 +932,9 @@ public class UNO extends AbstractGame<UNOGameDto> {
                                 selectedCards.add(item);
                                 cardPanel.setBorder(new LineBorder(Color.WHITE, 2));
                             }
+                            // 剩余卡牌，在打出倒数第二张牌的时候记得含UNO
+                            int surplus = cards.size() - selectedCards.size();
+                            refreshBtnStatus(unoBtn, surplus == 1);
                             refreshPlayerCards(player);
                         }
                     });
@@ -929,9 +966,24 @@ public class UNO extends AbstractGame<UNOGameDto> {
      * @param body
      */
     private void catchUnUNO(UNOGameDto body) {
+        String playerName = body.getPlayerName();
+        List<Card> cards = handleAllocMap(body);
+        // 添加两张牌
+        addCards(playerName, cards);
+        Player player = playerMap.get(playerName);
+        PlayerNode playerNode = player.getPlayerNode();
+        // 设置玩家面板是否展示catch
+        playerNode.setCanCatch(false);
+        // 刷新玩家面板
+        player.refreshUserPanel();
     }
 
     private void uno(UNOGameDto body) {
+        String playerName = body.getPlayerName();
+        Player player = playerMap.get(playerName);
+        PlayerNode playerNode = player.getPlayerNode();
+        playerNode.setUno(true);
+        player.refreshUserPanel();
     }
 
     /**
@@ -948,8 +1000,6 @@ public class UNO extends AbstractGame<UNOGameDto> {
 
         String playerName = body.getPlayerName();
         log.info("【{}】 出牌 - {}", playerName, outCards);
-        log.info("当前弃牌堆数量 -{}", discardPile.size());
-        log.info("当前判断牌堆 -{}", judgeDeque);
         Player player = playerMap.get(playerName);
         PlayerNode playerNode = player.getPlayerNode();
 
@@ -993,8 +1043,17 @@ public class UNO extends AbstractGame<UNOGameDto> {
                 playerCards.remove(index);
             }
         }
+        // 当前玩家剩下一张牌 并且没诶呦喊UNo 而且和当前玩家不是 队友 允许抓人
+        if (playerCards.size() == 1 &&
+                !playerNode.getUno() &&
+                StrUtil.equalsIgnoreCase(teamMap.get(playerName), GameAction.getNickname())) {
+            playerNode.setCanCatch(true);
+            player.refreshUserPanel();
+        }
+
         if (CollUtil.isEmpty(playerCards)) {
             gameOver();
+            return;
         }
         playerNode.setCards(playerCards);
         player.refreshUserPanel();
@@ -1018,8 +1077,7 @@ public class UNO extends AbstractGame<UNOGameDto> {
         }
         // 下家玩家名称
         String nextPlayerName = getNextPlayerName(playerName);
-        sendMsg(ALLOC_CARDS, nextPlayerName, 1, nums);
-        sendMsg(PASS, nextPlayerName, null);
+        sendMsg(ALLOC_CARDS, nextPlayerName, 1, randomAllocCards(nums));
     }
 
     /**

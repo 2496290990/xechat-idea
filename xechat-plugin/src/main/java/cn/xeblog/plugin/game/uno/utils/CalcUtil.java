@@ -183,16 +183,23 @@ public class CalcUtil {
         List<Card> sameColorCards = filterCards(cards, (item) -> item.getColor().equals(lastColor));
         log.info("筛选同颜色的卡片，结果为 -{}", sameColorCards);
         boolean hasSameColorCards = CollUtil.isNotEmpty(sameColorCards);
-        // 首先判断黑色牌 +4 CHANGE
-        if (last.getColor().equals(Color.BLACK)) {
-            // 如果有同颜色的牌则出同颜色牌 否则的话出黑色功能牌
-            return hasSameColorCards ?
-                    outSameColorCards(sameColorCards) :
-                    outBlackCards(cards);
+        if (hasSameColorCards) {
+            return outSameColorCards(sameColorCards);
+        } else if (last.getColor().equals(Color.BLACK)) {
+            return outBlackCards(cards);
+        } else {
+            return outSameValueCards(cards, last.getValue());
         }
-        return hasSameColorCards ?
-                outSameColorCards(sameColorCards) :
-                outSameValueCards(cards, last.getValue());
+        //// 首先判断黑色牌 +4 CHANGE
+        //if (last.getColor().equals(Color.BLACK)) {
+        //    // 如果有同颜色的牌则出同颜色牌 否则的话出黑色功能牌
+        //    return hasSameColorCards ?
+        //            outSameColorCards(sameColorCards) :
+        //            outBlackCards(cards);
+        //}
+        //return hasSameColorCards ?
+        //        outSameColorCards(sameColorCards) :
+        //        outSameValueCards(cards, last.getValue());
     }
 
     /**
@@ -302,6 +309,15 @@ public class CalcUtil {
         return CollUtil.isNotEmpty(filterCards) ? cards.indexOf(filterCards.get(0)) : -1;
     }
 
+    /**
+     * 判断是否要喊UNO
+     * @param playerCards       玩家手牌
+     * @param outCards          要出的牌
+     * @return  Boolean         如果出了要出的牌之后就剩一张了则要喊UNO
+     */
+    public static Boolean sayUNo(List<Card> playerCards, List<Card> outCards) {
+        return playerCards.size() - outCards.size() == 1;
+    }
 
     public static void main(String[] args) {
         List<Card> cards = CardUtil.initCards(GameMode.HAPPY);
