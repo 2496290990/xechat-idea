@@ -806,9 +806,9 @@ public class UNO extends AbstractGame<UNOGameDto> {
                         }
                     }
                 }
-                // 不能出 或者是玩家选择了保留卡牌就自动跳过
-                sendMsg(PASS, playerName, null);
             }
+            // 不能出 或者是玩家选择了保留卡牌就自动跳过
+            sendMsg(PASS, playerName, null);
             return;
         }
         addCards(playerName, addCards);
