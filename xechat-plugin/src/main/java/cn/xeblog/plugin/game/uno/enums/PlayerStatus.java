@@ -10,10 +10,6 @@ import lombok.Getter;
 @Getter
 public enum PlayerStatus {
     /**
-     * 行动
-     */
-    ACTION("正在操作"),
-    /**
      * 等待
      */
     WAITING("等待中"),

@@ -26,7 +26,7 @@ public class UserPanel {
         statusLabel.setText(String.format("【%s】", playerNode.getPlayerStatus().getStatus()));
         unoLabel.setText(playerNode.getUno() ? "UNO" : "");
         teamFlag.setText(playerNode.getTeamName());
-        catchBtn.setVisible(false);
+        catchBtn.setEnabled(false);
         this.catchAction = catchAction;
         catchBtn.addActionListener(catchAction);
         return userPanel;
@@ -36,6 +36,6 @@ public class UserPanel {
         cardsLabel.setText(String.format("手牌: %d", playerNode.getCardsTotal()));
         statusLabel.setText(String.format("【%s】", playerNode.getPlayerStatus().getStatus()));
         unoLabel.setText(playerNode.getUno() ? "UNO" : "");
-        catchBtn.setVisible(playerNode.getCanCatch());
+        catchBtn.setEnabled(playerNode.getCanCatch());
     }
 }

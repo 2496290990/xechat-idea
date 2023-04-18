@@ -121,6 +121,7 @@ public class CalcUtil {
         long count = playerCards.stream()
                 .filter(item -> item.getColor().equals(Color.BLACK) ||
                         item.getColor().equals(judgeCard.getColor()) ||
+                        item.getColor().equals(judgeCard.getChangeColor()) ||
                         StrUtil.equalsIgnoreCase(item.getValue(), judgeCard.getValue()))
                 .count();
         return count > 0;
