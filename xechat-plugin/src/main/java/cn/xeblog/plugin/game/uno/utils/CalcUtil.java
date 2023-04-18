@@ -321,6 +321,53 @@ public class CalcUtil {
         return playerCards.size() - outCards.size() == 1;
     }
 
+    /**
+     * 获取上一名玩家
+     * @param anticlockwise 逆时针
+     * @param playerMap     玩家集合
+     * @param playerName    玩家名称
+     * @param nextFlag      是否查看下家
+     * @return  Player      玩家
+     */
+    public static Player getOtherPlayer(Boolean anticlockwise, Map<String, Player> playerMap, Boolean nextFlag, String playerName) {
+        Player currentPlayer = playerMap.get(playerName);
+        PlayerNode playerNode = currentPlayer.getPlayerNode();
+        PlayerNode otherPlayer;
+        if (!nextFlag) {
+            // 获取上一个 逆时针就上一个， 顺时针就下一个
+            otherPlayer = anticlockwise ? playerNode.getPrevPlayer() : playerNode.getNextPlayer();
+        } else {
+            // 获取下一个人 逆时针就获取下下一个 顺时针就获取上一个
+            otherPlayer = anticlockwise ? playerNode.getNextPlayer() : playerNode.getPrevPlayer();
+        }
+        return playerMap.get(otherPlayer.getPlayerName());
+    }
+
+    /**
+     * 获取上一名玩家节点
+     * @param anticlockwise 逆时针
+     * @param playerMap     玩家集合
+     * @param playerName    玩家名称
+     * @param nextFlag      是否查看下家
+     * @return  PlayerNode  玩家节点
+     */
+    public static PlayerNode getOtherPlayerNode(Boolean anticlockwise, Map<String, Player> playerMap,Boolean nextFlag, String playerName) {
+        return getOtherPlayer(anticlockwise, playerMap, nextFlag, playerName).getPlayerNode();
+    }
+
+    /**
+     * 获取上一名玩家名称
+     * @param anticlockwise 逆时针
+     * @param playerMap     玩家集合
+     * @param playerName    玩家名称
+     * @param nextFlag      是否查看下家
+     * @return  String      玩家名称
+     */
+    public static String getOtherPlayerName(Boolean anticlockwise, Map<String, Player> playerMap,Boolean nextFlag, String playerName) {
+        return getOtherPlayerNode(anticlockwise, playerMap, nextFlag, playerName).getPlayerName();
+    }
+
+
     public static void main(String[] args) {
         List<Card> cards = CardUtil.initCards(GameMode.HAPPY);
     }

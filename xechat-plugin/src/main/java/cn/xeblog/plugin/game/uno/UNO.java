@@ -303,7 +303,6 @@ public class UNO extends AbstractGame<UNOGameDto> {
         JBScrollPane outCardsScroll = new JBScrollPane(outCardsPanel);
         outCardsScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         outCardsScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-        //showCardsPanel.add(tipsArea, BorderLayout.WEST);
         showCardsPanel.add(outCardsScroll, BorderLayout.CENTER);
         centerPanel.add(showCardsPanel);
         // 玩家手牌
@@ -315,15 +314,6 @@ public class UNO extends AbstractGame<UNOGameDto> {
 
         return centerPanel;
     }
-
-    //private void refreshTipsArea(String formatStr, Object... data){
-    //    refreshTipsArea(String.format(formatStr, data));
-    //}
-    //
-    //private void refreshTipsArea(String msg) {
-    //    tipsArea.setText(msg);
-    //    tipsArea.updateUI();
-    //}
 
     private JPanel initBtnPanel() {
         JPanel btnPanel = new JPanel();
@@ -351,7 +341,7 @@ public class UNO extends AbstractGame<UNOGameDto> {
             if (canOut) {
                 sendMsg(OUT_CARDS, nickname, selectedCards);
             } else {
-                JOptionPane.showMessageDialog(null, "请选择正确的卡牌", "游戏提示", JOptionPane.YES_OPTION);
+                JOptionPane.showMessageDialog(null, "请选择正确的卡牌，同颜色或同数值或黑色功能牌", "游戏提示", JOptionPane.YES_OPTION);
                 return;
             }
             refreshBtnStatus(outBtn, false);
@@ -411,7 +401,6 @@ public class UNO extends AbstractGame<UNOGameDto> {
         usersPanel.setPreferredSize(new Dimension(140, 80));
         for (String playerName : userList) {
             Player player = playerMap.get(playerName);
-            //JPanel userPanel = getUserPanel(player.getPlayerNode());
             JPanel userPanel = getUserUI(player);
             player.setPanel(userPanel);
             usersPanel.add(userPanel);
@@ -557,7 +546,6 @@ public class UNO extends AbstractGame<UNOGameDto> {
                 initCard.put(playerName, randomCards);
             }
             sendMsg(INIT_ALLOC_CARDS, GameAction.getNickname(), initCard);
-            //refreshTipsArea("初始化发牌");
         }
     }
 
@@ -639,9 +627,13 @@ public class UNO extends AbstractGame<UNOGameDto> {
         player.getPlayerNode().setPlayerStatus(playerStatus);
         player.refreshUserPanel();
 
-        Player nextPlayer = getNextPlayer(playerName);
+        Player nextPlayer = CalcUtil.getOtherPlayer(anticlockwise, playerMap, true, playerName);
         nextPlayer.getPlayerNode().setPlayerStatus(PlayerStatus.NEXT);
         nextPlayer.refreshUserPanel();
+
+        Player prevPlayer = CalcUtil.getOtherPlayer(anticlockwise, playerMap, false, playerName);
+        prevPlayer.getPlayerNode().setPlayerStatus(PlayerStatus.PREV);
+        prevPlayer.refreshUserPanel();
     }
 
     @Override
@@ -702,7 +694,7 @@ public class UNO extends AbstractGame<UNOGameDto> {
         String playerName = body.getPlayerName();
         changePlayerStatus(playerName, PlayerStatus.WAITING);
         // 获取下一个人是谁
-        currentPlayer = getNextPlayer(playerName).getPlayerNode();
+        currentPlayer = CalcUtil.getOtherPlayerNode(anticlockwise, playerMap, true, playerName);
         //refreshTipsArea("%s跳过，下家%s", playerName, currentPlayer.getPlayerName());
         // 获取
         String currentPlayerName = currentPlayer.getPlayerName();
@@ -713,11 +705,9 @@ public class UNO extends AbstractGame<UNOGameDto> {
         Boolean robotControl = robotControl(currentPlayerName);
         // 如果能出牌
         if (hasCanOut) {
-            //refreshTipsArea("%s思考中", playerName);
             // 如果是AI的话自动出牌
             if (robotControl) {
                 ThreadUtils.spinMoment(aiThinkingTime);
-                //refreshTipsArea("%s出牌", playerName);
                 List<Card> currentPlayerCards = currentPlayer.getCards();
                 List<Card> aiOutCards = CalcUtil.tips(currentPlayerCards, judgeDeque, gameMode);
                 Boolean sayUNo = CalcUtil.sayUNo(currentPlayerCards, aiOutCards);
@@ -844,7 +834,6 @@ public class UNO extends AbstractGame<UNOGameDto> {
         // 给玩家添加上当前摸牌
         addCards(playerName, addCards);
         Boolean canOut = CalcUtil.canOut(addCards, judgeDeque);
-        //refreshTipsArea("%s摸了%d张牌",playerName, addCards.size());
         // 是否机器人控制
         Boolean robotControl = robotControl(playerName);
         // 只摸一张牌
@@ -1090,7 +1079,7 @@ public class UNO extends AbstractGame<UNOGameDto> {
             return;
         }
         if (StrUtil.equalsIgnoreCase(discardValue, CardUtil.SKIP)) {
-            String nextPlayerName = getNextPlayerName(playerName);
+            String nextPlayerName = CalcUtil.getOtherPlayerName(anticlockwise, playerMap, true, playerName);
             changePlayerStatus(nextPlayerName, PlayerStatus.SKIP);
             refreshCards(player, outCards, discard);
             sendMsg(PASS, nextPlayerName, null);
@@ -1156,30 +1145,9 @@ public class UNO extends AbstractGame<UNOGameDto> {
             nums = addNums;
         }
         // 下家玩家名称
-        String nextPlayerName = getNextPlayerName(playerName);
+        String nextPlayerName = CalcUtil.getOtherPlayerName(anticlockwise, playerMap, false, playerName);
         sendMsg(ALLOC_CARDS, nextPlayerName, 1, randomAllocCards(nums));
         sendMsg(PASS, nextPlayerName, null);
-    }
-
-    /**
-     * 获取下一名玩家
-     * @param playerName        当前玩家姓名
-     * @return  Player          下家节点
-     */
-    private Player getNextPlayer(String playerName) {
-        Player player = playerMap.get(playerName);
-        PlayerNode playerNode = player.getPlayerNode();
-        // 逆时针就下一个， 顺时针就上一个
-        PlayerNode nextPlayer = anticlockwise ? playerNode.getNextPlayer() : playerNode.getPrevPlayer();
-        return playerMap.get(nextPlayer.getPlayerName());
-    }
-
-    private PlayerNode getNextPlayerNode(String playerName) {
-        return getNextPlayer(playerName).getPlayerNode();
-    }
-
-    private String getNextPlayerName(String playerName) {
-        return getNextPlayerNode(playerName).getPlayerName();
     }
 
     /**

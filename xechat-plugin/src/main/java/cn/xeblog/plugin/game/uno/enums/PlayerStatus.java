@@ -24,7 +24,11 @@ public enum PlayerStatus {
     /**
      * 下一个
      */
-    NEXT("下名玩家");
+    NEXT("下家"),
+    /**
+     * 上家
+     */
+    PREV("上家");
 
     private String status;
 
