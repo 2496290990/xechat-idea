@@ -634,6 +634,14 @@ public class UNO extends AbstractGame<UNOGameDto> {
         Player prevPlayer = CalcUtil.getOtherPlayer(anticlockwise, playerMap, false, playerName);
         prevPlayer.getPlayerNode().setPlayerStatus(PlayerStatus.PREV);
         prevPlayer.refreshUserPanel();
+
+        List<String> userNameSet = new ArrayList<>(playerMap.keySet());
+        userNameSet.remove(playerName);
+        userNameSet.remove(nextPlayer.getPlayerNode().getPlayerName());
+        userNameSet.remove(prevPlayer.getPlayerNode().getPlayerName());
+        Player otherPlayer = playerMap.get(userNameSet.get(0));
+        otherPlayer.getPlayerNode().setPlayerStatus(PlayerStatus.WAITING);
+        otherPlayer.refreshUserPanel();
     }
 
     @Override
@@ -1147,6 +1155,7 @@ public class UNO extends AbstractGame<UNOGameDto> {
         // 下家玩家名称
         String nextPlayerName = CalcUtil.getOtherPlayerName(anticlockwise, playerMap, false, playerName);
         sendMsg(ALLOC_CARDS, nextPlayerName, 1, randomAllocCards(nums));
+        changePlayerStatus(nextPlayerName, PlayerStatus.SKIP);
         sendMsg(PASS, nextPlayerName, null);
     }
 
