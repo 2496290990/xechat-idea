@@ -2,6 +2,7 @@ package cn.xeblog.plugin.game.uno;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.xeblog.commons.entity.User;
 import cn.xeblog.commons.entity.game.GameDTO;
 import cn.xeblog.commons.entity.game.GameRoom;
 import cn.xeblog.commons.entity.game.uno.Card;
@@ -11,6 +12,7 @@ import cn.xeblog.plugin.action.GameAction;
 import cn.xeblog.plugin.annotation.DoGame;
 import cn.xeblog.plugin.cache.DataCache;
 import cn.xeblog.plugin.game.AbstractGame;
+import cn.xeblog.plugin.game.landlords.LandlordsGame;
 import cn.xeblog.plugin.game.uno.action.AiPlayerAction;
 import cn.xeblog.plugin.game.uno.action.PlayerAction;
 import cn.xeblog.plugin.game.uno.entity.Player;
@@ -249,6 +251,31 @@ public class UNO extends AbstractGame<UNOGameDto> {
             initAllocCards();
         }
         mainPanel.add(initCenter(), BorderLayout.CENTER);
+        // 游戏底部
+        JPanel mainBottomPanel = new JPanel();
+        if (getRoom() == null) {
+            backButton = getBackButton();
+            mainBottomPanel.add(backButton);
+        }
+        gameOverButton = getGameOverButton();
+        gameOverButton.setVisible(false);
+        mainBottomPanel.add(gameOverButton);
+        mainPanel.add(mainBottomPanel, BorderLayout.SOUTH);
+    }
+
+    /**
+     * 玩家离开
+     * @param player
+     */
+    @Override
+    public void playerLeft(User player) {
+        super.playerLeft(player);
+        if (status > 0 && status == -1) {
+            String msg = "游戏结束！" + player.getUsername() + "逃跑了~";
+            String tips = "溜了~";
+            gameOverButton.setVisible(true);
+        }
+        // TODO: 2023/4/18 玩家离开
     }
 
     /**
@@ -602,10 +629,10 @@ public class UNO extends AbstractGame<UNOGameDto> {
 
     @Override
     public void handle(UNOGameDto body) {
-        if (status == 0){
+        String playerName = body.getPlayerName();
+        if (status <= 0 || !StrUtil.equalsIgnoreCase(playerName, currentPlayer.getPlayerName())) {
             return;
         }
-        String playerName = body.getPlayerName();
         switch (body.getMsgType()) {
             case REFRESH_TIPS_MSG:
                 refreshTipsMsg(body);
@@ -657,34 +684,38 @@ public class UNO extends AbstractGame<UNOGameDto> {
         // 获取
         String currentPlayerName = currentPlayer.getPlayerName();
         // 有能出的牌
-        Boolean hashCanOut = CalcUtil.hasCanOutCards(currentPlayer, judgeDeque, gameMode);
+        Boolean hasCanOut = CalcUtil.hasCanOutCards(currentPlayer, judgeDeque, gameMode);
         // 是否AI
         Boolean robotControl = robotControl(currentPlayerName);
-        // 没有能出的牌
-        if (!hashCanOut) {
+        // 如果能出牌
+        if (hasCanOut) {
+            // 如果是AI的话自动出牌
+            if (robotControl) {
+                ThreadUtils.spinMoment(aiThinkingTime);
+                List<Card> currentPlayerCards = currentPlayer.getCards();
+                List<Card> aiOutCards = CalcUtil.tips(currentPlayerCards, judgeDeque, gameMode);
+                Boolean sayUNo = CalcUtil.sayUNo(currentPlayerCards, aiOutCards);
+                if (sayUNo) {
+                    sendMsg(UNO, currentPlayerName, null);
+                }
+                // 双重判断ai没有能出的牌就摸牌
+                if (CollUtil.isEmpty(aiOutCards)) {
+                    sendMsg(ALLOC_CARDS, currentPlayerName, randomAllocCards(1));
+                } else {
+                    sendMsg(OUT_CARDS, currentPlayerName, aiOutCards);
+                }
+            } else if (StrUtil.equalsIgnoreCase(currentPlayerName, GameAction.getNickname())) {
+                // 如果是玩家的话就展示按钮，玩家选择出什么牌
+                refreshBtnStatus(outBtn, true);
+                refreshBtnStatus(allocBtn, true);
+            }
+        } else {
             if (!robotControl) {
                 JOptionPane.showMessageDialog(null, "暂无可出的牌，自动摸牌", "游戏提示", JOptionPane.YES_OPTION);
             }
             sendMsg(ALLOC_CARDS, currentPlayerName, randomAllocCards(1));
-        }
-        // 如果是AI的话自动出牌
-        if (robotControl) {
-            ThreadUtils.spinMoment(aiThinkingTime);
-            List<Card> currentPlayerCards = currentPlayer.getCards();
-            List<Card> aiOutCards = CalcUtil.tips(currentPlayerCards, judgeDeque, gameMode);
-            Boolean sayUNo = CalcUtil.sayUNo(currentPlayerCards, aiOutCards);
-            if (sayUNo) {
-                sendMsg(UNO, currentPlayerName, null);
-            }
-            // 双重判断ai没有能出的牌就摸牌
-            if (CollUtil.isEmpty(aiOutCards)) {
-                sendMsg(ALLOC_CARDS, currentPlayerName, randomAllocCards(1));
-            } else {
-                sendMsg(OUT_CARDS, currentPlayerName, aiOutCards);
-            }
-        } else if (StrUtil.equalsIgnoreCase(currentPlayerName, GameAction.getNickname())) {
-            refreshBtnStatus(outBtn, true);
-            refreshBtnStatus(allocBtn, true);
+            // 摸牌之后返回
+            return;
         }
     }
 
@@ -804,12 +835,15 @@ public class UNO extends AbstractGame<UNOGameDto> {
 
                     if (res == 1){
                         sendMsg(OUT_CARDS, playerName, addCards);
+                        return;
                     }
                 }
+                sendMsg(PASS, playerName, null);
+            } else {
+                // 不能出 或者是玩家选择了保留卡牌就自动跳过
+                sendMsg(PASS, playerName, null);
+                return;
             }
-            // 不能出 或者是玩家选择了保留卡牌就自动跳过
-            sendMsg(PASS, playerName, null);
-            return;
         }
         // 如果不为空则要跳过当前玩家
         if (null != actionId) {
@@ -1105,8 +1139,11 @@ public class UNO extends AbstractGame<UNOGameDto> {
      */
     private void gameOver() {
         status = -1;
-        gameOverButton.setVisible(true);
-        gameOverButton.setEnabled(true);
+        if (getRoom() == null) {
+            backButton.setVisible(true);
+        } else {
+            gameOverButton.setVisible(true);
+        }
     }
 
     /**

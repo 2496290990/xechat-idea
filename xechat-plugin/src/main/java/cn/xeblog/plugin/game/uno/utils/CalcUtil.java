@@ -96,7 +96,8 @@ public class CalcUtil {
         colorListMap.forEach((k,v) -> map.put(v.size(), k));
         List<Integer> countList = new ArrayList<>(map.keySet());
         countList.sort(Integer::compareTo);
-        return map.get(countList.get(countList.size() - 1));
+        Color color = map.get(countList.get(countList.size() - 1));
+        return color.equals(Color.BLACK) ? Color.RED : color;
     }
 
 
