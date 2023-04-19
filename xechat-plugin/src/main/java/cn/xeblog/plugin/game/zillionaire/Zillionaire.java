@@ -1000,7 +1000,12 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
 
         String playerName = body.getPlayer();
         Player player = playerMap.get(playerName);
-        PlayerNode playerNode = player.getPlayerNode();
+        PlayerNode playerNode = null;
+        try {
+            playerNode = player.getPlayerNode();
+        } catch (NullPointerException e) {
+            log.error("发生错误, - {}", body);
+        }
         body.setCurrentPlayer(playerNode);
 
         switch (body.getMsgType()) {
@@ -1260,19 +1265,17 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
         PlayerAction playerAction = aiPlayerActionMap.get(currentPlayer.getPlayer());
         AiPlayerAction aiPlayerAction = (AiPlayerAction) playerAction;
         boolean robotControl = isHomeowner() && playerAction != null;
-        // 人机玩家
-        if (robotControl) {
-            ThreadUtils.spinMoment(aiThinkingTime);
-            // 获取AI步数
-            Integer step = aiPlayerAction.diceRoll();
-            sendMsg(DICE_ROLL, currentPlayer.getPlayer(), step);
-
-        } else {
-            String playerName = currentPlayer.getPlayer();
-            Player player = playerMap.get(playerName);
-            PlayerNode playerNode = player.getPlayerNode();
-            // 玩家状态正常暂未入狱
-            if (playerNode.getStatus()) {
+        String playerName = currentPlayer.getPlayer();
+        Player player = playerMap.get(playerName);
+        PlayerNode playerNode = player.getPlayerNode();
+        if (playerNode.getStatus()) {
+            // 人机玩家且没有休息
+            if (robotControl) {
+                ThreadUtils.spinMoment(aiThinkingTime);
+                // 获取AI步数
+                Integer step = aiPlayerAction.diceRoll();
+                sendMsg(DICE_ROLL, currentPlayer.getPlayer(), step);
+            } else {
                 List<PositionDto> positions = playerNode.getPositions();
                 if (CollUtil.isNotEmpty(positions)) {
                     // 已售出的地皮数量
@@ -1284,12 +1287,12 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
                         refreshBtnStatus(redemptionBtn, true);
                     }
                 }
-            } else {
-                sendRefreshTipsMsg(currentPlayer.getPlayer(), "玩家当前回合休息一轮");
-                currentPlayer = currentPlayer.getNextPlayer();
-                sendRefreshTipsMsg(currentPlayer.getPlayer(), "玩家回合开始");
+                initBtnStatus();
             }
-            initBtnStatus();
+        } else {
+            sendRefreshTipsMsg(currentPlayer.getPlayer(), "玩家当前回合休息一轮");
+            currentPlayer = currentPlayer.getNextPlayer();
+            sendRefreshTipsMsg(currentPlayer.getPlayer(), "玩家回合开始");
         }
     }
 
