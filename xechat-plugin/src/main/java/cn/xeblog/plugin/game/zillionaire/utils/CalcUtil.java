@@ -6,7 +6,9 @@ import cn.xeblog.commons.entity.game.zillionaire.dto.*;
 import cn.xeblog.plugin.game.zillionaire.dto.Player;
 import cn.xeblog.plugin.game.zillionaire.dto.PlayerNode;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -28,6 +30,8 @@ public class CalcUtil {
     public static final Integer randomInt() {
         return RandomUtil.randomInt(1, 12);
     }
+
+
 
     public static void main(String[] args) {
         for (int i = 0; i < 100; i++) {
@@ -98,6 +102,15 @@ public class CalcUtil {
             return ((CompanyDto) position).getPrice();
         }
         return 0;
+    }
+
+    public static Integer calcPositionSalePrice(PositionDto position) {
+        if (position instanceof CityDto) {
+            CityDto city = (CityDto) position;
+            return calcPositionPrice(position) + city.getBuildMoney() * city.getLevel();
+        } else {
+            return calcPositionPrice(position);
+        }
     }
 
     /**
@@ -289,5 +302,31 @@ public class CalcUtil {
         return cities.stream()
                 .filter(item -> item.getLevel() != 0)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 当前地皮的拥有者是否有全部颜色的地皮 并且当前的地皮是
+     *
+     * @param playerNode 地皮拥有者
+     * @param position   地皮
+     * @return Boolean          是否拥有全部颜色的地皮
+     */
+    public static Boolean isDouble(PlayerNode playerNode, CityDto position, Map<Integer, PositionDto> positionMap) {
+        List<CityDto> cities = playerNode.getCities();
+        // 获取当前位置的颜色
+        Color color = position.getColor();
+        // 获取所有的地皮
+        Collection<PositionDto> values = positionMap.values();
+        // 获取初始化中房屋的颜色
+        long colorInitCount = values.stream()
+                .filter(item -> item.getColor().equals(color))
+                .count();
+
+        long userColorCount = cities.stream()
+                .filter(item -> item.getColor().equals(color))
+                .count();
+        boolean hasAll = colorInitCount == userColorCount;
+        boolean zero = position.getLevel() == 0;
+        return hasAll && zero;
     }
 }

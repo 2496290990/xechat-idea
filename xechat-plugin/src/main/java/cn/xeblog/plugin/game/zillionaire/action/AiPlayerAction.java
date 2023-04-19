@@ -5,9 +5,13 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.xeblog.commons.entity.game.zillionaire.dto.CityDto;
 import cn.xeblog.commons.entity.game.zillionaire.dto.CompanyDto;
+import cn.xeblog.commons.entity.game.zillionaire.dto.PositionDto;
 import cn.xeblog.commons.entity.game.zillionaire.dto.StationDto;
 import cn.xeblog.plugin.game.zillionaire.dto.PlayerNode;
+import cn.xeblog.plugin.game.zillionaire.dto.PositionCost;
+import cn.xeblog.plugin.game.zillionaire.utils.CalcUtil;
 
+import javax.swing.text.Position;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -22,69 +26,52 @@ public class AiPlayerAction extends PlayerAction{
         super(playerNode);
     }
 
+    /**
+     * 按照地皮的过路费进行排序，然后从头开始计算
+     * @return
+     */
     @Override
-    public Map<Integer, Integer> saleBuild() {
+    public List<Integer> saleBuild() {
         // 获取差额
         PlayerNode playerNode = getPlayerNode();
         int debt = Math.abs(playerNode.getCash());
         List<CityDto> cities = playerNode.getCities();
         List<StationDto> stations = playerNode.getStations();
         List<CompanyDto> companies = playerNode.getCompanies();
-        List<CityDto> zeroCities = cities.stream()
-                .filter(item -> item.getLevel() == 0)
-                .collect(Collectors.toList());
-        Map<Integer, List<Integer>> costPositionMap = new HashMap<>(23);
-        List<Integer> positions = null;
+        List<PositionCost> costList = new ArrayList<>();
         // 如果公司不为空
         if (CollUtil.isNotEmpty(companies)) {
             if (companies.size() == 1) {
-                CompanyDto companyDto = companies.get(0);
-                // 如果只有一个公司 电力或者水利公司的话，每次最高也只能赚 120
-                Integer position = companyDto.getPosition();
-                positions = Collections.singletonList(position);
-                costPositionMap.put(120, positions);
+                costList.add(new PositionCost(120, companies.get(0)));
             } else {
                 // 有两个公司的话转数翻100倍 最高能到达 1200
-                positions = new ArrayList<>(2);
-                for (CompanyDto company : companies) {
-                    Integer position = company.getPosition();
-                    positions.add(position);
-                }
-                costPositionMap.put(1200, positions);
+                companies.forEach(item -> costList.add(new PositionCost(1200, item)));
             }
         }
         // 火车站价值计算
         if (CollUtil.isNotEmpty(stations)) {
-            positions = new ArrayList<>(stations.size());
-            for (StationDto station : stations) {
-                positions.add(station.getPosition());
-            }
-            costPositionMap.put(stations.get(0).getToll(), positions);
+            stations.forEach(item -> costList.add(new PositionCost(CalcUtil.calcPositionToll(item), item)));
         }
 
         if (CollUtil.isNotEmpty(cities)) {
-            cities.forEach(item -> {
-                Integer toll = item.getToll();
-                List<Integer> list = costPositionMap.get(toll);
-                if (CollUtil.isEmpty(list)) {
-                    costPositionMap.put(toll, Collections.singletonList(item.getPosition()));
-                } else {
-                    list.add(item.getPosition());
-                    costPositionMap.put(toll, list);
-                }
-            });
+            cities.forEach(item -> costList.add(new PositionCost(CalcUtil.calcPositionToll(item), item)));
         }
         // =============点位价值计算完毕=======================
-        List<Integer> costList = new ArrayList<>(costPositionMap.keySet());
-        int lastPositions;
-        costList.sort(Integer::compareTo);
-        for (Integer cost : costList) {
-            // TODO: 2023/4/3 带完善卖房子计划 
-            //do {
-            //    costPositionMap.get()
-            //} while (true);
+        //==============按照 点位价值排序======================
+        costList.sort(Comparator.comparing(PositionCost::getCost));
+        List<Integer> salePositionList = new ArrayList<>();
+        for (PositionCost positionCost : costList) {
+            PositionDto positionDto = positionCost.getPositionDto();
+            // 点位售卖价格
+            Integer salePrice = CalcUtil.calcPositionSalePrice(positionDto);
+            debt -= salePrice;
+            salePositionList.add(positionDto.getPosition());
+            if (debt < 0 ) {
+                break;
+            }
+
         }
-        return null;
+        return salePositionList;
     }
 
     /**

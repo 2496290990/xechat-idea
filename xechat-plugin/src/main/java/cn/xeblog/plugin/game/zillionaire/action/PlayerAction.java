@@ -185,7 +185,7 @@ public abstract class PlayerAction {
      * 卖房子
      * Map  key 地皮坐标点  value 售卖的房子数量
      */
-    public abstract Map<Integer, Integer> saleBuild();
+    public abstract List<Integer> saleBuild();
 
     /**
      * 投掷色子
