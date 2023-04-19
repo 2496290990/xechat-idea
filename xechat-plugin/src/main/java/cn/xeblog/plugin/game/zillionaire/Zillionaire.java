@@ -723,7 +723,6 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
             }
         });
 
-        Integer position = choosePosition.getPosition();
         saleBtn.addActionListener(e -> {
             Player player = playerMap.get(nickname);
             PlayerNode playerNode = player.getPlayerNode();
@@ -732,6 +731,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
                 alertGameMessage("请选择一块地皮");
                 return;
             }
+            int position = choosePosition.getPosition();
             if (pullDown) {
                 if (choosePosition instanceof CityDto) {
                     CityDto chooseCity = (CityDto) choosePosition;
@@ -748,6 +748,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
                     alertGameMessage("请选择一块有房屋的地区点位");
                 }
             } else {
+
                 // 当前选中的是地区， 需要考虑房子的问题
                 if (choosePosition instanceof CityDto) {
                     CityDto city = (CityDto) choosePosition;
@@ -791,6 +792,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
                 alertGameMessage("当前地皮未出售，请选择其他地皮");
                 return;
             }
+            int position = choosePosition.getPosition();
             // 赎回价格是买的价格的一半
             Integer price = CalcUtil.calcPositionPrice(choosePosition) / 2;
             if (playerNode.getCash() < price) {
