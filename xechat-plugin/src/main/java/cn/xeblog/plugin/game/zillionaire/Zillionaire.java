@@ -919,7 +919,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
         JPanel positionPanel = new JPanel();
         positionPanel.setBorder(new LineBorder(position.getColor(), 1));
         positionPanel.setBackground(new Color(0x2B, 0x2B, 0x2B));
-        int positionPanelWidth = 50;
+        int positionPanelWidth = 80;
         positionPanel.setPreferredSize(new Dimension(positionPanelWidth, 40));
         positionPanel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
