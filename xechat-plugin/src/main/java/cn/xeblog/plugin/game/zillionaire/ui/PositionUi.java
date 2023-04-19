@@ -33,22 +33,16 @@ public class PositionUi extends JPanel {
 
     private Integer position;
 
+    private Font font = new Font("", 0, 8);
+
     public PositionUi(Integer position, String name, String owner, Integer level, Integer pay, Integer buildMoney, Integer toll, Color color) {
         PositionUi positionUi = this;
+        positionUi.setToolTipText(name);
         positionUi.setBorder(new LineBorder(color, 1));
         positionUi.setPreferredSize(new Dimension(40,40));
-        //StringBuffer sb = new StringBuffer();
-        //sb.append("<html>")
-        //        .append("坐标:").append(position).append("<br/>")
-        //        .append("名称:").append(name).append("<br/>")
-        //        .append("拥有者:").append(StrUtil.isBlank(owner) ? "--" : owner).append("<br/>")
-        //        .append("等级:").append(level).append("<br/>")
-        //        .append("售价:").append(pay).append("<br/>")
-        //        .append("升级:").append(buildMoney).append("<br/>")
-        //        .append("过路费:").append(toll)
-        //   .append("</html>");
         // 创建label
         JLabel positionLabel = new JLabel(name);
+        positionLabel.setFont(font);
         // 添加组件
         positionUi.add(positionLabel);
         // 设置参数
@@ -63,14 +57,11 @@ public class PositionUi extends JPanel {
 
     public PositionUi(Integer position, String name, Color color) {
         PositionUi positionUi = this;
+        positionUi.setToolTipText(name);
         positionUi.setBorder(new LineBorder(color, 1));
-        //StringBuffer sb = new StringBuffer();
-        //sb.append("<html>")
-        //        .append("坐标:").append(position).append("<br/>")
-        //        .append("名称:").append(name)
-        //   .append("</html>");
         // 创建组件
         JLabel positionLabel = new JLabel(name);
+        positionLabel.setFont(font);
         // 添加组件
         positionUi.add(positionLabel);
         // 设置参数

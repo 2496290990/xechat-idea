@@ -234,20 +234,20 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
     protected void init() {
         initStartPanel();
     }
-
+    Font font = new Font("", 0, 8);
     private void initStartPanel() {
         mainPanel.removeAll();
         mainPanel.setLayout(null);
         mainPanel.setEnabled(true);
         mainPanel.setVisible(true);
-        mainPanel.setMinimumSize(new Dimension(400, 400));
+        mainPanel.setMinimumSize(new Dimension(250, 400));
         startPanel = new JPanel();
         startPanel.setBounds(10, 10, 120, 260);
         mainPanel.add(startPanel);
 
         // 添加游戏标题
         JLabel title = new JLabel("大富翁！");
-        title.setFont(new Font("", 1, 14));
+        title.setFont(font);
         startPanel.add(title);
 
         Box vBox = Box.createVerticalBox();
@@ -255,7 +255,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
 
         vBox.add(Box.createVerticalStrut(20));
         JLabel modelLabel = new JLabel("游戏模式：");
-        modelLabel.setFont(new Font("", 1, 13));
+        modelLabel.setFont(font);
         vBox.add(modelLabel);
 
         vBox.add(Box.createVerticalStrut(5));
@@ -442,21 +442,26 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
     private void showGamePanel() {
         mainPanel.removeAll();
         mainPanel.setLayout(new BorderLayout());
-        mainPanel.setMinimumSize(new Dimension(490, 360));
+        // 490 360
+        mainPanel.setMinimumSize(new Dimension(350, 330));
 
         JPanel panel = new JPanel();
-        panel.setPreferredSize(new Dimension(480, 300));
+        // 480 300
+        panel.setPreferredSize(new Dimension(330, 300));
         panel.setLayout(new BorderLayout(10, 10));
         JPanel topPanel = new JPanel();
-        topPanel.setPreferredSize(new Dimension(400, 30));
+        // 400 30
+        topPanel.setPreferredSize(new Dimension(330, 30));
         JPanel leftPanel = new JPanel();
         leftPanel.setPreferredSize(new Dimension(60, 280));
         JPanel rightPanel = new JPanel();
         rightPanel.setPreferredSize(new Dimension(60, 280));
         JPanel bottomPanel = new JPanel();
-        bottomPanel.setPreferredSize(new Dimension(400, 30));
+        // 400 30
+        bottomPanel.setPreferredSize(new Dimension(330, 30));
         JPanel centerPanel = new JPanel();
-        centerPanel.setPreferredSize(new Dimension(280, 280));
+        // 280 280
+        centerPanel.setPreferredSize(new Dimension(200, 180));
         // 初始化游戏区域
         initPlayAreaCenterPanel(centerPanel);
         initPlayAreaRightPanel(rightPanel);
@@ -474,7 +479,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
         JPanel mainTopPanel = new JPanel();
         String title = "大富翁！";
         titleLabel = new JLabel(title);
-        titleLabel.setFont(new Font("", 1, 14));
+        titleLabel.setFont(font);
         mainTopPanel.add(titleLabel);
 
         JPanel mainBottomPanel = new JPanel();
@@ -621,7 +626,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
         tipsArea.setRows(10);
         tipsArea.setColumns(50);
         tipsArea.setLineWrap(true);
-        tipsArea.setPreferredSize(new Dimension(300, 80));
+        tipsArea.setPreferredSize(new Dimension(180, 80));
         JBScrollPane scrollPane = new JBScrollPane(tipsArea);//创建滚动条面板
         scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
@@ -639,11 +644,11 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
     private JPanel centerGameButton() {
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new GridLayout(1, 6));
-        randomBtn = new JButton("投掷骰子");
-        buildBtn = new JButton("升级建筑");
-        buyBtn = new JButton("购买地皮");
-        saleBtn = new JButton("售卖建筑");
-        redemptionBtn = new JButton("赎回建筑");
+        randomBtn = new JButton("投掷");
+        buildBtn = new JButton("升级");
+        buyBtn = new JButton("购买");
+        saleBtn = new JButton("售卖");
+        redemptionBtn = new JButton("赎回");
         passBtn = new JButton("过");
         addAll(buttonPanel, randomBtn, buildBtn, buyBtn, saleBtn, redemptionBtn, passBtn);
 
@@ -769,6 +774,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
             Player player = playerMap.get(username);
             JPanel panel = player.getPanel();
             panel.setLayout(new FlowLayout());
+            panel.setMaximumSize(new Dimension(100, 80));
             int r = RandomUtil.randomInt(0, 255);
             int g = RandomUtil.randomInt(0, 255);
             int b = RandomUtil.randomInt(0, 255);
@@ -778,14 +784,12 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
             String white = "  ";
             String br = "<br />";
             sb.append("<html>")
-                    .append("玩家: ").append(playerNode.getPlayer()).append(white)
-                    .append("状态: ").append(playerNode.getStatus() ? "正常" : "入狱").append(br)
-                    .append("位置: ").append(0).append(white)
-                    .append("名称: ").append("起点 ").append(br)
-                    .append("现金: ").append(playerNode.getCash()).append(white)
-                    .append("资产: ").append(playerNode.getProperty()).append(br)
+                    .append(playerNode.getPlayer()).append(white).append(playerNode.getStatus() ? "正常" : "入狱").append(br)
+                    .append(0).append(white).append("起点 ").append(br)
+                    .append(playerNode.getCash()).append(white).append("/").append(playerNode.getProperty()).append(br)
                     .append("</html>");
             tipsLabel = new JLabel(sb.toString());
+            tipsLabel.setFont(font);
             panel.add(tipsLabel);
             player.setTipsLabel(tipsLabel);
             userListPanel.add(panel);
@@ -847,26 +851,32 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
         JPanel positionPanel = new JPanel();
         positionPanel.setBorder(new LineBorder(position.getColor(), 1));
         positionPanel.setBackground(new Color(0x2B, 0x2B, 0x2B));
-        positionPanel.setPreferredSize(new Dimension(100, 70));
+        int positionPanelWidth = 50;
+        positionPanel.setPreferredSize(new Dimension(positionPanelWidth, 40));
         positionPanel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
         JLabel nameLabel = new JLabel();
         nameLabel.setText(String.format("地皮:%s", position.getName()));
         nameLabel.setForeground(position.getColor());
-        nameLabel.setPreferredSize(new Dimension(100, 15));
+        nameLabel.setPreferredSize(new Dimension(positionPanelWidth, 13));
+        nameLabel.setFont(font);
 
         JLabel levelLabel = new JLabel();
-        levelLabel.setText("等级: " + CalcUtil.calcPositionLevel(position).toString());
+        Integer level = CalcUtil.calcPositionLevel(position);
+        Integer toll = CalcUtil.calcPositionToll(position);
+        levelLabel.setText(String.format("等级%s/¥ %d", level, toll));
         levelLabel.setForeground(position.getColor());
-        levelLabel.setPreferredSize(new Dimension(100, 15));
+        levelLabel.setPreferredSize(new Dimension(positionPanelWidth, 13));
+        levelLabel.setFont(font);
 
-        JLabel tollLabel = new JLabel();
-        tollLabel.setText("过路费: " + CalcUtil.calcPositionToll(position).toString());
-        tollLabel.setForeground(position.getColor());
-        tollLabel.setPreferredSize(new Dimension(100, 15));
+        //JLabel tollLabel = new JLabel();
+        //tollLabel.setText("过路费: " + CalcUtil.calcPositionToll(position).toString());
+        //tollLabel.setForeground(position.getColor());
+        //tollLabel.setPreferredSize(new Dimension(positionPanelWidth, 13));
+        //tollLabel.setFont(font);
 
-        positionPanel.setToolTipText(position.getName());
-        addAll(positionPanel, nameLabel, levelLabel, tollLabel);
+        positionPanel.setToolTipText(String.format("地皮:%s,等级%d,过路费%d", position.getName(), level, toll));
+        addAll(positionPanel, nameLabel, levelLabel);
         return positionPanel;
     }
 
@@ -889,7 +899,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
      * 刷新窗口模式
      */
     private void flushWindowMode() {
-        int width = 490;
+        int width = 390;
         int topWidth = 200;
         if (windowMode == WindowMode.ADAPTIVE) {
             // 重置卡牌宽度
@@ -1291,8 +1301,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
             }
         } else {
             sendRefreshTipsMsg(currentPlayer.getPlayer(), "玩家当前回合休息一轮");
-            currentPlayer = currentPlayer.getNextPlayer();
-            sendRefreshTipsMsg(currentPlayer.getPlayer(), "玩家回合开始");
+            sendMsg(PASS, playerNode.getPlayer(), null);
         }
     }
 
