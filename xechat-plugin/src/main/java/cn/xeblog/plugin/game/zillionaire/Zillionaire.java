@@ -20,6 +20,7 @@ import cn.xeblog.plugin.game.zillionaire.dto.PlayerNode;
 import cn.xeblog.plugin.game.zillionaire.enums.GameMode;
 import cn.xeblog.plugin.game.zillionaire.enums.MsgType;
 import cn.xeblog.plugin.game.zillionaire.enums.WindowMode;
+import cn.xeblog.plugin.game.zillionaire.ui.PlayerUI;
 import cn.xeblog.plugin.game.zillionaire.ui.PositionUi;
 import cn.xeblog.plugin.game.zillionaire.utils.CalcUtil;
 import cn.xeblog.plugin.game.zillionaire.utils.ZillionaireUtil;
@@ -554,9 +555,14 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
         mainPanel.add(mainTopPanel, BorderLayout.NORTH);
         mainPanel.add(panel, BorderLayout.CENTER);
         mainPanel.add(mainBottomPanel, BorderLayout.SOUTH);
-        mainPanel.add(initUserPanel(), BorderLayout.EAST);
+        //mainPanel.add(initUserPanel(), BorderLayout.EAST);
+        mainPanel.add(initUserPanelUI(), BorderLayout.EAST);
         mainPanel.updateUI();
-
+        if (isHomeowner()) {
+            playerMap.forEach((k, player) -> {
+                player.refreshTips(positionMap.get(0));
+            });
+        }
     }
 
     private void alertGameMessage(String str) {
@@ -852,15 +858,36 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
             String white = "  ";
             String br = "<br />";
             sb.append("<html>")
-                    .append(playerNode.getPlayer()).append(white).append(playerNode.getStatus() ? "正常" : "入狱").append(br)
-                    .append(0).append(white).append("起点 ").append(br)
-                    .append(playerNode.getCash()).append(white).append("/").append(playerNode.getProperty()).append(br)
+                    .append("玩家: ").append(playerNode.getPlayer()).append(white)
+                    .append("状态: ").append(playerNode.getStatus() ? "正常" : "休息").append(br)
+                    .append("位置: ").append(playerNode.getPosition()).append(white)
+                    .append("名称: ").append(positionMap.get(playerNode.getPosition()).getName()).append(br)
+                    .append("现金: ").append(playerNode.getCash()).append(white)
+                    .append("资产: ").append(playerNode.getProperty()).append(br)
                     .append("</html>");
             tipsLabel = new JLabel(sb.toString());
             tipsLabel.setFont(font);
             panel.add(tipsLabel);
             player.setTipsLabel(tipsLabel);
             userListPanel.add(panel);
+        }
+        userListPanel.updateUI();
+        initBtnStatus();
+        return userListPanel;
+    }
+
+    private JPanel initUserPanelUI(){
+        userListPanel.removeAll();
+        userListPanel.setLayout(new GridLayout(userList.size(), 1));
+        PlayerUI playerUI = null;
+        for (String username : playerMap.keySet()) {
+            Player player = playerMap.get(username);
+            playerUI = new PlayerUI(player.getPlayerNode(), positionMap.get(0));
+            player.setPlayerUI(playerUI);
+            JPanel playerPanel = playerUI.getPlayerPanel();
+            playerPanel.setLayout(new GridLayout(3,1));
+            playerPanel.setMaximumSize(new Dimension(100, 80));
+            userListPanel.add(playerPanel);
         }
         userListPanel.updateUI();
         initBtnStatus();
@@ -1235,7 +1262,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
     /**
      * 升级建筑
      *
-     * @param body  游戏消息实体类
+     * @param body 游戏消息实体类
      */
     private void upgradeBuilding(MonopolyGameDto body) {
         String playerName = body.getPlayer();
@@ -1364,7 +1391,6 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
 
     /**
      * 切换玩家
-     *
      */
     private void pass() {
         if (null != currentPlayer) {
@@ -1409,7 +1435,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
     /**
      * 支付给其他游戏钱
      *
-     * @param body  发送的游戏消息
+     * @param body 发送的游戏消息
      */
     @SuppressWarnings("all")
     private void payToOthers(MonopolyGameDto body) {
@@ -1716,7 +1742,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
     /**
      * 免费升级一个建筑
      *
-     * @param players   玩家集合
+     * @param players 玩家集合
      */
     private void freeNewBuilding(List<Player> players) {
         List<String> playerNameList = getPlayerNamesByPlayersAndAddToTemp(players);
@@ -1783,7 +1809,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
     /**
      * 拆除建筑
      *
-     * @param players   玩家集合
+     * @param players 玩家集合
      */
     private void pullDownBuilding(List<Player> players) {
         List<String> playerNameList = getPlayerNamesByPlayersAndAddToTemp(players);
@@ -1920,7 +1946,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
     /**
      * 税务
      *
-     * @param body  发送的游戏消息
+     * @param body 发送的游戏消息
      */
     private void tax(MonopolyGameDto body) {
         Integer actionId = body.getActionId();
@@ -1934,7 +1960,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
     /**
      * 刷新提示
      *
-     * @param body  游戏消息
+     * @param body 游戏消息
      */
     private void refreshTips(MonopolyGameDto body) {
         refreshTips(String.valueOf(body.getData()));
@@ -1950,7 +1976,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
     /**
      * 加入人机玩家
      *
-     * @param body        消息体
+     * @param body 消息体
      */
     private void joinRobots(MonopolyGameDto body) {
         List<String> robotList = (List<String>) body.getData();

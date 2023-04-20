@@ -1,6 +1,7 @@
 package cn.xeblog.plugin.game.zillionaire.dto;
 
 import cn.xeblog.commons.entity.game.zillionaire.dto.PositionDto;
+import cn.xeblog.plugin.game.zillionaire.ui.PlayerUI;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -30,24 +31,19 @@ public class Player {
      */
     private JLabel tipsLabel;
 
+    private PlayerUI playerUI;
+
+
+
     public Player(PlayerNode playerNode, JPanel panel) {
         this.playerNode = playerNode;
         this.panel = panel;
     }
 
-    public void showTips(String tips) {
-        tipsLabel.setText(tips);
-        tipsLabel.updateUI();
-    }
-
-    public void refreshTips() {
-        tipsLabel.setText(getTipsString(null));
-        tipsLabel.updateUI();
-    }
-
     public void refreshTips(PositionDto position) {
-        tipsLabel.setText(getTipsString(position));
-        tipsLabel.updateUI();
+        //tipsLabel.setText(getTipsString(position));
+        //tipsLabel.updateUI();
+        playerUI.refreshPosition(playerNode, position);
     }
 
     public void refreshTips(Map<Integer, PositionDto> positionMap) {
