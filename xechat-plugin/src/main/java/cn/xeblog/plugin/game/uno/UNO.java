@@ -6,6 +6,7 @@ import cn.xeblog.commons.entity.User;
 import cn.xeblog.commons.entity.game.GameDTO;
 import cn.xeblog.commons.entity.game.GameRoom;
 import cn.xeblog.commons.entity.game.uno.Card;
+import cn.xeblog.commons.entity.game.uno.MsgType;
 import cn.xeblog.commons.enums.Game;
 import cn.xeblog.commons.util.ThreadUtils;
 import cn.xeblog.plugin.action.GameAction;
@@ -16,7 +17,7 @@ import cn.xeblog.plugin.game.uno.action.AiPlayerAction;
 import cn.xeblog.plugin.game.uno.action.PlayerAction;
 import cn.xeblog.plugin.game.uno.entity.Player;
 import cn.xeblog.plugin.game.uno.entity.PlayerNode;
-import cn.xeblog.plugin.game.uno.entity.UNOGameDto;
+import cn.xeblog.commons.entity.game.uno.UNOGameDto;
 import cn.xeblog.plugin.game.uno.enums.*;
 import cn.xeblog.plugin.game.uno.ui.CardPanel;
 import cn.xeblog.plugin.game.uno.utils.CalcUtil;
@@ -35,7 +36,7 @@ import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static cn.xeblog.plugin.game.uno.enums.MsgType.*;
+import static cn.xeblog.commons.entity.game.uno.MsgType.*;
 
 
 /**
@@ -1251,7 +1252,6 @@ public class UNO extends AbstractGame<UNOGameDto> {
         dto.setPlayerName(player);
         dto.setData(data);
         dto.setActionId(action);
-        dto.setCurrentPlayer(currentPlayer);
         sendMsg(dto);
     }
 

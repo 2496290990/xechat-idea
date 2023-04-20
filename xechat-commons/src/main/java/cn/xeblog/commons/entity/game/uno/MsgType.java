@@ -1,4 +1,4 @@
-package cn.xeblog.plugin.game.uno.enums;
+package cn.xeblog.commons.entity.game.uno;
 
 public enum MsgType {
     /**

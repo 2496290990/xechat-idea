@@ -1,7 +1,6 @@
-package cn.xeblog.plugin.game.uno.entity;
+package cn.xeblog.commons.entity.game.uno;
 
 import cn.xeblog.commons.entity.game.GameDTO;
-import cn.xeblog.plugin.game.uno.enums.MsgType;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -32,6 +31,4 @@ public class UNOGameDto extends GameDTO {
      * 行动id
      */
     private Integer actionId;
-
-    private PlayerNode currentPlayer;
 }
