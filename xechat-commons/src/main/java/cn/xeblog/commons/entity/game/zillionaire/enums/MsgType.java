@@ -1,4 +1,4 @@
-package cn.xeblog.plugin.game.zillionaire.enums;
+package cn.xeblog.commons.entity.game.zillionaire.enums;
 
 /**
  * @author eleven

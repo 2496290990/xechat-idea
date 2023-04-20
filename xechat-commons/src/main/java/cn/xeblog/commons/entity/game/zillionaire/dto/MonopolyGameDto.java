@@ -1,7 +1,7 @@
-package cn.xeblog.plugin.game.zillionaire.dto;
+package cn.xeblog.commons.entity.game.zillionaire.dto;
 
 import cn.xeblog.commons.entity.game.GameDTO;
-import cn.xeblog.plugin.game.zillionaire.enums.MsgType;
+import cn.xeblog.commons.entity.game.zillionaire.enums.MsgType;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -22,11 +22,6 @@ public class MonopolyGameDto extends GameDTO {
      * 玩家名称
      */
     private String player;
-
-    /**
-     * 当前玩家
-     */
-    private PlayerNode currentPlayer;
 
     /**
      * 动作id

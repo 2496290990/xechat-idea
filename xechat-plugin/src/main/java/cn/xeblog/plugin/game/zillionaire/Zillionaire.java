@@ -4,7 +4,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.xeblog.commons.entity.User;
-import cn.xeblog.commons.entity.game.GameDTO;
 import cn.xeblog.commons.entity.game.GameRoom;
 import cn.xeblog.commons.entity.game.zillionaire.dto.*;
 import cn.xeblog.commons.enums.Game;
@@ -13,14 +12,13 @@ import cn.xeblog.plugin.action.GameAction;
 import cn.xeblog.plugin.annotation.DoGame;
 import cn.xeblog.plugin.cache.DataCache;
 import cn.xeblog.plugin.game.AbstractGame;
-import cn.xeblog.plugin.game.landlords.LandlordsGame;
 import cn.xeblog.plugin.game.zillionaire.action.AiPlayerAction;
 import cn.xeblog.plugin.game.zillionaire.action.PlayerAction;
-import cn.xeblog.plugin.game.zillionaire.dto.MonopolyGameDto;
+import cn.xeblog.commons.entity.game.zillionaire.dto.MonopolyGameDto;
 import cn.xeblog.plugin.game.zillionaire.dto.Player;
 import cn.xeblog.plugin.game.zillionaire.dto.PlayerNode;
 import cn.xeblog.plugin.game.zillionaire.enums.GameMode;
-import cn.xeblog.plugin.game.zillionaire.enums.MsgType;
+import cn.xeblog.commons.entity.game.zillionaire.enums.MsgType;
 import cn.xeblog.plugin.game.zillionaire.enums.WindowMode;
 import cn.xeblog.plugin.game.zillionaire.ui.PlayerUI;
 import cn.xeblog.plugin.game.zillionaire.ui.PositionUi;
@@ -42,7 +40,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import static cn.xeblog.plugin.game.zillionaire.enums.MsgType.*;
+import static cn.xeblog.commons.entity.game.zillionaire.enums.MsgType.*;
 
 
 /**
@@ -126,14 +124,6 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
      */
     private PlayerNode currentPlayer;
 
-    /**
-     * 玩家的建筑
-     */
-    private List<? extends PositionDto> userPosition;
-    /**
-     * 已选中的地皮
-     */
-    private List<? extends PositionDto> selectedPosition;
     /**
      * 玩家键值对
      */
@@ -307,8 +297,6 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
         userList = new ArrayList<>();
         aiPlayerActionMap = new HashMap<>();
         userListPanel = new JPanel();
-        userPosition = new ArrayList<>();
-        selectedPosition = new ArrayList<>();
         positionMainPanel = new JPanel();
         outJailLicence = null;
         tempPlayerList = new ArrayList<>();
@@ -397,11 +385,13 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
         if (isHomeowner()) {
             int usersTotal = userList.size();
             // 指定最少三名玩家游玩
-            int roomUsers = 6;
+            int roomUsers = 3;
             GameRoom room = this.getRoom();
             if (null != room) {
                 roomUsers = room.getNums();
             }
+            // 最少三名玩家
+            roomUsers = Math.max(roomUsers, 3);
             int nums = roomUsers - usersTotal;
             invoke(() -> {
                 if (nums > 0) {
@@ -432,14 +422,6 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
         buildPlayerNode();
         showGamePanel();
         status = 1;
-        showTips("请等待...");
-
-        if (userList.size() < 2) {
-            showTips("正在加入机器人...");
-        } else {
-            showTips("等待开始...");
-        }
-
         if (gameRoom == null) {
             allPlayersGameStarted();
         }
@@ -561,9 +543,9 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
         mainPanel.add(initUserPanelUI(), BorderLayout.EAST);
         mainPanel.updateUI();
         if (isHomeowner()) {
-            playerMap.forEach((k, player) -> {
-                player.refreshTips(positionMap.get(0));
-            });
+            refreshBtnStatus(true,false, false, false, false, false);
+        } else {
+            refreshBtnStatus(false,false, false, false, false, false);
         }
     }
 
@@ -633,7 +615,9 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
         centerPanel.setLayout(new GridLayout(4, 1));
         JPanel textPanel = new JPanel();
         //textPanel.setPreferredSize(new Dimension(300, 80));
-        tipsArea = new JTextArea("游戏开始\n");
+        tipsArea = new JTextArea();
+        tipsArea.append("游戏开始\n");
+        tipsArea.append(String.format("当前操作玩家%s\n", currentPlayer.getPlayer()));
         tipsArea.setRows(10);
         tipsArea.setColumns(50);
         tipsArea.setLineWrap(true);
@@ -1106,7 +1090,6 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
         } catch (NullPointerException e) {
             log.error("发生错误, - {}", body);
         }
-        body.setCurrentPlayer(playerNode);
 
         switch (body.getMsgType()) {
             case JOIN_ROBOTS:
@@ -1551,7 +1534,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
             case 11:
                 // 捐200元再转转盘行动一次
                 if (playerNode.getCash() > 200) {
-                    int dialog = JOptionPane.showConfirmDialog(null, "是否话费200元重新投掷一次", "游戏提示", JOptionPane.OK_CANCEL_OPTION);
+                    int dialog = JOptionPane.showConfirmDialog(null, "是否花费200元重新投掷一次", "游戏提示", JOptionPane.OK_CANCEL_OPTION);
                     if (dialog == JOptionPane.YES_OPTION) {
                         sendMsg(DICE_ROLL, playerNode.getPlayer(), RandomUtil.randomInt(2, 12));
                     }
@@ -2162,16 +2145,10 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
         dto.setPlayer(player);
         dto.setData(data);
         dto.setActionId(action);
-        dto.setCurrentPlayer(currentPlayer);
-        sendMsg(dto);
-    }
-
-    @Override
-    protected void sendMsg(GameDTO body) {
         if (getRoom() != null) {
-            super.sendMsg(body);
+            sendMsg(dto);
         }
-        invoke(() -> handle((MonopolyGameDto) body));
+        invoke(() -> handle(dto));
     }
 
     /**
@@ -2196,8 +2173,6 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
             status = 4;
             String msg = "游戏结束！" + player.getUsername() + "逃跑了~";
             String tips = "溜了~";
-
-
             showTips(msg);
             Player leftPlayer = playerMap.get(player.getUsername());
             gameOverButton.setVisible(true);
