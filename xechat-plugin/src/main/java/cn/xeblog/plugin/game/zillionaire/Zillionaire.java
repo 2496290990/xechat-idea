@@ -3,6 +3,7 @@ package cn.xeblog.plugin.game.zillionaire;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.xeblog.commons.entity.User;
 import cn.xeblog.commons.entity.game.GameDTO;
 import cn.xeblog.commons.entity.game.GameRoom;
 import cn.xeblog.commons.entity.game.zillionaire.dto.*;
@@ -12,6 +13,7 @@ import cn.xeblog.plugin.action.GameAction;
 import cn.xeblog.plugin.annotation.DoGame;
 import cn.xeblog.plugin.cache.DataCache;
 import cn.xeblog.plugin.game.AbstractGame;
+import cn.xeblog.plugin.game.landlords.LandlordsGame;
 import cn.xeblog.plugin.game.zillionaire.action.AiPlayerAction;
 import cn.xeblog.plugin.game.zillionaire.action.PlayerAction;
 import cn.xeblog.plugin.game.zillionaire.dto.MonopolyGameDto;
@@ -2184,6 +2186,21 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
         }
         for (Component component : child) {
             parent.add(component);
+        }
+    }
+
+    @Override
+    public void playerLeft(User player) {
+        super.playerLeft(player);
+        if (status > 0 && status < 4) {
+            status = 4;
+            String msg = "游戏结束！" + player.getUsername() + "逃跑了~";
+            String tips = "溜了~";
+
+
+            showTips(msg);
+            Player leftPlayer = playerMap.get(player.getUsername());
+            gameOverButton.setVisible(true);
         }
     }
 }
