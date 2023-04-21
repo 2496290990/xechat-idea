@@ -310,14 +310,14 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
         // 获取当前玩家
         Player player = playerMap.get(nickname);
         PlayerNode playerNode = player.getPlayerNode();
-        boolean actionFlag = StrUtil.equalsIgnoreCase(nickname, currentPlayer.getPlayer());
+        boolean actionFlag = StrUtil.equalsIgnoreCase(nickname, homeOwnerName());
         // 检测玩家是否有售出地皮
         List<PositionDto> collect = playerNode.getPositions().stream()
                 .filter(item -> !item.getPositionStatus())
                 .collect(Collectors.toList());
         long count = collect.size();
         // 当前点位是否有拥有者
-        refreshBtnStatus(actionFlag, false, false, true, count > 0, false);
+        refreshBtnStatus(actionFlag, false, false, false, count > 0, false);
     }
 
     /**
@@ -333,13 +333,20 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
     private void refreshBtnStatus(Boolean randomBtnStatus, Boolean buyBtnStatus, Boolean buildBtnStatus,
                                   Boolean saleBtnStatus, Boolean redemptionBtnStatus, Boolean passBtnStatus) {
         // 如果当前玩家是操作玩家的话
-        if (StrUtil.equalsIgnoreCase(GameAction.getNickname(), currentPlayer.getPlayer())) {
+        if (currentPlayer != null && StrUtil.equalsIgnoreCase(GameAction.getNickname(), currentPlayer.getPlayer())) {
             randomBtn.setEnabled(null == randomBtnStatus ? randomBtn.isEnabled() : randomBtnStatus);
             buyBtn.setEnabled(null == buyBtnStatus ? buyBtn.isEnabled() : buyBtnStatus);
             buildBtn.setEnabled(null == buildBtnStatus ? buildBtn.isEnabled() : buildBtnStatus);
             saleBtn.setEnabled(null == saleBtnStatus ? saleBtn.isEnabled() : saleBtnStatus);
             redemptionBtn.setEnabled(null == redemptionBtnStatus ? redemptionBtn.isEnabled() : redemptionBtnStatus);
             passBtn.setEnabled(null == passBtnStatus ? passBtn.isEnabled() : passBtnStatus);
+        } else {
+            randomBtn.setEnabled(false);
+            buyBtn.setEnabled(false);
+            buildBtn.setEnabled(false);
+            saleBtn.setEnabled(false);
+            redemptionBtn.setEnabled(false);
+            passBtn.setEnabled(false);
         }
     }
 
@@ -391,7 +398,6 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
                 roomUsers = room.getNums();
             }
             // 最少三名玩家
-            roomUsers = Math.max(roomUsers, 3);
             int nums = roomUsers - usersTotal;
             invoke(() -> {
                 if (nums > 0) {
@@ -610,14 +616,18 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
         jPanel.setLayout(new GridLayout(9, 1));
         initPositionUi(jPanel, 31, 40, true);
     }
-
+    private String homeOwnerName(){
+        return currentPlayer == null ?
+                GameAction.getAction().getRoom().getHomeowner().getUsername() :
+                currentPlayer.getPlayer();
+    }
     private void initPlayAreaCenterPanel(JPanel centerPanel) {
         centerPanel.setLayout(new GridLayout(4, 1));
         JPanel textPanel = new JPanel();
         //textPanel.setPreferredSize(new Dimension(300, 80));
         tipsArea = new JTextArea();
         tipsArea.append("游戏开始\n");
-        tipsArea.append(String.format("当前操作玩家%s\n", currentPlayer.getPlayer()));
+        tipsArea.append(String.format("当前操作玩家%s\n", homeOwnerName()));
         tipsArea.setRows(10);
         tipsArea.setColumns(50);
         tipsArea.setLineWrap(true);
@@ -1010,8 +1020,8 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
             node.setPlayer(roomUserList.get(i));
             node.setAlias("Machine 0" + (i + 1));
             playerMap.put(node.getPlayer(), new Player(node, new JPanel()));
-
-            if (GameAction.getNickname().equals(node.getPlayer())) {
+            // 固定房主是第一名玩家
+            if (StrUtil.equalsIgnoreCase(homeOwnerName(), node.getPlayer())) {
                 currentPlayer = node;
                 helpPlayerAction = new AiPlayerAction(currentPlayer);
             }
