@@ -32,3 +32,4 @@ build
 *.iml
 *.ipr
 */rebel.xml
+/xechat-plugin/out/
