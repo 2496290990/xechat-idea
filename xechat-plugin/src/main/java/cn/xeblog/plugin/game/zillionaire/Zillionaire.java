@@ -6,6 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.xeblog.commons.entity.User;
 import cn.xeblog.commons.entity.game.GameRoom;
 import cn.xeblog.commons.entity.game.zillionaire.dto.*;
+import cn.xeblog.commons.entity.game.zillionaire.enums.MsgType;
 import cn.xeblog.commons.enums.Game;
 import cn.xeblog.commons.util.ThreadUtils;
 import cn.xeblog.plugin.action.GameAction;
@@ -14,11 +15,9 @@ import cn.xeblog.plugin.cache.DataCache;
 import cn.xeblog.plugin.game.AbstractGame;
 import cn.xeblog.plugin.game.zillionaire.action.AiPlayerAction;
 import cn.xeblog.plugin.game.zillionaire.action.PlayerAction;
-import cn.xeblog.commons.entity.game.zillionaire.dto.MonopolyGameDto;
 import cn.xeblog.plugin.game.zillionaire.dto.Player;
 import cn.xeblog.plugin.game.zillionaire.dto.PlayerNode;
 import cn.xeblog.plugin.game.zillionaire.enums.GameMode;
-import cn.xeblog.commons.entity.game.zillionaire.enums.MsgType;
 import cn.xeblog.plugin.game.zillionaire.enums.WindowMode;
 import cn.xeblog.plugin.game.zillionaire.ui.PlayerUI;
 import cn.xeblog.plugin.game.zillionaire.ui.PositionUi;
@@ -899,9 +898,8 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
         PlayerNode playerNode = player.getPlayerNode();
         PlayerAction playerAction = aiPlayerActionMap.get(currentPlayer.getPlayer());
         boolean robotControl = isHomeowner() && playerAction != null;
-        boolean actionFlag = StrUtil.equalsIgnoreCase(playerNode.getPlayer(), currentPlayer.getPlayer());
         // 当前是活动玩家并且非机器人
-        if (actionFlag && !robotControl) {
+        if (isActionPlayer() && !robotControl) {
             // 清空原来的所用数据
             positionMainPanel.removeAll();
             List<PositionDto> positionRefreshList = CalcUtil.getUserPositionRefreshList(playerNode);
@@ -1118,10 +1116,10 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
                 gameOver();
                 break;
             case CHANCE:
-                randomChance(playerName, player, playerNode);
+                randomChance(body);
                 break;
             case DESTINY:
-                randomDestiny(playerName, player, playerNode);
+                randomDestiny(body);
                 break;
             case TO_JAIL:
                 toJail(playerName, player, playerNode);
@@ -1473,23 +1471,19 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
     /**
      * 随机机会卡片
      *
-     * @param playerName 玩家名称
-     * @param player     玩家
-     * @param playerNode 玩家节点
+     * @param body 游戏消息
      */
-    private void randomChance(String playerName, Player player, PlayerNode playerNode) {
-        List<LuckEntity> chanceCards = ZillionaireUtil.chanceCards;
-        Collections.shuffle(chanceCards);
-        LuckEntity chanceCard;
-        if (StrUtil.isNotBlank(outJailLicence)) {
-            // 如果有人有出狱许可证的话则不允许随机到出狱许可证
-            do {
-                chanceCard = RandomUtil.randomEle(chanceCards);
-            } while (chanceCard.getId() != 2);
-        } else {
-            chanceCard = RandomUtil.randomEle(chanceCards);
+    private void randomChance(MonopolyGameDto body) {
+        // 获取机会卡牌
+        LuckEntity chanceCard = (LuckEntity) body.getData();
+        String playerName = body.getPlayer();
+        Player player = playerMap.get(playerName);
+        PlayerNode playerNode = null;
+        try {
+            playerNode = player.getPlayerNode();
+        } catch (NullPointerException e) {
+            log.error("发生错误, - {}", body);
         }
-        sendRefreshTipsMsg(playerName, "【机会】 %s,%s", chanceCard.getTitle(), chanceCard.getAction());
         switch (chanceCard.getId()) {
             case 0:
                 // 玩家得600元
@@ -1623,15 +1617,19 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
     /**
      * 随机命运卡
      *
-     * @param playerName 玩家名称
-     * @param player     玩家
-     * @param playerNode 玩家节点
+     * @param body 游戏消息
      */
-    private void randomDestiny(String playerName, Player player, PlayerNode playerNode) {
-        List<LuckEntity> destinyCards = ZillionaireUtil.destinyCards;
-        Collections.shuffle(destinyCards);
-        LuckEntity destinyCard = RandomUtil.randomEle(destinyCards);
-        sendRefreshTipsMsg(playerName, "【命运】%s,%s", destinyCard.getTitle(), destinyCard.getAction());
+    private void randomDestiny(MonopolyGameDto body) {
+        // 获取机会卡牌
+        LuckEntity destinyCard = (LuckEntity) body.getData();
+        String playerName = body.getPlayer();
+        Player player = playerMap.get(playerName);
+        PlayerNode playerNode = null;
+        try {
+            playerNode = player.getPlayerNode();
+        } catch (NullPointerException e) {
+            log.error("发生错误, - {}", body);
+        }
         switch (destinyCard.getId()) {
             case 0:
                 // 从巴黎直达伦敦 过起点的话领2000
@@ -2009,6 +2007,8 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
         Boolean robotControl = isHomeowner() && playerAction != null;
         // 如果当前点位允许购买并且当前没有拥有者
         String owner = position.getOwner();
+        // 是否当前操作玩家
+        Boolean actionFlag = isActionPlayer();
         if (robotControl) {
             if (StrUtil.isBlank(owner) && position.getAllowBuy()) {
                 ThreadUtils.spinMoment(aiThinkingTime);
@@ -2027,7 +2027,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
                     sendMsg(UPGRADE_BUILDING, currentPlayer.getPlayer(), position);
                 }
             }
-        } else {
+        } else if (actionFlag){
             refreshBtnStatus(randomBtn, false);
             // 当前玩家操作释放通过按钮
             if (StrUtil.equalsIgnoreCase(playerName, currentPlayer.getPlayer())) {
@@ -2064,12 +2064,27 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
                 sendMsg(TAX, playerName, 39, null);
             }
             // 机会
-            if (StrUtil.equalsIgnoreCase("机会", name)) {
-                sendMsg(CHANCE, playerName, null);
+            if (StrUtil.equalsIgnoreCase("机会", name) && actionFlag) {
+                List<LuckEntity> chanceCards = ZillionaireUtil.chanceCards;
+                Collections.shuffle(chanceCards);
+                LuckEntity chanceCard;
+                if (StrUtil.isNotBlank(outJailLicence)) {
+                    // 如果有人有出狱许可证的话则不允许随机到出狱许可证
+                    do {
+                        chanceCard = RandomUtil.randomEle(chanceCards);
+                    } while (chanceCard.getId() != 2);
+                } else {
+                    chanceCard = RandomUtil.randomEle(chanceCards);
+                }
+                sendRefreshTipsMsg(playerName, "【机会】 %s,%s", chanceCard.getTitle(), chanceCard.getAction());
+                sendMsg(CHANCE, playerName, chanceCard);
             }
             // 命运
-            if (StrUtil.equalsIgnoreCase("命运", name)) {
-                sendMsg(DESTINY, playerName, null);
+            if (StrUtil.equalsIgnoreCase("命运", name) && actionFlag) {
+                List<LuckEntity> destinyCards = ZillionaireUtil.destinyCards;
+                Collections.shuffle(destinyCards);
+                LuckEntity destinyCard =  RandomUtil.randomEle(destinyCards);;
+                sendMsg(DESTINY, playerName, destinyCard);
             }
             // 入狱
             if (positionIndex == 30 && StrUtil.equalsIgnoreCase("入狱", name)) {
@@ -2187,5 +2202,18 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
             Player leftPlayer = playerMap.get(player.getUsername());
             gameOverButton.setVisible(true);
         }
+    }
+
+    /**
+     * 获取是否是活动玩家
+     * 如果当前的currentPlayer为空的话默认返回false
+     * 否则判断当前玩家昵称是否与currentPlayer的昵称一直
+     * @return Boolean 是否是活动玩家
+     */
+    private Boolean isActionPlayer(){
+        if (null == currentPlayer) {
+            return false;
+        }
+        return StrUtil.equalsIgnoreCase(currentPlayer.getPlayer(), GameAction.getNickname());
     }
 }
