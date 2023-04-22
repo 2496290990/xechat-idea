@@ -1347,11 +1347,13 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
         String playerName = body.getPlayer();
         Player player = playerMap.get(playerName);
         PlayerNode playerNode = player.getPlayerNode();
+        Integer playerCash = playerNode.getCash();
+        Integer playerProerty = playerNode.getProperty();
         subPlayerCash(player, playerNode, toll);
         sendRefreshTipsMsg(owner, "【%s】 获得 【%s】 缴纳的过路费 %d", owner, playerNode.getPlayer(), toll);
         Integer ownerCash = ownerPlayerNode.getCash();
         Integer property = ownerPlayerNode.getProperty();
-        sendRefreshPropertyTipsMsg(playerName, ownerCash, ownerCash + toll, property, property + toll);
+        sendRefreshPropertyTipsMsg(playerName, playerCash, playerCash - toll, playerProerty, playerProerty - toll);
         sendRefreshPropertyTipsMsg(owner, ownerCash, ownerCash + toll, property, property + toll);
         ownerPlayerNode.upgradeCashAndProperty(toll, toll, true);
         ownerPlayer.setPlayerNode(ownerPlayerNode);
