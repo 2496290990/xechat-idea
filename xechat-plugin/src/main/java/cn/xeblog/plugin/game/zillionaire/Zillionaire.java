@@ -615,9 +615,14 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
         jPanel.setLayout(new GridLayout(9, 1));
         initPositionUi(jPanel, 31, 40, true);
     }
+
     private String homeOwnerName(){
+        GameRoom room = getRoom();
+        if (null == room) {
+            return GameAction.getNickname();
+        }
         return currentPlayer == null ?
-                GameAction.getAction().getRoom().getHomeowner().getUsername() :
+                room.getHomeowner().getUsername() :
                 currentPlayer.getPlayer();
     }
     private void initPlayAreaCenterPanel(JPanel centerPanel) {
