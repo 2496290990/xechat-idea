@@ -78,6 +78,7 @@ public class CalcUtil {
         }
 
         if (position instanceof StationDto) {
+            // 车站站点的话返回玩家有多少个车站
             return ((StationDto) position).getLevel();
         }
 
@@ -136,7 +137,6 @@ public class CalcUtil {
         // 重置地皮集合
         List<PositionDto> positions = playerNode.getPositions();
         positions.add(position);
-        playerNode.setPositions(positions);
 
         if (position instanceof CityDto) {
             List<CityDto> cities = playerNode.getCities();
@@ -147,7 +147,14 @@ public class CalcUtil {
         if (position instanceof StationDto) {
             List<StationDto> stations = playerNode.getStations();
             stations.add((StationDto)position);
+            // 给车站升级
+            stations.forEach(item -> item.setLevel(stations.size()));
             playerNode.setStations(stations);
+            positions.forEach(item -> {
+                if (item instanceof StationDto) {
+                    ((StationDto) item).setLevel(stations.size());
+                }
+            });
         }
 
         if (position instanceof CompanyDto) {
@@ -155,6 +162,7 @@ public class CalcUtil {
             companies.add((CompanyDto)position);
             playerNode.setCompanies(companies);
         }
+        playerNode.setPositions(positions);
         player.setPlayerNode(playerNode);
         return player;
     }

@@ -697,6 +697,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
                 // 如果不是免费升级的话
                 sendMsg(UPGRADE_BUILDING, playerNode.getPlayer(), playerNode.getPosition());
             }
+            refreshBtnStatus(buildBtn, false);
         });
 
         buyBtn.addActionListener(e -> {
@@ -779,6 +780,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
                 // 售卖公司和车站
                 sendMsg(PULL_DOWN, nickname, 2, position);
             }
+            refreshBtnStatus(saleBtn, false);
         });
 
         redemptionBtn.addActionListener(e -> {
@@ -801,6 +803,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
                 return;
             }
             sendMsg(BUY_POSITION, nickname, 1, position);
+            refreshBtnStatus(redemptionBtn, false);
         });
         passBtn.addActionListener(e -> {
             Player player = playerMap.get(nickname);
@@ -961,6 +964,12 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
         positionPanel.setToolTipText(String.format("地皮:%s,等级%d,过路费%d", position.getName(), level, toll));
         addAll(positionPanel, nameLabel, levelLabel);
         return positionPanel;
+    }
+
+    private PlayerNode getCurrentHostPlayerNode(){
+        String nickname = GameAction.getNickname();
+        Player player = playerMap.get(nickname);
+        return player.getPlayerNode();
     }
 
     /**
