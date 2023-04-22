@@ -750,7 +750,10 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
                     alertGameMessage("请选择一块有房屋的地区点位");
                 }
             } else {
-
+                if (getCurrentHostPlayerNode().getCash() > 0) {
+                    alertGameMessage("当前玩家不存在欠款，不允许售卖");
+                    return;
+                }
                 // 当前选中的是地区， 需要考虑房子的问题
                 if (choosePosition instanceof CityDto) {
                     CityDto city = (CityDto) choosePosition;
@@ -780,6 +783,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
                 // 售卖公司和车站
                 sendMsg(PULL_DOWN, nickname, 2, position);
             }
+
             refreshBtnStatus(saleBtn, false);
         });
 
@@ -1385,6 +1389,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
                 property,
                 player.getPlayerNode().getProperty());
         playerMap.put(playerName, player);
+        player.refreshTips(positionMap);
         // 如果是当前玩家在玩的话刷新当前
         if (StrUtil.equalsIgnoreCase(playerNode.getPlayer(), currentPlayer.getPlayer())) {
             refreshPositions(player);
