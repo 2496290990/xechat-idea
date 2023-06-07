@@ -1081,8 +1081,11 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
             String join = String.join(",", tempPlayerList);
             refreshTips(String.format("%s 玩家正在重新投掷骰子，请等待", join));
         }
-
         String playerName = body.getPlayer();
+        // 如果是AI控制的话增加0.5S考虑时间
+        if (robotController(playerName)) {
+            ThreadUtils.spinMoment(500);
+        }
         Player player = playerMap.get(playerName);
         PlayerNode playerNode = null;
         try {

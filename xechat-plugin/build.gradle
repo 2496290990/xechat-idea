@@ -25,8 +25,8 @@ ext {
 }
 
 dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.12'
-    compile "cn.xeblog:xechat-commons:$rootProject.xechatCommonsVersion"
+    testImplementation  group: 'junit', name: 'junit', version: '4.12'
+    implementation "cn.xeblog:xechat-commons:$rootProject.xechatCommonsVersion"
     compileOnly "org.projectlombok:lombok:$rootProject.lombokVersion"
     annotationProcessor "org.projectlombok:lombok:$rootProject.lombokVersion"
     testCompileOnly "org.projectlombok:lombok:$rootProject.lombokVersion"
