@@ -1,10 +1,12 @@
 package cn.xeblog.plugin.game.zillionaire.ui;
 
+import cn.hutool.core.util.RandomUtil;
 import cn.xeblog.commons.entity.game.zillionaire.dto.PositionDto;
 import cn.xeblog.plugin.game.zillionaire.dto.PlayerNode;
 import lombok.Getter;
 
 import javax.swing.*;
+import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.util.Map;
 
@@ -31,9 +33,16 @@ public class PlayerUI {
      */
     public PlayerUI(PlayerNode playerNode, PositionDto position) {
         playerPanel.setMaximumSize(new Dimension(100, 80));
+        playerPanel.setBorder(new LineBorder(randomColor(), 1));
         userLabel.setText(formatStr("【%s】 %s", playerNode.getPlayer(), getPlayerStatusStr(playerNode.getStatus())));
         positionLabel.setText(formatStr("【%d】 %s", position.getPosition(), position.getName()));
         cashLabel.setText(formatStr("现金: %d 资产:%d", playerNode.getCash(), playerNode.getProperty()));
+    }
+    private Color randomColor(){
+        return new Color(getRandomRgb(), getRandomRgb(), getRandomRgb());
+    }
+    private Integer getRandomRgb(){
+        return RandomUtil.randomInt(0,255);
     }
 
     /**
