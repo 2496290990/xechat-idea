@@ -2107,7 +2107,7 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto> {
             if (StrUtil.equalsIgnoreCase("命运", name) && actionFlag) {
                 List<LuckEntity> destinyCards = ZillionaireUtil.destinyCards;
                 Collections.shuffle(destinyCards);
-                LuckEntity destinyCard =  RandomUtil.randomEle(destinyCards);;
+                LuckEntity destinyCard =  RandomUtil.randomEle(destinyCards);
                 sendMsg(DESTINY, playerName, destinyCard);
             }
             // 入狱
