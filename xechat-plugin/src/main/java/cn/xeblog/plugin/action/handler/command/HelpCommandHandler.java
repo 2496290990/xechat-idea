@@ -30,6 +30,10 @@ public class HelpCommandHandler extends AbstractCommandHandler {
         ConsoleAction.atomicExec(() -> {
             ConsoleAction.showSimpleMsg(" 命令列表 & 触发命令前缀 " + Command.COMMAND_PREFIX);
             ConsoleAction.renderText(textRenderList);
+            ConsoleAction.renderText("误入充电鸭鱼塘 怎么切换？\n");
+            ConsoleAction.renderText("#exit 退出\n");
+            ConsoleAction.renderText("#showServer 查询服务列表\n");
+            ConsoleAction.renderText("#login {昵称} -s 0\n");
             ConsoleAction.renderText(" --------------\n ");
             ConsoleAction.renderUrl("[开源]", "https://github.com/anlingyi/xechat-idea");
             ConsoleAction.renderText("  ");

@@ -16,7 +16,7 @@
     },
     {
         "name": "充电鸭",
-        "ip": "127.0.0.1",
+        "ip": "chargeduck.lesscoding.net",
         "port": 1024
     }
 ]
