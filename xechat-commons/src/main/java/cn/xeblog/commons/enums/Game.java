@@ -19,10 +19,9 @@ public enum Game {
     SUDOKU("数独", false),
     PUSH_BOX("推箱子", false),
     CHINESE_CHESS("中国象棋", false),
-    /** 大富翁 */
-    ZILLIONAIRE("大富翁", true),
-    /** UNO */
-    UNO("UNO", true);
+    TETRIS("俄罗斯方块", false),
+    MINESWEEPER("扫雷", false),
+    ;
 
     /**
      * 游戏名称

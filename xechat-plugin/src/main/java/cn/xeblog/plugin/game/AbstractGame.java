@@ -33,6 +33,7 @@ import java.util.List;
  */
 public abstract class AbstractGame<T extends GameDTO> extends AbstractPanelComponent implements GameRoomEventHandler {
 
+    private JPanel gameRoomPanel;
     private JPanel gameUserPanel;
     private JPanel onlineUserListPanel;
     private JButton startGameButton;
@@ -61,6 +62,7 @@ public abstract class AbstractGame<T extends GameDTO> extends AbstractPanelCompo
 
     protected final void startGame() {
         start();
+        flush();
         ConsoleAction.gotoConsoleLow(true);
     }
 
@@ -223,10 +225,17 @@ public abstract class AbstractGame<T extends GameDTO> extends AbstractPanelCompo
     }
 
     protected void showGameRoomPanel() {
-        mainPanel.removeAll();
-        mainPanel.setVisible(true);
-        mainPanel.setLayout(null);
-        mainPanel.setMinimumSize(new Dimension(300, 200));
+        boolean init = false;
+        gameRoomPanel = getComponent();
+        if (gameRoomPanel == null) {
+            init = true;
+            gameRoomPanel = new JPanel();
+        }
+
+        gameRoomPanel.removeAll();
+        gameRoomPanel.setVisible(true);
+        gameRoomPanel.setLayout(null);
+        gameRoomPanel.setMinimumSize(new Dimension(300, 200));
 
         Box mainVBox = Box.createVerticalBox();
         JPanel panel = new JPanel();
@@ -342,8 +351,12 @@ public abstract class AbstractGame<T extends GameDTO> extends AbstractPanelCompo
         mainVBox.add(vBox2);
         panel.add(mainVBox);
 
-        mainPanel.add(panel);
-        mainPanel.updateUI();
+        gameRoomPanel.add(panel);
+        gameRoomPanel.updateUI();
+
+        if (init) {
+            showMainPanel(gameRoomPanel);
+        }
     }
 
     private int getUserStatusOrder(UserStatus status) {
@@ -549,5 +562,8 @@ public abstract class AbstractGame<T extends GameDTO> extends AbstractPanelCompo
     public void playerGameStarted(User user) {
         gameRoomHandler.playerGameStarted(user);
     }
+
+    @Override
+    protected abstract JPanel getComponent();
 
 }
