@@ -48,6 +48,8 @@ import static cn.xeblog.commons.entity.game.uno.MsgType.*;
 @Slf4j
 public class UNO extends AbstractGame<UNOGameDto> {
 
+    private JPanel mainPanel;
+
     /**
      * 游戏模式
      */
@@ -270,6 +272,11 @@ public class UNO extends AbstractGame<UNOGameDto> {
             gameOverButton.setVisible(true);
         }
         // TODO: 2023/4/18 玩家离开
+    }
+
+    @Override
+    protected JPanel getComponent() {
+        return mainPanel;
     }
 
     /**
@@ -552,6 +559,9 @@ public class UNO extends AbstractGame<UNOGameDto> {
 
     @Override
     protected void init() {
+        if (mainPanel == null) {
+            mainPanel = new JPanel();
+        }
         mainPanel.removeAll();
         mainPanel.setLayout(null);
         mainPanel.setEnabled(true);

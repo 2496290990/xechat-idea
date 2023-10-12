@@ -46,9 +46,11 @@ import static cn.xeblog.plugin.game.zillionaire.enums.MsgType.*;
  * @date 2023/3/20 11:20
  * @apiNote  大富翁
  */
-@DoGame(Game.ZILLIONAIRE)
+@DoGame(Game.MONOPOLY)
 @Slf4j
 public class Zillionaire extends AbstractGame<MonopolyGameDto>{
+
+    private JPanel mainPanel;
     public static WindowMode windowMode;
 
     /** 开始 */
@@ -180,6 +182,9 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
     }
 
     private void initStartPanel() {
+        if (mainPanel == null) {
+            mainPanel = new JPanel();
+        }
         mainPanel.removeAll();
         mainPanel.setLayout(null);
         mainPanel.setEnabled(true);
@@ -1998,6 +2003,11 @@ public class Zillionaire extends AbstractGame<MonopolyGameDto>{
             super.sendMsg(body);
         }
         invoke(() -> handle((MonopolyGameDto) body));
+    }
+
+    @Override
+    protected JPanel getComponent() {
+        return mainPanel;
     }
 
     /**
