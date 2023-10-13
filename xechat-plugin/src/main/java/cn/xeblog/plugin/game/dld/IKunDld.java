@@ -12,11 +12,14 @@ import cn.xeblog.plugin.game.AbstractGame;
 import cn.xeblog.plugin.game.dld.model.dto.PlayerDto;
 import cn.xeblog.plugin.game.dld.model.vo.PlayerVo;
 import cn.xeblog.plugin.game.dld.utils.HttpSendUtil;
-import cn.xeblog.plugin.game.dld.utils.RecordsUtil;
+import cn.xeblog.plugin.game.dld.utils.ResultUtil;
 import cn.xeblog.plugin.util.AlertMessagesUtil;
 import com.google.gson.Gson;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTabbedPane;
+import com.intellij.ui.components.JBTextArea;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,6 +33,7 @@ import java.util.List;
  * @apiNote
  */
 @DoGame(Game.IKUN)
+@Slf4j
 public class IKunDld extends AbstractGame {
 
     /**
@@ -40,6 +44,10 @@ public class IKunDld extends AbstractGame {
     private JPanel uiPanel = null;
 
     private JTabbedPane loginTab = new JBTabbedPane();
+
+    private JTextArea processTextArea = new JBTextArea();
+
+    private JBScrollPane processScroll = new JBScrollPane(processTextArea);
 
     private JComboBox loginTypeComboBox = null;
 
@@ -162,30 +170,42 @@ public class IKunDld extends AbstractGame {
         uiPanel.removeAll();
         PlayerDto dto = new PlayerDto(new Page<PlayerVo>());
         Page beforePage = HttpSendUtil.postResult(Const.PLAYER_GET_ALL, dto, Page.class);
-        Page<PlayerVo> page = RecordsUtil.convertData(beforePage, PlayerVo.class);
+        Page<PlayerVo> page = ResultUtil.convertPageData(beforePage, PlayerVo.class);
         List<PlayerVo> records = page.getRecords();
-        uiPanel.setLayout(new GridLayout(records.size() + 2, 1));
+        uiPanel.setLayout(new GridLayout(3, 1));
         uiPanel.add(getTitleLabel());
+        JPanel listPanel = new JPanel(new GridLayout(records.size(), 1));
+        processScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        processScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
         JPanel playerPanel = null;
         JButton battleBtn = null;
+        JLabel playerInfoLabel = null;
         for (PlayerVo record : records) {
             playerPanel = new JPanel();
-            playerPanel.add(new JLabel(String.format("%d [%s][Lv %d][%s]",
-                    records.indexOf(record) + 1 ,
+            playerInfoLabel = new JLabel(String.format("%d [%s][Lv %d][%s]",
+                    records.indexOf(record) + 1,
                     record.getRegion(),
                     record.getLevel(),
                     record.getNickname()
-                    )));
+            ));
+            playerInfoLabel.setHorizontalAlignment(SwingConstants.LEFT);
+            playerPanel.add(playerInfoLabel, BorderLayout.WEST);
 
             if (!StrUtil.equalsIgnoreCase(record.getMac(), currentUser.getUuid())) {
                 battleBtn = new JButton("战斗");
-                playerPanel.add(battleBtn);
+                playerPanel.add(battleBtn, BorderLayout.EAST);
                 battleBtn.addActionListener(e -> {
-                    AlertMessagesUtil.showInfoDialog(GAME_NAME, String.format("还没做，但是你和%s打架了", record.getNickname()));
+                    Result processResult = HttpSendUtil.post(Const.BATTLE_DO, List.class);
+                    log.info("当前返回类型的 {}", processResult.getData().getClass());
+                    log.info("当前过程 {}", gson.toJson(processResult));
                 });
             }
-            uiPanel.add(playerPanel);
+            listPanel.add(playerPanel);
         }
+        JScrollPane playerScroll = new JBScrollPane(listPanel);
+        playerScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        playerScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+        uiPanel.add(playerScroll);
         uiPanel.updateUI();
         mainPanel.updateUI();
     }

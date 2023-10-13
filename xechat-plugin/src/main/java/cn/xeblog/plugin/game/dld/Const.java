@@ -19,6 +19,10 @@ public class Const {
      */
     public static final String PLAYER_CONTROLLER = BASE_URL + "/player";
     /**
+     * 战斗控制器
+     */
+    public static final String BATTLE_CONTROLLER = BASE_URL + "/battle";
+    /**
      * 登录
      */
     public static final String SYS_LOGIN = SYS_CONTROLLER + "/login";
@@ -30,6 +34,12 @@ public class Const {
      * 获取所有玩家
      */
     public static final String PLAYER_GET_ALL = PLAYER_CONTROLLER + "/getAll";
+    /**
+     * 战斗
+     */
+    public static final String BATTLE_DO = BATTLE_CONTROLLER + "/doBattle";
+
+
 
 
 }

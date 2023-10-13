@@ -16,4 +16,18 @@ import lombok.NoArgsConstructor;
 public class PlayerDto {
     private Page page;
 
+    private Integer accountPlayerId;
+
+    /**
+     * 网卡地址
+     */
+    private String mac;
+
+    public PlayerDto(String mac) {
+        this.mac = mac;
+    }
+
+    public PlayerDto(Page page) {
+        this.page = page;
+    }
 }

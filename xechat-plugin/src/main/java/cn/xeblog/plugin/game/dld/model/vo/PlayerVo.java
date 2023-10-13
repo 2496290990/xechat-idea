@@ -22,6 +22,10 @@ public class PlayerVo {
      */
     private Integer accountId;
     /**
+     * 网卡地址
+     */
+    private String mac;
+    /**
      * 昵称
      */
     private String nickname;
@@ -33,9 +37,5 @@ public class PlayerVo {
      * 省份
      */
     private String region;
-    /**
-     * mac地址
-     */
-    private String mac;
 
 }
