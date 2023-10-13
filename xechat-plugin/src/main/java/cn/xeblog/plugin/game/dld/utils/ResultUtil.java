@@ -3,6 +3,7 @@ package cn.xeblog.plugin.game.dld.utils;
 import cn.hutool.core.bean.BeanUtil;
 import cn.xeblog.plugin.game.dld.model.Result;
 import cn.xeblog.plugin.game.dld.model.common.Page;
+import com.google.gson.Gson;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,19 +15,25 @@ import java.util.Map;
  * @apiNote
  */
 public class ResultUtil {
+    private static Gson gson = new Gson();
+
     public static <T> Page<T> convertPageData(Page page, Class<T> cls) {
-        List records = page.getRecords();
+        List<Map> records = page.getRecords();
         List<T> convertList = new ArrayList<>(records.size());
-        for (Object record : records) {
-            convertList.add(BeanUtil.mapToBean((Map) record, cls, true));
+        for (Map record : records) {
+            convertList.add(BeanUtil.mapToBean(record, cls, true));
         }
         page.setRecords(convertList);
         return page;
     }
 
     public static <T> List<T> convertListData(Result dataResult, Class<T> cls) {
-        List data = (List) dataResult.getData();
-        return data;
+        List<Map> data = (List) dataResult.getData();
+        List<T> result = new ArrayList<>(data.size());
+        for (Map item : data) {
+            result.add(BeanUtil.mapToBean(item, cls, true));
+        }
+        return result;
     }
 
 }

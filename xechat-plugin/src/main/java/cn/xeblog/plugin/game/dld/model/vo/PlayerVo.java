@@ -38,4 +38,9 @@ public class PlayerVo {
      */
     private String region;
 
+    private Boolean canBattle;
+
+    public Boolean getCanBattle() {
+        return canBattle == null ? false : canBattle;
+    }
 }

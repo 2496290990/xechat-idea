@@ -7,10 +7,12 @@ import cn.xeblog.plugin.annotation.DoGame;
 import cn.xeblog.plugin.cache.DataCache;
 import cn.xeblog.plugin.game.dld.model.Result;
 import cn.xeblog.plugin.game.dld.model.common.Page;
+import cn.xeblog.plugin.game.dld.model.dto.BattleDto;
 import cn.xeblog.plugin.game.dld.model.dto.LoginDto;
 import cn.xeblog.plugin.game.AbstractGame;
 import cn.xeblog.plugin.game.dld.model.dto.PlayerDto;
 import cn.xeblog.plugin.game.dld.model.vo.PlayerVo;
+import cn.xeblog.plugin.game.dld.model.vo.ProcessVo;
 import cn.xeblog.plugin.game.dld.utils.HttpSendUtil;
 import cn.xeblog.plugin.game.dld.utils.ResultUtil;
 import cn.xeblog.plugin.util.AlertMessagesUtil;
@@ -180,6 +182,7 @@ public class IKunDld extends AbstractGame {
         JPanel playerPanel = null;
         JButton battleBtn = null;
         JLabel playerInfoLabel = null;
+        processTextArea.append("展示数据");
         for (PlayerVo record : records) {
             playerPanel = new JPanel();
             playerInfoLabel = new JLabel(String.format("%d [%s][Lv %d][%s]",
@@ -195,9 +198,10 @@ public class IKunDld extends AbstractGame {
                 battleBtn = new JButton("战斗");
                 playerPanel.add(battleBtn, BorderLayout.EAST);
                 battleBtn.addActionListener(e -> {
-                    Result processResult = HttpSendUtil.post(Const.BATTLE_DO, List.class);
-                    log.info("当前返回类型的 {}", processResult.getData().getClass());
-                    log.info("当前过程 {}", gson.toJson(processResult));
+                    Result processResult = HttpSendUtil.post(Const.BATTLE_DO, new BattleDto(currentUser.getUuid(), record.getMac()));
+                    List<ProcessVo> list = ResultUtil.convertListData(processResult, ProcessVo.class);
+                    list.forEach(System.out::println);
+                    list.forEach(item -> processTextArea.append(String.format("%s \n", item.getProcess())));
                 });
             }
             listPanel.add(playerPanel);
@@ -206,6 +210,7 @@ public class IKunDld extends AbstractGame {
         playerScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         playerScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
         uiPanel.add(playerScroll);
+        uiPanel.add(processScroll);
         uiPanel.updateUI();
         mainPanel.updateUI();
     }
@@ -213,6 +218,7 @@ public class IKunDld extends AbstractGame {
 
     @Override
     protected void init() {
+        log.info("当前初始化游戏面板");
         initPanel();
         mainPanel.setMinimumSize(new Dimension(150, 200));
         JPanel startPanel = new JPanel();
@@ -225,6 +231,7 @@ public class IKunDld extends AbstractGame {
         vBox.add(getStartGameButton());
         vBox.add(getExitButton());
         mainPanel.updateUI();
+        log.info("初始化完成");
     }
 
     private JLabel getTitleLabel() {
