@@ -86,6 +86,8 @@ public class DataCache {
      */
     public static BrowserConfig browserConfig = new BrowserConfig();
 
+    public static String loginToken = null;
+
     /**
      * 获取用户信息
      *

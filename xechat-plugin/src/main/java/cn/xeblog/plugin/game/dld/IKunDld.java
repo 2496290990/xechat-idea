@@ -1,9 +1,20 @@
 package cn.xeblog.plugin.game.dld;
 
+import cn.hutool.core.util.StrUtil;
+import cn.xeblog.commons.entity.User;
 import cn.xeblog.commons.enums.Game;
 import cn.xeblog.plugin.annotation.DoGame;
+import cn.xeblog.plugin.cache.DataCache;
+import cn.xeblog.plugin.game.dld.model.Result;
+import cn.xeblog.plugin.game.dld.model.common.Page;
+import cn.xeblog.plugin.game.dld.model.dto.LoginDto;
 import cn.xeblog.plugin.game.AbstractGame;
+import cn.xeblog.plugin.game.dld.model.dto.PlayerDto;
+import cn.xeblog.plugin.game.dld.model.vo.PlayerVo;
+import cn.xeblog.plugin.game.dld.utils.HttpSendUtil;
+import cn.xeblog.plugin.game.dld.utils.RecordsUtil;
 import cn.xeblog.plugin.util.AlertMessagesUtil;
+import com.google.gson.Gson;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.components.JBTabbedPane;
 
@@ -11,6 +22,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 
 /**
  * @author eleven
@@ -25,15 +37,22 @@ public class IKunDld extends AbstractGame {
      */
     private JPanel mainPanel;
 
+    private JPanel uiPanel = null;
+
     private JTabbedPane loginTab = new JBTabbedPane();
 
     private JComboBox loginTypeComboBox = null;
 
     private Integer loginType = 0;
     private static final String GAME_NAME = "爱坤大乐斗";
+
+    private Gson gson = new Gson();
+
+    private User currentUser = DataCache.getCurrentUser();
     @Override
     protected void start() {
         initPanel();
+        uiPanel = new JPanel();
         int width = 240;
         int height = 300;
         mainPanel.setMinimumSize(new Dimension(width + 10, height + 10));
@@ -48,21 +67,20 @@ public class IKunDld extends AbstractGame {
     }
 
     private JPanel loginPanel() {
-        JPanel loginPanel = new JPanel();
-        loginPanel.setLayout(new GridLayout(4,1));
+        uiPanel.setLayout(new GridLayout(4,1));
         String[] loginTypeArr=  {
                 "MAC自动登录",
                 "账号密码登录",
                 "邮箱验证码登录"
         };
         loginTypeComboBox = new ComboBox(loginTypeArr);
-        loginPanel.add(getTitleLabel());
+        uiPanel.add(getTitleLabel());
         JPanel typePanel = new JPanel();
         typePanel.add(new JLabel("登录类型："));
         typePanel.add(loginTypeComboBox);
-        loginPanel.add(typePanel);
+        uiPanel.add(typePanel);
         JPanel textPanel = new JPanel(new GridLayout(2,2));
-        JPanel btnPanel = new JPanel(new GridLayout(1,3));
+        JPanel btnPanel = new JPanel(new FlowLayout());
         JButton loginBtn = new JButton("登录");
         JButton regBtn = new JButton("注册");
         JButton verifyBtn = new JButton("获取验证码");
@@ -100,14 +118,79 @@ public class IKunDld extends AbstractGame {
                 }
                 textPanel.add(accountPanel);
                 textPanel.add(pwdPanel);
-                loginPanel.updateUI();
+                uiPanel.updateUI();
                 btnPanel.updateUI();
             }
         });
-        loginPanel.add(textPanel);
-        loginPanel.add(btnPanel);
-        return loginPanel;
+        uiPanel.add(textPanel);
+        uiPanel.add(btnPanel);
+
+        loginBtn.addActionListener(e -> {
+            LoginDto dto = null;
+            switch (loginType) {
+                case 0:
+
+                    if ((StrUtil.isBlank(currentUser.getUuid()))) {
+                        AlertMessagesUtil.showErrorDialog(GAME_NAME, "当前未登录插件，请选择其他方式登录");
+                        break;
+                    }
+                    dto = LoginDto.macLogin();
+                    break;
+                case 1:
+                case 2:
+                    AlertMessagesUtil.showInfoDialog(GAME_NAME, "当前类型未实现");
+                    break;
+                default:
+                    AlertMessagesUtil.showErrorDialog(GAME_NAME, "登录类型异常");
+                    break;
+            }
+            if (dto != null) {
+                Result loginResult = HttpSendUtil.post(Const.SYS_LOGIN, dto);
+                AlertMessagesUtil.showInfoDialog(GAME_NAME, gson.toJson(loginResult));
+                if (loginResult.getCode() == 200 ) {
+                    DataCache.loginToken = String.format("Bearer %s", loginResult.getData().toString());
+                    initGamePanel();
+                } else {
+                    AlertMessagesUtil.showErrorDialog(GAME_NAME, loginResult.getMessage());
+                }
+            }
+        });
+        return uiPanel;
     }
+
+    private void initGamePanel() {
+        uiPanel.removeAll();
+        PlayerDto dto = new PlayerDto(new Page<PlayerVo>());
+        Page beforePage = HttpSendUtil.postResult(Const.PLAYER_GET_ALL, dto, Page.class);
+        Page<PlayerVo> page = RecordsUtil.convertData(beforePage, PlayerVo.class);
+        List<PlayerVo> records = page.getRecords();
+        uiPanel.setLayout(new GridLayout(records.size() + 2, 1));
+        uiPanel.add(getTitleLabel());
+        JPanel playerPanel = null;
+        JButton battleBtn = null;
+        for (PlayerVo record : records) {
+            playerPanel = new JPanel();
+            playerPanel.add(new JLabel(String.format("%d [%s][Lv %d][%s]",
+                    records.indexOf(record) + 1 ,
+                    record.getRegion(),
+                    record.getLevel(),
+                    record.getNickname()
+                    )));
+
+            if (!StrUtil.equalsIgnoreCase(record.getMac(), currentUser.getUuid())) {
+                battleBtn = new JButton("战斗");
+                playerPanel.add(battleBtn);
+                battleBtn.addActionListener(e -> {
+                    AlertMessagesUtil.showInfoDialog(GAME_NAME, String.format("还没做，但是你和%s打架了", record.getNickname()));
+                });
+            }
+            uiPanel.add(playerPanel);
+        }
+        uiPanel.updateUI();
+        mainPanel.updateUI();
+    }
+
+
     @Override
     protected void init() {
         initPanel();

@@ -9,17 +9,27 @@ public class Const {
     /**
      * 基础url
      */
-    private static final String BASE_URL = "http://localhost:9529/dld";
+    public static final String BASE_URL = "http://localhost:9528/dld";
     /**
      * 系统控制器
      */
-    private static final String SYS_CONTROLLER = "/sys";
+    public static final String SYS_CONTROLLER = BASE_URL + "/sys";
+    /**
+     * 玩家控制器
+     */
+    public static final String PLAYER_CONTROLLER = BASE_URL + "/player";
     /**
      * 登录
      */
-    private static final String SYS_LOGIN = SYS_CONTROLLER + "/login";
+    public static final String SYS_LOGIN = SYS_CONTROLLER + "/login";
     /**
      * 注册接口
      */
-    private static final String SYS_REG = SYS_CONTROLLER + "/register";
+    public static final String SYS_REG = SYS_CONTROLLER + "/register";
+    /**
+     * 获取所有玩家
+     */
+    public static final String PLAYER_GET_ALL = PLAYER_CONTROLLER + "/getAll";
+
+
 }
