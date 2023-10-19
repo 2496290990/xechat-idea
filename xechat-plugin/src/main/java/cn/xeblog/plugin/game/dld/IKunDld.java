@@ -25,8 +25,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 
 /**
@@ -59,6 +57,7 @@ public class IKunDld extends AbstractGame {
     private Gson gson = new Gson();
 
     private User currentUser = DataCache.getCurrentUser();
+
     @Override
     protected void start() {
         initPanel();
@@ -101,36 +100,33 @@ public class IKunDld extends AbstractGame {
         JPanel pwdPanel = new JPanel(new GridLayout(1,2));
         JTextField accountText = new JTextField();
         JTextField pwdText = new JTextField();
-        loginTypeComboBox.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                loginType = loginTypeComboBox.getSelectedIndex();
-                textPanel.removeAll();
-                accountPanel.removeAll();
-                pwdPanel.removeAll();
-                switch (loginType) {
-                    case 1:
-                        accountPanel.add(new JLabel("账号："));
-                        accountPanel.add(accountText);
-                        pwdPanel.add(new JLabel("密码："));
-                        pwdPanel.add(pwdText);
+        loginTypeComboBox.addActionListener(e -> {
+            loginType = loginTypeComboBox.getSelectedIndex();
+            textPanel.removeAll();
+            accountPanel.removeAll();
+            pwdPanel.removeAll();
+            switch (loginType) {
+                case 1:
+                    accountPanel.add(new JLabel("账号："));
+                    accountPanel.add(accountText);
+                    pwdPanel.add(new JLabel("密码："));
+                    pwdPanel.add(pwdText);
 
-                        break;
-                    case 2:
-                        accountPanel.add(new JLabel("邮箱："));
-                        accountPanel.add(accountText);
-                        pwdPanel.add(new JLabel("验证码"));
-                        pwdPanel.add(pwdText);
-                        btnPanel.add(verifyBtn);
-                        break;
-                    default:
-                        break;
-                }
-                textPanel.add(accountPanel);
-                textPanel.add(pwdPanel);
-                uiPanel.updateUI();
-                btnPanel.updateUI();
+                    break;
+                case 2:
+                    accountPanel.add(new JLabel("邮箱："));
+                    accountPanel.add(accountText);
+                    pwdPanel.add(new JLabel("验证码"));
+                    pwdPanel.add(pwdText);
+                    btnPanel.add(verifyBtn);
+                    break;
+                default:
+                    break;
             }
+            textPanel.add(accountPanel);
+            textPanel.add(pwdPanel);
+            uiPanel.updateUI();
+            btnPanel.updateUI();
         });
         uiPanel.add(textPanel);
         uiPanel.add(btnPanel);
@@ -139,8 +135,7 @@ public class IKunDld extends AbstractGame {
             LoginDto dto = null;
             switch (loginType) {
                 case 0:
-
-                    if ((StrUtil.isBlank(currentUser.getUuid()))) {
+                    if (null == currentUser || StrUtil.isBlank(currentUser.getUuid())) {
                         AlertMessagesUtil.showErrorDialog(GAME_NAME, "当前未登录插件，请选择其他方式登录");
                         break;
                     }
@@ -155,14 +150,19 @@ public class IKunDld extends AbstractGame {
                     break;
             }
             if (dto != null) {
-                Result loginResult = HttpSendUtil.post(Const.SYS_LOGIN, dto);
-                AlertMessagesUtil.showInfoDialog(GAME_NAME, gson.toJson(loginResult));
-                if (loginResult.getCode() == 200 ) {
-                    DataCache.loginToken = String.format("Bearer %s", loginResult.getData().toString());
-                    initGamePanel();
-                } else {
-                    AlertMessagesUtil.showErrorDialog(GAME_NAME, loginResult.getMessage());
-                }
+                LoginDto finalDto = dto;
+                invoke(() -> {
+                    log.info("当前开始执行登录流程");
+                    Result loginResult = HttpSendUtil.post(Const.SYS_LOGIN, finalDto);
+                    log.info("当前登录返回结果 -{}", loginResult);
+                    AlertMessagesUtil.showInfoDialog(GAME_NAME, gson.toJson(loginResult));
+                    if (loginResult.getCode() == 200 ) {
+                        DataCache.loginToken = String.format("Bearer %s", loginResult.getData().toString());
+                        initGamePanel();
+                    } else {
+                        AlertMessagesUtil.showErrorDialog(GAME_NAME, loginResult.getMessage());
+                    }
+                });
             }
         });
         return uiPanel;
@@ -198,10 +198,21 @@ public class IKunDld extends AbstractGame {
                 battleBtn = new JButton("战斗");
                 playerPanel.add(battleBtn, BorderLayout.EAST);
                 battleBtn.addActionListener(e -> {
-                    Result processResult = HttpSendUtil.post(Const.BATTLE_DO, new BattleDto(currentUser.getUuid(), record.getMac()));
-                    List<ProcessVo> list = ResultUtil.convertListData(processResult, ProcessVo.class);
-                    list.forEach(System.out::println);
-                    list.forEach(item -> processTextArea.append(String.format("%s \n", item.getProcess())));
+                    processTextArea.removeAll();
+                    processTextArea.append("展示数据");
+                    invoke(() -> {
+                        Result processResult = HttpSendUtil.post(Const.BATTLE_DO, new BattleDto(currentUser.getUuid(), record.getMac()));
+                        List<ProcessVo> list = ResultUtil.convertListData(processResult, ProcessVo.class);
+                        list.forEach(System.out::println);
+                        list.forEach(item -> {
+                            try {
+                                Thread.sleep(50);
+                            } catch (InterruptedException ex) {
+                                throw new RuntimeException(ex);
+                            }
+                            processTextArea.append(String.format("%s \n", item.getProcess()));
+                        });
+                    });
                 });
             }
             listPanel.add(playerPanel);
