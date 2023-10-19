@@ -22,7 +22,7 @@ public class Page<T> {
     public Page() {
         this.records = Collections.emptyList();
         this.total = 0L;
-        this.size = 10L;
+        this.size = 999L;
         this.current = 1L;
         this.orders = new ArrayList();
     }

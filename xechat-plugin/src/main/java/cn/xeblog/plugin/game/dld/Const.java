@@ -9,7 +9,7 @@ public class Const {
     /**
      * 基础url
      */
-    public static final String BASE_URL = "http://localhost:9528/dld";
+    public static final String BASE_URL = "http://lesscoding.net:9528/dld";
     /**
      * 系统控制器
      */
