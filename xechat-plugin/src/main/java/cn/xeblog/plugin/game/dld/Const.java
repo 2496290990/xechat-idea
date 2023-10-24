@@ -39,6 +39,7 @@ public class Const {
      */
     public static final String BATTLE_DO = BATTLE_CONTROLLER + "/doBattle";
 
+    public static final String GAME_NAME = "爱坤大乐斗";
 
 
 

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="cn.xeblog.plugin.game.dld.ui.login.MacLogin">
+  <grid id="27dc6" binding="macPanel" layout-manager="FlowLayout" hgap="5" vgap="5" flow-align="1">
+    <constraints>
+      <xy x="20" y="20" width="236" height="54"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <component id="43898" class="javax.swing.JButton" binding="loginBtn">
+        <constraints/>
+        <properties>
+          <horizontalAlignment value="0"/>
+          <horizontalTextPosition value="0"/>
+          <text value="登录"/>
+        </properties>
+      </component>
+    </children>
+  </grid>
+</form>

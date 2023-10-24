@@ -32,7 +32,7 @@ import java.util.List;
  * @date 2023/10/12 15:49
  * @apiNote
  */
-@DoGame(Game.IKUN)
+//@DoGame(Game.IKUN)
 @Slf4j
 public class IKunDld extends AbstractGame {
 
