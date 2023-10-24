@@ -8,9 +8,6 @@ import cn.xeblog.plugin.cache.DataCache;
 import cn.xeblog.plugin.game.AbstractGame;
 import cn.xeblog.plugin.game.dld.model.Result;
 import cn.xeblog.plugin.game.dld.model.dto.LoginDto;
-import cn.xeblog.plugin.game.dld.ui.IKunUi;
-import cn.xeblog.plugin.game.dld.ui.login.LoginFormUi;
-import cn.xeblog.plugin.game.dld.ui.login.MacLogin;
 import cn.xeblog.plugin.game.dld.utils.HttpSendUtil;
 import cn.xeblog.plugin.util.AlertMessagesUtil;
 import com.google.gson.Gson;
@@ -18,8 +15,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 import static cn.xeblog.plugin.game.dld.Const.GAME_NAME;
 
