@@ -20,9 +20,6 @@ public class PvpTab {
     private JLabel playerLabel;
 
     public PvpTab() {
-        clearBtn.addActionListener(e -> {
-            fightArea.removeAll();
-            fightArea.append("数据已清空");
-        });
+
     }
 }

@@ -11,6 +11,8 @@ public class Const {
      */
     public static final Integer ERROR_CODE = 500;
 
+    public static final String CLEAR_MSG = "粉身碎骨浑不怕，要留清白在人家";
+
     /**
      * 基础url
      */
