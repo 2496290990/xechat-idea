@@ -36,4 +36,5 @@ public class HttpSendUtil {
         log.info("当前返回的实体类 json字符串为 {}", dataJson);
         return gson.fromJson(dataJson, cls);
     }
+
 }

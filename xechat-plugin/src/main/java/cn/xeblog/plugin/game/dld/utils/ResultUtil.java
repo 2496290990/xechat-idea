@@ -36,4 +36,9 @@ public class ResultUtil {
         return result;
     }
 
+    public static <T> Page<T> convertPageData(Object data, Class<T> cls) {
+        Page page = gson.fromJson(gson.toJson(data), Page.class);
+        return convertPageData(page, cls);
+    }
+
 }

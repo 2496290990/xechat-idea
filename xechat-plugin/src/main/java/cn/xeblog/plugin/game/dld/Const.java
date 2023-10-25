@@ -7,6 +7,11 @@ package cn.xeblog.plugin.game.dld;
  */
 public class Const {
     /**
+     * 错误编码
+     */
+    public static final Integer ERROR_CODE = 500;
+
+    /**
      * 基础url
      */
     public static final String BASE_URL = "http://103.153.101.174:9528/dld";
