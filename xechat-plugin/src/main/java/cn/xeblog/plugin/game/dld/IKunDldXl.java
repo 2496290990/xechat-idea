@@ -1,6 +1,5 @@
 package cn.xeblog.plugin.game.dld;
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.xeblog.commons.entity.User;
 import cn.xeblog.commons.enums.Game;
@@ -33,8 +32,6 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.List;
 
@@ -359,7 +356,7 @@ public class IKunDldXl extends AbstractGame {
                             list.forEach(item -> {
                                 fightArea.append(String.format("%s \n", item.getProcess()));
                             });
-                            invoke(this::refreshPlayerList);
+                            refreshPlayerList();
                         });
                     });
                 }
