@@ -36,9 +36,16 @@ public class ResultUtil {
         return result;
     }
 
+    public static <T> T convertObjData(Result result, Class<T> cls) {
+        return convertObjData(result.getData(), cls);
+    }
+
+    public static <T> T convertObjData(Object data, Class<T> cls) {
+        return gson.fromJson(gson.toJson(data), cls);
+    }
+
     public static <T> Page<T> convertPageData(Object data, Class<T> cls) {
-        Page page = gson.fromJson(gson.toJson(data), Page.class);
-        return convertPageData(page, cls);
+        return convertPageData(convertObjData(data, Page.class), cls);
     }
 
 }

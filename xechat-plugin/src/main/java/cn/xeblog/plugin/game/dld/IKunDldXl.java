@@ -12,16 +12,19 @@ import cn.xeblog.plugin.game.dld.model.common.Page;
 import cn.xeblog.plugin.game.dld.model.dto.BattleDto;
 import cn.xeblog.plugin.game.dld.model.dto.LoginDto;
 import cn.xeblog.plugin.game.dld.model.dto.PlayerDto;
+import cn.xeblog.plugin.game.dld.model.vo.PlayerInfoVo;
 import cn.xeblog.plugin.game.dld.model.vo.PlayerVo;
 import cn.xeblog.plugin.game.dld.model.vo.ProcessVo;
 import cn.xeblog.plugin.game.dld.ui.IKunUi;
 import cn.xeblog.plugin.game.dld.ui.game.MasterGame;
+import cn.xeblog.plugin.game.dld.ui.game.PlayerInfoTab;
 import cn.xeblog.plugin.game.dld.ui.game.PvpTab;
 import cn.xeblog.plugin.game.dld.ui.login.LoginFormUi;
 import cn.xeblog.plugin.game.dld.ui.login.MacLogin;
 import cn.xeblog.plugin.game.dld.utils.HttpSendUtil;
 import cn.xeblog.plugin.game.dld.utils.ResultUtil;
 import cn.xeblog.plugin.util.AlertMessagesUtil;
+import cn.xeblog.plugin.util.NotifyUtils;
 import com.google.gson.Gson;
 import com.intellij.ui.components.panels.VerticalBox;
 import lombok.extern.slf4j.Slf4j;
@@ -77,6 +80,10 @@ public class IKunDldXl extends AbstractGame {
     private MacLogin macLogin;
 
     private MasterGame masterGame;
+
+    private PvpTab pvpTab;
+
+    private PlayerInfoTab playerInfoTab;
 
 
     private Gson gson = new Gson();
@@ -198,7 +205,6 @@ public class IKunDldXl extends AbstractGame {
         log.info("开始加载游戏主面板");
         masterGame = new MasterGame();
         tab = masterGame.getTab();
-        addTabChangeListener();
         loadPvpTab();
         JPanel gamePanel = masterGame.getGamePanel();
         Dimension maximumSize = new Dimension(400, 300);
@@ -214,6 +220,18 @@ public class IKunDldXl extends AbstractGame {
                     case 0:
                         loadPvpTab();
                         break;
+                    case 1:
+                        loadInstanceTab();
+                        break;
+                    case 2:
+                        loadPlayerInfoTab();
+                        break;
+                    case 3:
+                        loadPackageTab();
+                        break;
+                    case 4:
+                        loadBossTab();
+                        break;
                     default:
                         break;
                 }
@@ -221,10 +239,13 @@ public class IKunDldXl extends AbstractGame {
         });
     }
 
+    /**
+     * pvp Tab页
+     */
     private void loadPvpTab() {
         tab.setSelectedIndex(0);
         JPanel pvpPanel = masterGame.getPvpPanel();
-        PvpTab pvpTab = new PvpTab();
+        pvpTab = new PvpTab();
         playerArea = pvpTab.getPlayerArea();
         fightArea = pvpTab.getFightArea();
         JButton clearBtn = pvpTab.getClearBtn();
@@ -239,6 +260,55 @@ public class IKunDldXl extends AbstractGame {
         tab.updateUI();
     }
 
+    /**
+     * 副本tab
+     */
+    private void loadInstanceTab() {
+
+    }
+
+    /**
+     * 玩家信息
+     */
+    private void loadPlayerInfoTab() {
+        tab.setSelectedIndex(2);
+        JPanel playerPanel = masterGame.getPlayerPanel();
+        playerPanel.removeAll();
+        playerInfoTab = new PlayerInfoTab();
+        JLabel lvLabel = playerInfoTab.getLvLabel();
+        JProgressBar lvProgress = playerInfoTab.getLvProgress();
+        JScrollPane attrScroll = playerInfoTab.getAttrScroll();
+        invoke(() -> {
+            Result result = HttpSendUtil.post(Const.PLAYER_DETAIL, new PlayerDto());
+            if (Const.ERROR_CODE.equals(result.getCode())) {
+                NotifyUtils.error(GAME_NAME, result.toString(), false);
+            } else {
+                PlayerInfoVo playerInfoVo = ResultUtil.convertObjData(result, PlayerInfoVo.class);
+                String lvTips = String.format("%d/%d", playerInfoVo.getExp(), playerInfoVo.getNextLvExp());
+                lvLabel.setText(String.format("Lv:%d(%s)", playerInfoVo.getLevel(), lvTips));
+                lvProgress.setMaximum(playerInfoVo.getNextLvExp());
+                lvProgress.setValue(playerInfoVo.getExp());
+
+            }
+        });
+        playerPanel.add(playerInfoTab.getPlayerPanel(), BorderLayout.EAST);
+        updateUI(tab);
+    }
+
+    /**
+     * 背包
+     */
+    private void loadPackageTab() {
+
+    }
+
+    /**
+     * boss
+     */
+    private void loadBossTab() {
+
+    }
+
     private void updateUI(JComponent... panels){
         Arrays.asList(panels).forEach(JComponent::updateUI);
     }
@@ -248,8 +318,10 @@ public class IKunDldXl extends AbstractGame {
         Result result = HttpSendUtil.post(Const.PLAYER_GET_ALL, dto);
         Object data = result.getData();
         if (Const.ERROR_CODE.equals(result.getCode())) {
-            fightArea.setText(String.valueOf(data));
+            fightArea.setText(result.toString());
         } else {
+            // 防止出现战斗后列表紊乱的问题
+            playerArea.removeAll();
             Page<PlayerVo> playerPage = ResultUtil.convertPageData(data, PlayerVo.class);
             List<PlayerVo> records = playerPage.getRecords();
             JPanel playerPanel = null;
@@ -259,6 +331,10 @@ public class IKunDldXl extends AbstractGame {
             int size = records.size();
             log.info("当前人数{}", size);
             playerArea.setLayout(new GridLayout(size, 1));
+            long onlineCount = records.stream()
+                    .filter(PlayerVo::getOnline)
+                    .count();
+            pvpTab.getPlayerLabel().setText(String.format("玩家列表(%d/%d)", onlineCount, size));
             for (PlayerVo record : records) {
                 playerPanel = new JPanel();
                 playerInfoLabel = new JLabel(String.format("%d [%s][Lv %d][%s]",
@@ -267,6 +343,7 @@ public class IKunDldXl extends AbstractGame {
                         record.getLevel(),
                         record.getNickname()
                 ));
+                playerInfoLabel.setForeground(record.getOnline() ? Color.GREEN : Color.GRAY);
                 playerInfoLabel.setHorizontalAlignment(SwingConstants.LEFT);
                 playerPanel.add(playerInfoLabel, BorderLayout.CENTER);
 
@@ -280,14 +357,9 @@ public class IKunDldXl extends AbstractGame {
                             List<ProcessVo> list = ResultUtil.convertListData(processResult, ProcessVo.class);
                             list.forEach(System.out::println);
                             list.forEach(item -> {
-                                try {
-                                    Thread.sleep(50);
-                                } catch (InterruptedException ex) {
-                                    throw new RuntimeException(ex);
-                                }
                                 fightArea.append(String.format("%s \n", item.getProcess()));
                             });
-                            refreshPlayerList();
+                            invoke(this::refreshPlayerList);
                         });
                     });
                 }
@@ -310,17 +382,6 @@ public class IKunDldXl extends AbstractGame {
         centerPanel.updateUI();
     }
 
-    private void addTabChangeListener() {
-        tab.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                int selectedIndex = tab.getSelectedIndex();
-                AlertMessagesUtil.showInfoDialog(GAME_NAME, "当前选择项为：" + selectedIndex);
-            }
-        });
-    }
-
-
     private void loginByMac() {
         User currentUser = DataCache.getCurrentUser();
         if (currentUser == null || StrUtil.isBlank(currentUser.getUuid())) {
@@ -330,7 +391,7 @@ public class IKunDldXl extends AbstractGame {
         } else {
             LoginDto macLoginDto = LoginDto.macLogin();
             invoke(() -> {
-                log.info("当前开始执行登录流程");
+                log.info("当前开始执行登录流程 地址 {}", Const.SYS_LOGIN);
                 Result loginResult = HttpSendUtil.post(Const.SYS_LOGIN, macLoginDto);
                 log.info("当前登录返回结果 -{}", loginResult);
                 if (loginResult.getCode() == 200) {

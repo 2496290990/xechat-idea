@@ -19,4 +19,11 @@ public class Result<T> {
 
     private T data;
 
+    @Override
+    public String toString() {
+        return String.format("Result{\ncode=%d,\nmessage=%s\ndata=%s",
+                code,
+                message,
+                data);
+    }
 }

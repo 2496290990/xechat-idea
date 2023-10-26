@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 public class PlayerDto {
     private Page page;
 
-    private Integer accountPlayerId;
+    private Integer accountId;
 
     /**
      * 网卡地址

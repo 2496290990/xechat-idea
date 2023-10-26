@@ -40,6 +40,8 @@ public class PlayerVo {
 
     private Boolean canBattle;
 
+    private Boolean online;
+
     public Boolean getCanBattle() {
         return canBattle == null ? false : canBattle;
     }

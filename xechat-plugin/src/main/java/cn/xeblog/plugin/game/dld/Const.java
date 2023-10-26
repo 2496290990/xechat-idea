@@ -11,12 +11,13 @@ public class Const {
      */
     public static final Integer ERROR_CODE = 500;
 
-    public static final String CLEAR_MSG = "粉身碎骨浑不怕，要留清白在人家";
+    public static final String CLEAR_MSG = "青山湿遍君不知，一汪清水独自流";
 
     /**
      * 基础url
      */
-    public static final String BASE_URL = "http://103.153.101.174:9528/dld";
+    //public static final String BASE_URL = "http://103.153.101.174:9528/dld";
+    public static final String BASE_URL = "http://localhost:9528/dld";
     /**
      * 系统控制器
      */
@@ -41,6 +42,10 @@ public class Const {
      * 获取所有玩家
      */
     public static final String PLAYER_GET_ALL = PLAYER_CONTROLLER + "/getAll";
+    /**
+     * 玩家信息
+     */
+    public static final String PLAYER_DETAIL = PLAYER_CONTROLLER + "/detail";
     /**
      * 战斗
      */
