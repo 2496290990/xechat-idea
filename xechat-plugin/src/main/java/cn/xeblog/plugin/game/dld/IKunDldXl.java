@@ -69,6 +69,8 @@ public class IKunDldXl extends AbstractGame {
 
     private JPanel playerArea;
 
+    private final FlowLayout FLOW_LEFT_LAYOUT = new FlowLayout(FlowLayout.LEFT);
+
     //=====以下为各种UI=====
     private IKunUi iKunUi;
 
@@ -91,7 +93,7 @@ public class IKunDldXl extends AbstractGame {
         initLoginForm();
         centerPanel.removeAll();
         box = new VerticalBox();
-        box.setMaximumSize(new Dimension(400, 300));
+        box.setMaximumSize(new Dimension(600, 450));
         box.add(loginFormUi.getLoginPanel());
         centerPanel.add(box);
         centerPanel.updateUI();
@@ -204,7 +206,7 @@ public class IKunDldXl extends AbstractGame {
         tab = masterGame.getTab();
         loadPvpTab();
         JPanel gamePanel = masterGame.getGamePanel();
-        Dimension maximumSize = new Dimension(400, 300);
+        Dimension maximumSize = new Dimension(600, 450);
         tab.setPreferredSize(maximumSize);
         log.info("GameTabbed width {} ， height {}", tab.getWidth(), tab.getHeight());
         refreshCenterPanel(gamePanel);
@@ -242,6 +244,7 @@ public class IKunDldXl extends AbstractGame {
     private void loadPvpTab() {
         tab.setSelectedIndex(0);
         JPanel pvpPanel = masterGame.getPvpPanel();
+        pvpPanel.setLayout(FLOW_LEFT_LAYOUT);
         pvpTab = new PvpTab();
         playerArea = pvpTab.getPlayerArea();
         fightArea = pvpTab.getFightArea();
@@ -274,7 +277,8 @@ public class IKunDldXl extends AbstractGame {
         playerInfoTab = new PlayerInfoTab();
         JLabel lvLabel = playerInfoTab.getLvLabel();
         JProgressBar lvProgress = playerInfoTab.getLvProgress();
-        JScrollPane attrScroll = playerInfoTab.getAttrScroll();
+        JLabel energyLabel = playerInfoTab.getEnergyLabel();
+        JProgressBar energyProgress = playerInfoTab.getEnergyProgress();
         invoke(() -> {
             Result result = HttpSendUtil.post(Const.PLAYER_DETAIL, new PlayerDto());
             if (Const.ERROR_CODE.equals(result.getCode())) {
@@ -285,11 +289,32 @@ public class IKunDldXl extends AbstractGame {
                 lvLabel.setText(String.format("Lv:%d(%s)", playerInfoVo.getLevel(), lvTips));
                 lvProgress.setMaximum(playerInfoVo.getNextLvExp());
                 lvProgress.setValue(playerInfoVo.getExp());
+                // 体力
+                energyLabel.setText(String.format("体力: (%d/100)", playerInfoVo.getEnergy()));
+                energyProgress.setValue(playerInfoVo.getEnergy());
+                // 昵称
+                playerInfoTab.getNickname().setText(String.format("昵称: %s", playerInfoVo.getNickname()));
+                // 账号
+                playerInfoTab.getAccount().setText(String.format("账号: %s", StrUtil.isBlank(playerInfoVo.getAccount()) ? "暂无" : playerInfoVo.getAccount()));
 
+                // hp
+                playerInfoTab.getHp().setText(String.format("生命: %d", playerInfoVo.getHp()));
+                // 攻击
+                playerInfoTab.getAttack().setText(String.format("攻击: %d", playerInfoVo.getAttack()));
+
+                // 防御
+                playerInfoTab.getDefender().setText(String.format("防御: %d", playerInfoVo.getDefence()));
+                // 命中率
+                playerInfoTab.getHit().setText(String.format("命中: %.3f", playerInfoVo.getHitRate()));
+
+                // 闪避
+                playerInfoTab.getFlee().setText(String.format("闪避: %.3f", playerInfoVo.getFlee()));
+                // 连击
+                playerInfoTab.getCombo().setText(String.format("连击: %.3f", playerInfoVo.getComboRate()));
             }
         });
-        playerPanel.add(playerInfoTab.getPlayerPanel(), BorderLayout.EAST);
-        updateUI(tab);
+        playerPanel.setLayout(FLOW_LEFT_LAYOUT);
+        playerPanel.add(playerInfoTab.getInfoPanel());
     }
 
     /**
@@ -333,7 +358,7 @@ public class IKunDldXl extends AbstractGame {
                     .count();
             pvpTab.getPlayerLabel().setText(String.format("玩家列表(%d/%d)", onlineCount, size));
             for (PlayerVo record : records) {
-                playerPanel = new JPanel();
+                playerPanel = new JPanel(FLOW_LEFT_LAYOUT);
                 playerInfoLabel = new JLabel(String.format("%d [%s][Lv %d][%s]",
                         records.indexOf(record) + 1,
                         record.getRegion(),
@@ -342,11 +367,11 @@ public class IKunDldXl extends AbstractGame {
                 ));
                 playerInfoLabel.setForeground(record.getOnline() ? Color.GREEN : Color.GRAY);
                 playerInfoLabel.setHorizontalAlignment(SwingConstants.LEFT);
-                playerPanel.add(playerInfoLabel, BorderLayout.CENTER);
+                playerPanel.add(playerInfoLabel);
 
                 if (!StrUtil.equalsIgnoreCase(record.getMac(), currentUser.getUuid())) {
                     battleBtn = new JButton("战斗");
-                    playerPanel.add(battleBtn, BorderLayout.WEST);
+                    playerPanel.add(battleBtn);
                     battleBtn.addActionListener(e -> {
                         fightArea.setText(Const.CLEAR_MSG);
                         invoke(() -> {

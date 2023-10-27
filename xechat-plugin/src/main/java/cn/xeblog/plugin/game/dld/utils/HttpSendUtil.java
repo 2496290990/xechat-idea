@@ -6,6 +6,7 @@ import cn.xeblog.plugin.cache.DataCache;
 import cn.xeblog.plugin.game.dld.Const;
 import cn.xeblog.plugin.game.dld.model.Result;
 import cn.xeblog.plugin.game.dld.model.common.Page;
+import cn.xeblog.plugin.util.NotifyUtils;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 
@@ -27,7 +28,11 @@ public class HttpSendUtil {
                 .execute()
                 .body();
         log.info("\n当前接口请求 - {}\n, 当前参数 {}\n,返回结果: {}", url, dataJson, body);
-        return gson.fromJson(body, Result.class);
+        Result result = gson.fromJson(body, Result.class);
+        if (Const.ERROR_CODE == result.getCode()) {
+            NotifyUtils.error(Const.GAME_NAME, result.toString(), true);
+        }
+        return result;
     }
 
     public static <T> T postResult(String url, Object data, Class<T> cls) {
