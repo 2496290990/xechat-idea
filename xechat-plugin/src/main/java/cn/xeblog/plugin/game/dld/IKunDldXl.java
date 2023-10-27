@@ -11,10 +11,12 @@ import cn.xeblog.plugin.game.dld.model.common.Page;
 import cn.xeblog.plugin.game.dld.model.dto.BattleDto;
 import cn.xeblog.plugin.game.dld.model.dto.LoginDto;
 import cn.xeblog.plugin.game.dld.model.dto.PlayerDto;
+import cn.xeblog.plugin.game.dld.model.vo.InstanceVo;
 import cn.xeblog.plugin.game.dld.model.vo.PlayerInfoVo;
 import cn.xeblog.plugin.game.dld.model.vo.PlayerVo;
 import cn.xeblog.plugin.game.dld.model.vo.ProcessVo;
 import cn.xeblog.plugin.game.dld.ui.IKunUi;
+import cn.xeblog.plugin.game.dld.ui.game.InstanceListTab;
 import cn.xeblog.plugin.game.dld.ui.game.MasterGame;
 import cn.xeblog.plugin.game.dld.ui.game.PlayerInfoTab;
 import cn.xeblog.plugin.game.dld.ui.game.PvpTab;
@@ -84,8 +86,12 @@ public class IKunDldXl extends AbstractGame {
 
     private PlayerInfoTab playerInfoTab;
 
+    private InstanceListTab instanceListTab;
 
-    private Gson gson = new Gson();
+    /**
+     * 当前玩家
+     */
+    private PlayerVo currentPlayer;
 
     @Override
     protected void start() {
@@ -265,7 +271,49 @@ public class IKunDldXl extends AbstractGame {
      * 副本tab
      */
     private void loadInstanceTab() {
+        tab.setSelectedIndex(1);
+        JPanel instancePanel = masterGame.getInstancePanel();
+        instancePanel.removeAll();
+        instancePanel.setLayout(FLOW_LEFT_LAYOUT);
+        instanceListTab = new InstanceListTab();
+        JPanel instanceListPanel = instanceListTab.getInstanceListPanel();
+        instanceListPanel.setLayout(FLOW_LEFT_LAYOUT);
+        invoke(() -> {
+            Result result = HttpSendUtil.post(Const.INSTANCE_LIST, null);
+            List<InstanceVo> instanceVoList = ResultUtil.convertListData(result, InstanceVo.class);
+            log.info("当前副本列表 {}", instanceVoList);
+            JPanel itemPanel = null;
+            JLabel itemLabel = null;
+            JButton itemBtn = null;
+            for (InstanceVo instance : instanceVoList) {
+                itemPanel = new JPanel(FLOW_LEFT_LAYOUT);
+                Integer accessLevel = instance.getAccessLevel();
+                itemLabel = new JLabel(String.format("%d [%s] [%d级准入] [层数 %d]",
+                        instanceVoList.indexOf(instance),
+                        instance.getInstanceName(),
+                        accessLevel,
+                        instance.getFloorNum()));
+                boolean accessFlag = currentPlayer.getLevel() >= accessLevel;
+                itemLabel.setForeground(accessFlag ? Color.GREEN : Color.GRAY);
+                itemBtn = new JButton("进入副本");
+                if (!accessFlag) {
+                    itemBtn.setEnabled(false);
+                }
+                itemBtn.addActionListener(e -> {
+                    if (!accessFlag) {
+                        NotifyUtils.error(GAME_NAME, "等级不足", true);
+                    } else {
+                        loadInstanceNpc(instance);
+                    }
+                });
+                itemPanel.add(itemLabel);
+                itemPanel.add(itemBtn);
+                instanceListPanel.add(itemPanel);
+            }
+        });
 
+        instancePanel.add(instanceListPanel);
+        updateUI(tab, instancePanel);
     }
 
     /**
@@ -332,6 +380,10 @@ public class IKunDldXl extends AbstractGame {
 
     }
 
+    private void loadInstanceNpc(InstanceVo instance) {
+        NotifyUtils.info(GAME_NAME, instance.toString());
+    }
+
     private void updateUI(JComponent... panels){
         Arrays.asList(panels).forEach(JComponent::updateUI);
     }
@@ -385,6 +437,8 @@ public class IKunDldXl extends AbstractGame {
                             refreshPlayerList();
                         });
                     });
+                } else {
+                    currentPlayer = record;
                 }
                 playerArea.add(playerPanel, BorderLayout.WEST);
             }

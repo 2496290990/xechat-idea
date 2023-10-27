@@ -31,6 +31,10 @@ public class Const {
      */
     public static final String BATTLE_CONTROLLER = BASE_URL + "/battle";
     /**
+     * 副本控制器
+     */
+    public static final String INSTANCE_CONTROLLER = BASE_URL + "/instance";
+    /**
      * 登录
      */
     public static final String SYS_LOGIN = SYS_CONTROLLER + "/login";
@@ -50,6 +54,10 @@ public class Const {
      * 战斗
      */
     public static final String BATTLE_DO = BATTLE_CONTROLLER + "/doBattle";
+    /**
+     * 副本列表
+     */
+    public static final String INSTANCE_LIST = INSTANCE_CONTROLLER + "/list";
 
     public static final String GAME_NAME = "爱坤大乐斗";
 
