@@ -244,6 +244,7 @@ public class IKunDldXl extends AbstractGame {
     private void loadPvpTab() {
         tab.setSelectedIndex(0);
         JPanel pvpPanel = masterGame.getPvpPanel();
+        pvpPanel.removeAll();
         pvpPanel.setLayout(FLOW_LEFT_LAYOUT);
         pvpTab = new PvpTab();
         playerArea = pvpTab.getPlayerArea();
@@ -257,7 +258,7 @@ public class IKunDldXl extends AbstractGame {
         refreshPlayerList();
         refreshBtn.addActionListener(e -> invoke(this::refreshPlayerList));
         pvpPanel.add(pvpTab.getPvpPanel());
-        tab.updateUI();
+        updateUI(tab, pvpPanel);
     }
 
     /**
