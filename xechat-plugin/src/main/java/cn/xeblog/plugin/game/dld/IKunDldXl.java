@@ -465,18 +465,12 @@ public class IKunDldXl extends AbstractGame {
 
     private void addFightProcess(ProcessVo process) {
         String processStr = process.getProcess();
-
-    }
-
-    public static void main(String[] args) {
-        String str = CLEAR_MSG + CLEAR_MSG + CLEAR_MSG + CLEAR_MSG;
-        for (int i = 0; i < str.length(); i += COLUMN_NUM) {
-            int end = Math.min(i + COLUMN_NUM, str.length());
-            String chunk = str.substring(i, end);
-            System.out.println(chunk);
+        for (int i = 0; i < processStr.length(); i += COLUMN_NUM) {
+            int end = Math.min(i + COLUMN_NUM, processStr.length());
+            String chunk = processStr.substring(i, end);
+            fightArea.append(String.format("\n%s", chunk));
         }
     }
-
     /**
      * 刷新centerPanel
      *

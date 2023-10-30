@@ -13,7 +13,7 @@ public class Const {
     /**
      * 每行展示数字
      */
-    public static final Integer COLUMN_NUM = 15;
+    public static final Integer COLUMN_NUM = 18;
 
     public static final String CLEAR_MSG = "青山湿遍君不知，一汪清水独自流";
 
