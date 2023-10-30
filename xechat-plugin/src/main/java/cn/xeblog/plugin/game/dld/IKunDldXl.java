@@ -20,13 +20,13 @@ import cn.xeblog.plugin.game.dld.ui.game.InstanceListTab;
 import cn.xeblog.plugin.game.dld.ui.game.MasterGame;
 import cn.xeblog.plugin.game.dld.ui.game.PlayerInfoTab;
 import cn.xeblog.plugin.game.dld.ui.game.PvpTab;
+import cn.xeblog.plugin.game.dld.ui.login.AccountLogin;
 import cn.xeblog.plugin.game.dld.ui.login.LoginFormUi;
 import cn.xeblog.plugin.game.dld.ui.login.MacLogin;
 import cn.xeblog.plugin.game.dld.utils.HttpSendUtil;
 import cn.xeblog.plugin.game.dld.utils.ResultUtil;
 import cn.xeblog.plugin.util.AlertMessagesUtil;
 import cn.xeblog.plugin.util.NotifyUtils;
-import com.google.gson.Gson;
 import com.intellij.ui.components.panels.VerticalBox;
 import lombok.extern.slf4j.Slf4j;
 
@@ -37,7 +37,7 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 
-import static cn.xeblog.plugin.game.dld.Const.GAME_NAME;
+import static cn.xeblog.plugin.game.dld.Const.*;
 
 /**
  * @author eleven
@@ -80,6 +80,8 @@ public class IKunDldXl extends AbstractGame {
 
     private MacLogin macLogin;
 
+    private AccountLogin accountLogin;
+
     private MasterGame masterGame;
 
     private PvpTab pvpTab;
@@ -92,6 +94,10 @@ public class IKunDldXl extends AbstractGame {
      * 当前玩家
      */
     private PlayerVo currentPlayer;
+
+    private String account;
+
+    private String password;
 
     @Override
     protected void start() {
@@ -164,6 +170,8 @@ public class IKunDldXl extends AbstractGame {
                     typePanel.add(macLogin.getMacPanel());
                     break;
                 case 1:
+                    initAccountLogin();
+                    typePanel.add(accountLogin.getAccountLoginPanel());
                 case 2:
                 default:
                     break;
@@ -177,6 +185,17 @@ public class IKunDldXl extends AbstractGame {
     private void initMacLogin() {
         macLogin = new MacLogin();
         loginBtn = macLogin.getLoginBtn();
+        loadLoginAction();
+    }
+
+    private void initAccountLogin() {
+        accountLogin = new AccountLogin();
+        loginBtn = accountLogin.getLoginBtn();
+        loadLoginAction();
+    }
+
+    private void initEmailLogin() {
+        loadLoginAction();
     }
 
     /**
@@ -431,9 +450,7 @@ public class IKunDldXl extends AbstractGame {
                             Result processResult = HttpSendUtil.post(Const.BATTLE_DO, new BattleDto(currentUser.getUuid(), record.getMac()));
                             List<ProcessVo> list = ResultUtil.convertListData(processResult, ProcessVo.class);
                             list.forEach(System.out::println);
-                            list.forEach(item -> {
-                                fightArea.append(String.format("%s \n", item.getProcess()));
-                            });
+                            list.forEach(this::addFightProcess);
                             refreshPlayerList();
                         });
                     });
@@ -443,6 +460,20 @@ public class IKunDldXl extends AbstractGame {
                 playerArea.add(playerPanel, BorderLayout.WEST);
             }
             updateUI(playerArea, tab, box, centerPanel);
+        }
+    }
+
+    private void addFightProcess(ProcessVo process) {
+        String processStr = process.getProcess();
+
+    }
+
+    public static void main(String[] args) {
+        String str = CLEAR_MSG + CLEAR_MSG + CLEAR_MSG + CLEAR_MSG;
+        for (int i = 0; i < str.length(); i += COLUMN_NUM) {
+            int end = Math.min(i + COLUMN_NUM, str.length());
+            String chunk = str.substring(i, end);
+            System.out.println(chunk);
         }
     }
 
@@ -482,7 +513,29 @@ public class IKunDldXl extends AbstractGame {
     }
 
     private void loginByAccount() {
-        AlertMessagesUtil.showInfoDialog(GAME_NAME, "功能暂未开发，请选择MAC登录");
+        String accountStr = accountLogin.getAccount().getText();
+        String pwdStr = accountLogin.getPassword().getText();
+        if (StrUtil.isBlank(accountStr)) {
+            NotifyUtils.error(GAME_NAME, "账号不允许为空");
+            return;
+        }
+
+        if (StrUtil.isBlank(pwdStr)) {
+            NotifyUtils.error(GAME_NAME, "密码不允许为空");
+            return;
+        }
+        LoginDto accountDto = LoginDto.accountLogin(accountStr, pwdStr);
+        invoke(() -> {
+            log.info("当前开始执行登录流程 地址 {}", Const.SYS_LOGIN);
+            Result loginResult = HttpSendUtil.post(Const.SYS_LOGIN, accountDto);
+            log.info("当前登录返回结果 -{}", loginResult);
+            if (loginResult.getCode() == 200) {
+                DataCache.loginToken = String.format("Bearer %s", loginResult.getData().toString());
+                initMasterGame();
+            } else {
+                AlertMessagesUtil.showErrorDialog(GAME_NAME, loginResult.getMessage());
+            }
+        });
     }
 
     private void loginByEmail() {

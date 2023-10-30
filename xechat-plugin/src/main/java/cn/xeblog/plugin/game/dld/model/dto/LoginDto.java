@@ -61,7 +61,7 @@ public class LoginDto {
      * @param password      密码
      * @return LoginDto
      */
-    private static LoginDto accountLogin(String account, String password) {
+    public static LoginDto accountLogin(String account, String password) {
         LoginDto dto = new LoginDto();
         dto.setAccount(account);
         dto.setPassword(password);
@@ -75,7 +75,7 @@ public class LoginDto {
      * @param verifyCode     验证码
      * @return LoginDto
      */
-    private static LoginDto emailLogin(String email, String verifyCode) {
+    public static LoginDto emailLogin(String email, String verifyCode) {
         LoginDto dto = new LoginDto();
         dto.setEmail(email);
         dto.setVerifyCode(verifyCode);

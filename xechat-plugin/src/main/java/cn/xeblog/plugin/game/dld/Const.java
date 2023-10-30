@@ -10,6 +10,10 @@ public class Const {
      * 错误编码
      */
     public static final Integer ERROR_CODE = 500;
+    /**
+     * 每行展示数字
+     */
+    public static final Integer COLUMN_NUM = 15;
 
     public static final String CLEAR_MSG = "青山湿遍君不知，一汪清水独自流";
 
