@@ -8,18 +8,11 @@ import cn.xeblog.plugin.cache.DataCache;
 import cn.xeblog.plugin.game.AbstractGame;
 import cn.xeblog.plugin.game.dld.model.Result;
 import cn.xeblog.plugin.game.dld.model.common.Page;
-import cn.xeblog.plugin.game.dld.model.dto.BattleDto;
-import cn.xeblog.plugin.game.dld.model.dto.LoginDto;
-import cn.xeblog.plugin.game.dld.model.dto.PlayerDto;
-import cn.xeblog.plugin.game.dld.model.vo.InstanceVo;
-import cn.xeblog.plugin.game.dld.model.vo.PlayerInfoVo;
-import cn.xeblog.plugin.game.dld.model.vo.PlayerVo;
-import cn.xeblog.plugin.game.dld.model.vo.ProcessVo;
+import cn.xeblog.plugin.game.dld.model.dto.*;
+import cn.xeblog.plugin.game.dld.model.entity.InstanceNpc;
+import cn.xeblog.plugin.game.dld.model.vo.*;
 import cn.xeblog.plugin.game.dld.ui.IKunUi;
-import cn.xeblog.plugin.game.dld.ui.game.InstanceListTab;
-import cn.xeblog.plugin.game.dld.ui.game.MasterGame;
-import cn.xeblog.plugin.game.dld.ui.game.PlayerInfoTab;
-import cn.xeblog.plugin.game.dld.ui.game.PvpTab;
+import cn.xeblog.plugin.game.dld.ui.game.*;
 import cn.xeblog.plugin.game.dld.ui.login.AccountLogin;
 import cn.xeblog.plugin.game.dld.ui.login.LoginFormUi;
 import cn.xeblog.plugin.game.dld.ui.login.MacLogin;
@@ -70,6 +63,7 @@ public class IKunDldXl extends AbstractGame {
     private JTextArea fightArea;
 
     private JPanel playerArea;
+    private JPanel npcArea;
 
     private final FlowLayout FLOW_LEFT_LAYOUT = new FlowLayout(FlowLayout.LEFT);
 
@@ -400,67 +394,168 @@ public class IKunDldXl extends AbstractGame {
     }
 
     private void loadInstanceNpc(InstanceVo instance) {
-        NotifyUtils.info(GAME_NAME, instance.toString());
+        JPanel instancePanel = masterGame.getInstancePanel();
+        instancePanel.removeAll();
+        instancePanel.setLayout(FLOW_LEFT_LAYOUT);
+        pvpTab = new PvpTab();
+        playerArea = pvpTab.getPlayerArea();
+        fightArea = pvpTab.getFightArea();
+        JButton clearBtn = pvpTab.getClearBtn();
+        clearBtn.addActionListener(e -> {
+            fightArea.setText(Const.CLEAR_MSG);
+            updateUI(tab, box, centerPanel);
+        });
+        JButton refreshBtn = pvpTab.getRefreshBtn();
+        refreshInstanceNpcListV2(instance);
+        refreshBtn.addActionListener(e -> invoke(() -> refreshInstanceNpcListV2(instance)));
+        instancePanel.add(pvpTab.getPvpPanel());
+        updateUI(tab, instancePanel);
+    }
+    private void refreshInstanceNpcListV2(InstanceVo instance) {
+        invoke(() -> {
+            Result result = HttpSendUtil.post(INSTANCE_JOIN, new JoinInstanceDto(currentPlayer.getAccountId(), instance.getId()));
+            ChallengeInstanceVo challengeInstanceVo = ResultUtil.convertObjData(result, ChallengeInstanceVo.class);
+            log.info("返回结果 {}",  challengeInstanceVo);
+
+            if (Const.ERROR_CODE.equals(result.getCode())) {
+                fightArea.setText(result.toString());
+            } else {
+                // 防止出现战斗后列表紊乱的问题
+                playerArea.removeAll();
+                List<InstanceNpc> npcList = challengeInstanceVo.getNpcList();
+                JPanel playerPanel = null;
+                JButton battleBtn = null;
+                JLabel playerInfoLabel = null;
+                User currentUser = DataCache.getCurrentUser();
+                int size = npcList.size();
+                playerArea.setLayout(new GridLayout(size, 1));
+                pvpTab.getPlayerLabel().setText("NPC列表");
+                Integer currentFloor = challengeInstanceVo.getRecord().getCurrentFloor();
+                for (InstanceNpc instanceNpc : npcList) {
+                    playerPanel = new JPanel(FLOW_LEFT_LAYOUT);
+                    playerInfoLabel = new JLabel(String.format("[第%d层] [%s]", instanceNpc.getFloor(), instanceNpc.getNpcName()));
+                    boolean showBtnFlag = currentFloor < instanceNpc.getFloor();
+                    playerInfoLabel.setForeground(showBtnFlag ? Color.GREEN : Color.GRAY);
+                    playerInfoLabel.setHorizontalAlignment(SwingConstants.LEFT);
+                    playerPanel.add(playerInfoLabel);
+
+                    if (showBtnFlag) {
+                        battleBtn = new JButton("战斗");
+                        playerPanel.add(battleBtn);
+                        battleBtn.addActionListener(e -> {
+                            fightArea.setText(CLEAR_MSG);
+                            invoke(() -> {
+                                Result processResult = HttpSendUtil.post(NPC_CHALLENGE, new NpcFightDto(currentPlayer.getId(), instanceNpc));
+                                List<ProcessVo> list = ResultUtil.convertListData(processResult, ProcessVo.class);
+                                list.forEach(System.out::println);
+                                list.forEach(this::addFightProcess);
+                                refreshInstanceNpcListV2(instance);
+                            });
+                        });
+                        playerArea.add(playerPanel, BorderLayout.WEST);
+                    }
+                }
+                updateUI(playerArea, tab, box, centerPanel);
+            }
+        });
+    }
+    private void refreshInstanceNpcList(InstanceVo instance) {
+        log.info("执行获取列表数据的功能");
+        playerArea.removeAll();
+        log.info("当前接口 {}", INSTANCE_JOIN);
+        Result result = HttpSendUtil.post(INSTANCE_JOIN, new JoinInstanceDto(currentPlayer.getAccountId(), instance.getId()));
+        ChallengeInstanceVo challengeInstanceVo = ResultUtil.convertObjData(result, ChallengeInstanceVo.class);
+        log.info("返回结果 {}",  challengeInstanceVo);
+        List<InstanceNpc> npcList = challengeInstanceVo.getNpcList();
+
+        JPanel npcPanel = null;
+        JLabel npcLabel = null;
+        JButton fightBtn = null;
+        Integer currentFloor = challengeInstanceVo.getRecord().getCurrentFloor();
+        log.info("当前数据{}", npcList);
+        for (InstanceNpc instanceNpc : npcList) {
+            npcPanel = new JPanel(FLOW_LEFT_LAYOUT);
+            npcLabel = new JLabel(String.format("[第%d层] [%s]", instanceNpc.getFloor(), instanceNpc.getNpcName()));
+            fightBtn = new JButton("挑战");
+            fightBtn.setEnabled(currentFloor < instanceNpc.getFloor());
+            fightBtn.addActionListener(e -> {
+                fightArea.setText(CLEAR_MSG);
+                invoke(() -> {
+                    Result fightResult = HttpSendUtil.post(NPC_CHALLENGE, new NpcFightDto(currentPlayer.getId(), instanceNpc));
+                    List<ProcessVo> list = ResultUtil.convertListData(fightResult, ProcessVo.class);
+                    list.forEach(System.out::println);
+                    list.forEach(this::addFightProcess);
+                    refreshPlayerList();
+
+                });
+            });
+            npcPanel.add(npcLabel);
+            npcPanel.add(fightBtn);
+            playerArea.add(npcPanel);
+        }
+        updateUI(playerArea, tab, box, centerPanel);
     }
 
-    private void updateUI(JComponent... panels){
+    private void updateUI(JComponent... panels) {
         Arrays.asList(panels).forEach(JComponent::updateUI);
     }
 
     private void refreshPlayerList() {
-        PlayerDto dto = new PlayerDto(new Page<PlayerVo>());
-        Result result = HttpSendUtil.post(Const.PLAYER_GET_ALL, dto);
-        Object data = result.getData();
-        if (Const.ERROR_CODE.equals(result.getCode())) {
-            fightArea.setText(result.toString());
-        } else {
-            // 防止出现战斗后列表紊乱的问题
-            playerArea.removeAll();
-            Page<PlayerVo> playerPage = ResultUtil.convertPageData(data, PlayerVo.class);
-            List<PlayerVo> records = playerPage.getRecords();
-            JPanel playerPanel = null;
-            JButton battleBtn = null;
-            JLabel playerInfoLabel = null;
-            User currentUser = DataCache.getCurrentUser();
-            int size = records.size();
-            log.info("当前人数{}", size);
-            playerArea.setLayout(new GridLayout(size, 1));
-            long onlineCount = records.stream()
-                    .filter(PlayerVo::getOnline)
-                    .count();
-            pvpTab.getPlayerLabel().setText(String.format("玩家列表(%d/%d)", onlineCount, size));
-            for (PlayerVo record : records) {
-                playerPanel = new JPanel(FLOW_LEFT_LAYOUT);
-                playerInfoLabel = new JLabel(String.format("%d [%s][Lv %d][%s]",
-                        records.indexOf(record) + 1,
-                        record.getRegion(),
-                        record.getLevel(),
-                        record.getNickname()
-                ));
-                playerInfoLabel.setForeground(record.getOnline() ? Color.GREEN : Color.GRAY);
-                playerInfoLabel.setHorizontalAlignment(SwingConstants.LEFT);
-                playerPanel.add(playerInfoLabel);
+        invoke(() -> {
+            PlayerDto dto = new PlayerDto(new Page<PlayerVo>());
+            Result result = HttpSendUtil.post(Const.PLAYER_GET_ALL, dto);
+            Object data = result.getData();
+            if (Const.ERROR_CODE.equals(result.getCode())) {
+                fightArea.setText(result.toString());
+            } else {
+                // 防止出现战斗后列表紊乱的问题
+                playerArea.removeAll();
+                Page<PlayerVo> playerPage = ResultUtil.convertPageData(data, PlayerVo.class);
+                List<PlayerVo> records = playerPage.getRecords();
+                JPanel playerPanel = null;
+                JButton battleBtn = null;
+                JLabel playerInfoLabel = null;
+                User currentUser = DataCache.getCurrentUser();
+                int size = records.size();
+                log.info("当前人数{}", size);
+                playerArea.setLayout(new GridLayout(size, 1));
+                long onlineCount = records.stream()
+                        .filter(PlayerVo::getOnline)
+                        .count();
+                pvpTab.getPlayerLabel().setText(String.format("玩家列表(%d/%d)", onlineCount, size));
+                for (PlayerVo record : records) {
+                    playerPanel = new JPanel(FLOW_LEFT_LAYOUT);
+                    playerInfoLabel = new JLabel(String.format("%d [%s][Lv %d][%s]",
+                            records.indexOf(record) + 1,
+                            record.getRegion(),
+                            record.getLevel(),
+                            record.getNickname()
+                    ));
+                    playerInfoLabel.setForeground(record.getOnline() ? Color.GREEN : Color.GRAY);
+                    playerInfoLabel.setHorizontalAlignment(SwingConstants.LEFT);
+                    playerPanel.add(playerInfoLabel);
 
-                if (!StrUtil.equalsIgnoreCase(record.getMac(), currentUser.getUuid())) {
-                    battleBtn = new JButton("战斗");
-                    playerPanel.add(battleBtn);
-                    battleBtn.addActionListener(e -> {
-                        fightArea.setText(Const.CLEAR_MSG);
-                        invoke(() -> {
-                            Result processResult = HttpSendUtil.post(Const.BATTLE_DO, new BattleDto(currentUser.getUuid(), record.getMac()));
-                            List<ProcessVo> list = ResultUtil.convertListData(processResult, ProcessVo.class);
-                            list.forEach(System.out::println);
-                            list.forEach(this::addFightProcess);
-                            refreshPlayerList();
+                    if (!StrUtil.equalsIgnoreCase(record.getMac(), currentUser.getUuid())) {
+                        battleBtn = new JButton("挑战");
+                        playerPanel.add(battleBtn);
+                        battleBtn.addActionListener(e -> {
+                            fightArea.setText(CLEAR_MSG);
+                            invoke(() -> {
+                                Result processResult = HttpSendUtil.post(Const.BATTLE_DO, new BattleDto(currentUser.getUuid(), record.getMac()));
+                                List<ProcessVo> list = ResultUtil.convertListData(processResult, ProcessVo.class);
+                                list.forEach(System.out::println);
+                                list.forEach(this::addFightProcess);
+                                refreshPlayerList();
+                            });
                         });
-                    });
-                } else {
-                    currentPlayer = record;
+                    } else {
+                        currentPlayer = record;
+                    }
+                    playerArea.add(playerPanel, BorderLayout.WEST);
                 }
-                playerArea.add(playerPanel, BorderLayout.WEST);
+                updateUI(playerArea, tab, box, centerPanel);
             }
-            updateUI(playerArea, tab, box, centerPanel);
-        }
+        });
     }
 
     private void addFightProcess(ProcessVo process) {
@@ -471,6 +566,7 @@ public class IKunDldXl extends AbstractGame {
             fightArea.append(String.format("\n%s", chunk));
         }
     }
+
     /**
      * 刷新centerPanel
      *

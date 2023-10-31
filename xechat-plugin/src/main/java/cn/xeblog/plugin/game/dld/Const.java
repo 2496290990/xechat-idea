@@ -20,8 +20,8 @@ public class Const {
     /**
      * 基础url
      */
-    public static final String BASE_URL = "http://103.153.101.174:9528/dld";
-    //public static final String BASE_URL = "http://localhost:9528/dld";
+    //public static final String BASE_URL = "http://103.153.101.174:9528/dld";
+    public static final String BASE_URL = "http://localhost:9528/dld";
     /**
      * 系统控制器
      */
@@ -38,6 +38,10 @@ public class Const {
      * 副本控制器
      */
     public static final String INSTANCE_CONTROLLER = BASE_URL + "/instance";
+    /**
+     * npc控制器
+     */
+    public static final String INSTANCE_NPC_CONTROLLER = BASE_URL + "/instanceNpc";
     /**
      * 登录
      */
@@ -62,6 +66,12 @@ public class Const {
      * 副本列表
      */
     public static final String INSTANCE_LIST = INSTANCE_CONTROLLER + "/list";
+
+    /**
+     * 进入副本
+     */
+    public static final String INSTANCE_JOIN = INSTANCE_CONTROLLER + "/join";
+    public static final String NPC_CHALLENGE = INSTANCE_NPC_CONTROLLER + "/challenge";
 
     public static final String GAME_NAME = "爱坤大乐斗";
 
