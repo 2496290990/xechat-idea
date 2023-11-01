@@ -76,5 +76,5 @@ public class Const {
     public static final String GAME_NAME = "爱坤大乐斗";
 
 
-
+    public static final String INSTANCE_OVER_MSG = "当前副本已完成，请重新选择副本";
 }
