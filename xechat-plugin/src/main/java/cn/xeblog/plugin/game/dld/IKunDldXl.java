@@ -274,7 +274,7 @@ public class IKunDldXl extends AbstractGame {
             updateUI(tab, box, centerPanel);
         });
         JButton refreshBtn = pvpTab.getRefreshBtn();
-        refreshPlayerList();
+        invoke(this::refreshPlayerList);
         refreshBtn.addActionListener(e -> invoke(this::refreshPlayerList));
         pvpPanel.add(pvpTab.getPvpPanel());
         updateUI(tab, pvpPanel);
@@ -406,7 +406,7 @@ public class IKunDldXl extends AbstractGame {
             updateUI(tab, box, centerPanel);
         });
         JButton refreshBtn = pvpTab.getRefreshBtn();
-        refreshInstanceNpcList(instance);
+        invoke(() -> refreshInstanceNpcList(instance));
         refreshBtn.addActionListener(e -> invoke(() -> refreshInstanceNpcList(instance)));
         instancePanel.add(pvpTab.getPvpPanel());
         updateUI(tab, instancePanel);
@@ -456,18 +456,18 @@ public class IKunDldXl extends AbstractGame {
                             JButton refreshBtn = pvpTab.getRefreshBtn();
                             refreshBtn.setText("返回列表");
                             refreshBtn.addActionListener(re -> invoke(this::loadInstanceTab));
+                            updateUI(refreshBtn, tab, box, centerPanel);
                             return;
                         }
-                        //invoke(() -> {
-                        //
-                        //});
-                        Result processResult = HttpSendUtil.post(NPC_CHALLENGE, new NpcFightDto(currentPlayer.getId(), instanceNpc));
-                        List<ProcessVo> list = ResultUtil.convertListData(processResult, ProcessVo.class);
-                        list.forEach(this::addFightProcess);
+                        invoke(() -> {
+                            Result processResult = HttpSendUtil.post(NPC_CHALLENGE, new NpcFightDto(currentPlayer.getId(), instanceNpc));
+                            List<ProcessVo> list = ResultUtil.convertListData(processResult, ProcessVo.class);
+                            list.forEach(this::addFightProcess);
 
-                        playerArea.removeAll();
-                        updateUI(playerArea);
-                        refreshInstanceNpcList(instance);
+                            playerArea.removeAll();
+                            updateUI(playerArea);
+                            refreshInstanceNpcList(instance);
+                        });
                     });
                 }
                 playerArea.add(playerPanel, BorderLayout.WEST);
