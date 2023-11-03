@@ -20,8 +20,8 @@ public class BattleDto {
      */
     private PlayerDto defender;
 
-    public BattleDto(String attackMac, String defenderMac) {
-        this.attacker = new PlayerDto(attackMac);
+    public BattleDto( String defenderMac) {
+        this.attacker = new PlayerDto();
         this.defender = new PlayerDto(defenderMac);
     }
 }

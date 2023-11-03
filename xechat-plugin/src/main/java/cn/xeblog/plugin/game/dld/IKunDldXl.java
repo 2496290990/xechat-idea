@@ -520,7 +520,7 @@ public class IKunDldXl extends AbstractGame {
                     battleBtn.addActionListener(e -> {
                         fightArea.setText(CLEAR_MSG);
                         invoke(() -> {
-                            Result processResult = HttpSendUtil.post(Const.BATTLE_DO, new BattleDto(currentUser.getUuid(), record.getMac()));
+                            Result processResult = HttpSendUtil.post(Const.BATTLE_DO, new BattleDto(record.getMac()));
                             List<ProcessVo> list = ResultUtil.convertListData(processResult, ProcessVo.class);
                             list.forEach(System.out::println);
                             list.forEach(this::addFightProcess);
