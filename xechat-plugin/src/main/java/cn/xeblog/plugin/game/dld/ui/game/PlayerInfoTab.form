@@ -47,6 +47,8 @@
             <rowspec value="center:max(d;4px):noGrow"/>
             <rowspec value="top:4dlu:noGrow"/>
             <rowspec value="center:max(d;4px):noGrow"/>
+            <rowspec value="top:4dlu:noGrow"/>
+            <rowspec value="center:max(d;4px):noGrow"/>
             <colspec value="fill:d:grow"/>
             <constraints/>
             <properties/>
@@ -100,7 +102,7 @@
                       <forms/>
                     </constraints>
                     <properties>
-                      <text value="Label"/>
+                      <text value="昵称"/>
                     </properties>
                   </component>
                   <component id="c5bcb" class="javax.swing.JLabel" binding="account">
@@ -109,7 +111,7 @@
                       <forms/>
                     </constraints>
                     <properties>
-                      <text value="Label"/>
+                      <text value="账号"/>
                     </properties>
                   </component>
                 </children>
@@ -132,7 +134,7 @@
                       <forms/>
                     </constraints>
                     <properties>
-                      <text value="Label"/>
+                      <text value="HP"/>
                     </properties>
                   </component>
                   <component id="24d16" class="javax.swing.JLabel" binding="attack">
@@ -141,7 +143,7 @@
                       <forms/>
                     </constraints>
                     <properties>
-                      <text value="Label"/>
+                      <text value="攻击"/>
                     </properties>
                   </component>
                 </children>
@@ -164,7 +166,7 @@
                       <forms/>
                     </constraints>
                     <properties>
-                      <text value="Label"/>
+                      <text value="防御"/>
                     </properties>
                   </component>
                   <component id="94f62" class="javax.swing.JLabel" binding="hit">
@@ -173,7 +175,7 @@
                       <forms/>
                     </constraints>
                     <properties>
-                      <text value="Label"/>
+                      <text value="命中率"/>
                     </properties>
                   </component>
                 </children>
@@ -196,7 +198,7 @@
                       <forms/>
                     </constraints>
                     <properties>
-                      <text value="Label"/>
+                      <text value="连击"/>
                     </properties>
                   </component>
                   <component id="9858" class="javax.swing.JLabel" binding="flee">
@@ -205,7 +207,39 @@
                       <forms/>
                     </constraints>
                     <properties>
-                      <text value="Label"/>
+                      <text value="闪避率"/>
+                    </properties>
+                  </component>
+                </children>
+              </grid>
+              <grid id="e1f29" binding="speedPanel" layout-manager="FormLayout">
+                <rowspec value="center:d:grow"/>
+                <colspec value="fill:d:grow"/>
+                <colspec value="left:4dlu:noGrow"/>
+                <colspec value="fill:d:grow"/>
+                <constraints>
+                  <grid row="10" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                  <forms/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <component id="9bc80" class="javax.swing.JLabel" binding="speed">
+                    <constraints>
+                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <forms/>
+                    </constraints>
+                    <properties>
+                      <text value="速度"/>
+                    </properties>
+                  </component>
+                  <component id="7cbc4" class="javax.swing.JLabel" binding="critical">
+                    <constraints>
+                      <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <forms/>
+                    </constraints>
+                    <properties>
+                      <text value="暴击率"/>
                     </properties>
                   </component>
                 </children>

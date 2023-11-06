@@ -31,5 +31,8 @@ public class PlayerInfoTab {
     private JLabel flee;
     private JLabel nickname;
     private JLabel account;
+    private JPanel speedPanel;
+    private JLabel speed;
+    private JLabel critical;
 
 }

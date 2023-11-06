@@ -52,8 +52,14 @@ public class PlayerInfoVo {
 
     private Integer exp;
 
+    private Double criticalChance;
+
+    private Integer speed;
+
     private Integer nextLvExp;
 
     private Integer energy;
+
+    private Integer maxEnergy;
 
 }
