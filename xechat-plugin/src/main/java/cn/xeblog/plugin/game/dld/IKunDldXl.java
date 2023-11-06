@@ -290,10 +290,10 @@ public class IKunDldXl extends AbstractGame {
         instancePanel.setLayout(FLOW_LEFT_LAYOUT);
         instanceListTab = new InstanceListTab();
         JPanel instanceListPanel = instanceListTab.getInstanceListPanel();
-        instanceListPanel.setLayout(FLOW_LEFT_LAYOUT);
         invoke(() -> {
             Result result = HttpSendUtil.post(Const.INSTANCE_LIST, null);
             List<InstanceVo> instanceVoList = ResultUtil.convertListData(result, InstanceVo.class);
+            instanceListPanel.setLayout(new GridLayout(instanceVoList.size(), 1));
             log.info("当前副本列表 {}", instanceVoList);
             JPanel itemPanel = null;
             JLabel itemLabel = null;
@@ -352,8 +352,9 @@ public class IKunDldXl extends AbstractGame {
                 lvProgress.setMaximum(playerInfoVo.getNextLvExp());
                 lvProgress.setValue(playerInfoVo.getExp());
                 // 体力
-                energyLabel.setText(String.format("体力: (%d/100)", playerInfoVo.getEnergy()));
+                energyLabel.setText(String.format("体力: (%d/%d)", playerInfoVo.getEnergy(), playerInfoVo.getMaxEnergy()));
                 energyProgress.setValue(playerInfoVo.getEnergy());
+                energyProgress.setMaximum(playerInfoVo.getMaxEnergy());
                 // 昵称
                 playerInfoTab.getNickname().setText(String.format("昵称: %s", playerInfoVo.getNickname()));
                 // 账号
@@ -367,12 +368,17 @@ public class IKunDldXl extends AbstractGame {
                 // 防御
                 playerInfoTab.getDefender().setText(String.format("防御: %d", playerInfoVo.getDefence()));
                 // 命中率
-                playerInfoTab.getHit().setText(String.format("命中: %.3f", playerInfoVo.getHitRate()));
+                playerInfoTab.getHit().setText(String.format("命中率: %.3f", playerInfoVo.getHitRate()));
 
                 // 闪避
-                playerInfoTab.getFlee().setText(String.format("闪避: %.3f", playerInfoVo.getFlee()));
+                playerInfoTab.getFlee().setText(String.format("闪避率: %.3f", playerInfoVo.getFlee()));
                 // 连击
-                playerInfoTab.getCombo().setText(String.format("连击: %.3f", playerInfoVo.getComboRate()));
+                playerInfoTab.getCombo().setText(String.format("连击率: %.3f", playerInfoVo.getComboRate()));
+                // 速度
+                playerInfoTab.getCritical().setText(String.format("暴击率:%.3f", playerInfoVo.getCriticalChance()));
+                // 速度
+                playerInfoTab.getSpeed().setText(String.format("速度:%d", playerInfoVo.getSpeed()));
+
             }
         });
         playerPanel.setLayout(FLOW_LEFT_LAYOUT);
