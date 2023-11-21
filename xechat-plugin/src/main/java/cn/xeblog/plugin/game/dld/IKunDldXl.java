@@ -13,6 +13,7 @@ import cn.xeblog.plugin.game.dld.model.entity.InstanceNpc;
 import cn.xeblog.plugin.game.dld.model.vo.*;
 import cn.xeblog.plugin.game.dld.ui.IKunUi;
 import cn.xeblog.plugin.game.dld.ui.game.*;
+import cn.xeblog.plugin.game.dld.ui.game.playerPackege.PackageTab;
 import cn.xeblog.plugin.game.dld.ui.login.AccountLogin;
 import cn.xeblog.plugin.game.dld.ui.login.LoginFormUi;
 import cn.xeblog.plugin.game.dld.ui.login.MacLogin;
@@ -389,6 +390,11 @@ public class IKunDldXl extends AbstractGame {
      * 背包
      */
     private void loadPackageTab() {
+        tab.setSelectedIndex(3);
+        JPanel packagePanel = masterGame.getPackagePanel();
+        packagePanel.setLayout(FLOW_LEFT_LAYOUT);
+        PackageTab packageTab = new PackageTab();
+        packagePanel.add(packageTab.getPackageTabPanel());
 
     }
 
