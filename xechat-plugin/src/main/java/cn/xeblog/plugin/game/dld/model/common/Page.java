@@ -1,6 +1,8 @@
 package cn.xeblog.plugin.game.dld.model.common;
 
 
+import lombok.ToString;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -11,6 +13,7 @@ import java.util.List;
  * @date 2023/10/13 10:24
  * @apiNote
  */
+@ToString
 public class Page<T> {
     private static final long serialVersionUID = 8545996863226528798L;
     private List<T> records;

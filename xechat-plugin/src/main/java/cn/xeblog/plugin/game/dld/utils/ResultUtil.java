@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.xeblog.plugin.game.dld.model.Result;
 import cn.xeblog.plugin.game.dld.model.common.Page;
 import com.google.gson.Gson;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,15 +15,18 @@ import java.util.Map;
  * @date 2023/10/13 12:26
  * @apiNote
  */
+@Slf4j
 public class ResultUtil {
     private static Gson gson = new Gson();
 
     public static <T> Page<T> convertPageData(Page page, Class<T> cls) {
         List<Map> records = page.getRecords();
+        log.info("当前的records {}", records);
         List<T> convertList = new ArrayList<>(records.size());
         for (Map record : records) {
             convertList.add(BeanUtil.mapToBean(record, cls, true));
         }
+        log.info("最终的records {}", convertList);
         page.setRecords(convertList);
         return page;
     }

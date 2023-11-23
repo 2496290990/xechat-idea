@@ -14,4 +14,7 @@ public class PackageDetailTab {
     private JPanel detailPanel;
     private JTextArea detailArea;
     private JPanel propsPanel;
+    private JScrollPane propsScroll;
+    private JScrollPane detailScroll;
+
 }

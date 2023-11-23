@@ -10,9 +10,13 @@ import cn.xeblog.plugin.game.dld.model.Result;
 import cn.xeblog.plugin.game.dld.model.common.Page;
 import cn.xeblog.plugin.game.dld.model.dto.*;
 import cn.xeblog.plugin.game.dld.model.entity.InstanceNpc;
+import cn.xeblog.plugin.game.dld.model.entity.Weapon;
 import cn.xeblog.plugin.game.dld.model.vo.*;
 import cn.xeblog.plugin.game.dld.ui.IKunUi;
-import cn.xeblog.plugin.game.dld.ui.game.*;
+import cn.xeblog.plugin.game.dld.ui.game.InstanceListTab;
+import cn.xeblog.plugin.game.dld.ui.game.MasterGame;
+import cn.xeblog.plugin.game.dld.ui.game.PlayerInfoTab;
+import cn.xeblog.plugin.game.dld.ui.game.PvpTab;
 import cn.xeblog.plugin.game.dld.ui.game.playerPackege.PackageDetailTab;
 import cn.xeblog.plugin.game.dld.ui.game.playerPackege.PackageTab;
 import cn.xeblog.plugin.game.dld.ui.login.AccountLogin;
@@ -22,12 +26,12 @@ import cn.xeblog.plugin.game.dld.utils.HttpSendUtil;
 import cn.xeblog.plugin.game.dld.utils.ResultUtil;
 import cn.xeblog.plugin.util.AlertMessagesUtil;
 import cn.xeblog.plugin.util.NotifyUtils;
-import com.intellij.ui.JBColor;
+import com.google.common.collect.Lists;
 import com.intellij.ui.components.panels.VerticalBox;
+import com.jgoodies.forms.layout.CellConstraints;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.swing.*;
-import javax.swing.border.LineBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
@@ -121,8 +125,6 @@ public class IKunDldXl extends AbstractGame {
         box = new VerticalBox();
         box.setMaximumSize(maximumSize);
         box.add(loginFormUi.getLoginPanel());
-        box.setBorder(new LineBorder(JBColor.RED, 1));
-        centerPanel.setBorder(new LineBorder(JBColor.GREEN, 1));
         centerPanel.setPreferredSize(maximumSize);
         centerPanel.add(box);
         centerPanel.updateUI();
@@ -140,7 +142,6 @@ public class IKunDldXl extends AbstractGame {
             footerPanel = iKunUi.getFooterPanel();
         }
         mainPanel.setPreferredSize(maximumSize);
-        mainPanel.setBorder(new LineBorder(JBColor.BLUE, 1));
         footerPanel.add(getStartGameButton());
         footerPanel.add(getExitButton());
         mainPanel.updateUI();
@@ -443,8 +444,20 @@ public class IKunDldXl extends AbstractGame {
         JPanel propsPanel = detailTab.getPropsPanel();
         JTextArea detailArea = detailTab.getDetailArea();
         detailArea.setText("就是不给你看物品描述");
-        weaponPanel.add(detailPanel);
+        weaponPanel.add(detailPanel, new CellConstraints());
         updateUI(weaponPanel);
+    }
+
+    private void refreshPlayerWeapon() {
+        invoke(() -> {
+            log.info("当前获取玩家武器开始");
+            QueryWeaponDto dto = new QueryWeaponDto();
+            dto.setPlayerId(currentPlayer.getId());
+            Result result = HttpSendUtil.post(GET_ALL_WEAPON, dto);
+            List<Weapon> weaponList = ResultUtil.convertListData(result, Weapon.class);
+            List<List<Weapon>> partition = Lists.partition(weaponList, 5);
+            log.info("当前的数据 {}", partition);
+        });
     }
 
     /**

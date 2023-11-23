@@ -43,6 +43,10 @@ public class Const {
      */
     public static final String INSTANCE_NPC_CONTROLLER = BASE_URL + "/instanceNpc";
     /**
+     * 玩家武器
+     */
+    public static final String PLAYER_WEAPON_CONTROLLER = BASE_URL + "/playerWeapon";
+    /**
      * 登录
      */
     public static final String SYS_LOGIN = SYS_CONTROLLER + "/login";
@@ -72,6 +76,10 @@ public class Const {
      */
     public static final String INSTANCE_JOIN = INSTANCE_CONTROLLER + "/join";
     public static final String NPC_CHALLENGE = INSTANCE_NPC_CONTROLLER + "/challenge";
+    /**
+     * 获取玩家所有的武器
+     */
+    public static final String GET_ALL_WEAPON = PLAYER_WEAPON_CONTROLLER + "/getAll";
 
     public static final String GAME_NAME = "爱坤大乐斗";
 

@@ -17,8 +17,9 @@
         <properties/>
         <border type="none"/>
         <children>
-          <grid id="e1fca" binding="skillPanel" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-            <margin top="0" left="0" bottom="0" right="0"/>
+          <grid id="e1fca" binding="skillPanel" layout-manager="FormLayout">
+            <rowspec value="center:d:grow"/>
+            <colspec value="fill:d:grow"/>
             <constraints>
               <tabbedpane title="技能"/>
             </constraints>
@@ -26,8 +27,9 @@
             <border type="none"/>
             <children/>
           </grid>
-          <grid id="5109" binding="weaponPanel" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-            <margin top="0" left="0" bottom="0" right="0"/>
+          <grid id="5109" binding="weaponPanel" layout-manager="FormLayout">
+            <rowspec value="center:d:grow"/>
+            <colspec value="fill:d:grow"/>
             <constraints>
               <tabbedpane title="武器"/>
             </constraints>
@@ -35,8 +37,9 @@
             <border type="none"/>
             <children/>
           </grid>
-          <grid id="4dbf9" binding="materialsPanel" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-            <margin top="0" left="0" bottom="0" right="0"/>
+          <grid id="4dbf9" binding="materialsPanel" layout-manager="FormLayout">
+            <rowspec value="center:d:grow"/>
+            <colspec value="fill:d:grow"/>
             <constraints>
               <tabbedpane title="材料"/>
             </constraints>
@@ -44,8 +47,9 @@
             <border type="none"/>
             <children/>
           </grid>
-          <grid id="5e442" binding="propPanel" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-            <margin top="0" left="0" bottom="0" right="0"/>
+          <grid id="5e442" binding="propPanel" layout-manager="FormLayout">
+            <rowspec value="center:d:grow"/>
+            <colspec value="fill:d:grow"/>
             <constraints>
               <tabbedpane title="道具"/>
             </constraints>
