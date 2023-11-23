@@ -13,6 +13,7 @@ import cn.xeblog.plugin.game.dld.model.entity.InstanceNpc;
 import cn.xeblog.plugin.game.dld.model.vo.*;
 import cn.xeblog.plugin.game.dld.ui.IKunUi;
 import cn.xeblog.plugin.game.dld.ui.game.*;
+import cn.xeblog.plugin.game.dld.ui.game.playerPackege.PackageDetailTab;
 import cn.xeblog.plugin.game.dld.ui.game.playerPackege.PackageTab;
 import cn.xeblog.plugin.game.dld.ui.login.AccountLogin;
 import cn.xeblog.plugin.game.dld.ui.login.LoginFormUi;
@@ -21,10 +22,12 @@ import cn.xeblog.plugin.game.dld.utils.HttpSendUtil;
 import cn.xeblog.plugin.game.dld.utils.ResultUtil;
 import cn.xeblog.plugin.util.AlertMessagesUtil;
 import cn.xeblog.plugin.util.NotifyUtils;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.VerticalBox;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.swing.*;
+import javax.swing.border.LineBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
@@ -85,6 +88,18 @@ public class IKunDldXl extends AbstractGame {
 
     private InstanceListTab instanceListTab;
 
+    private PackageTab packageTab;
+
+    /**
+     * 详细的背包分类tab
+     */
+    private JTabbedPane packageTypeTab;
+
+    /**
+     * 详情tab
+     */
+    private PackageDetailTab detailTab;
+
     /**
      * 当前玩家
      */
@@ -94,14 +109,21 @@ public class IKunDldXl extends AbstractGame {
 
     private String password;
 
+    private Dimension maximumSize = new Dimension(800, 600);
+
+
+
     @Override
     protected void start() {
         log.info("开始了");
         initLoginForm();
         centerPanel.removeAll();
         box = new VerticalBox();
-        box.setMaximumSize(new Dimension(600, 450));
+        box.setMaximumSize(maximumSize);
         box.add(loginFormUi.getLoginPanel());
+        box.setBorder(new LineBorder(JBColor.RED, 1));
+        centerPanel.setBorder(new LineBorder(JBColor.GREEN, 1));
+        centerPanel.setPreferredSize(maximumSize);
         centerPanel.add(box);
         centerPanel.updateUI();
         log.info("结束了");
@@ -117,7 +139,8 @@ public class IKunDldXl extends AbstractGame {
             centerPanel = iKunUi.getCenterPanel();
             footerPanel = iKunUi.getFooterPanel();
         }
-        mainPanel.setMinimumSize(new Dimension(150, 200));
+        mainPanel.setPreferredSize(maximumSize);
+        mainPanel.setBorder(new LineBorder(JBColor.BLUE, 1));
         footerPanel.add(getStartGameButton());
         footerPanel.add(getExitButton());
         mainPanel.updateUI();
@@ -226,7 +249,7 @@ public class IKunDldXl extends AbstractGame {
         tab = masterGame.getTab();
         loadPvpTab();
         JPanel gamePanel = masterGame.getGamePanel();
-        Dimension maximumSize = new Dimension(600, 450);
+
         tab.setPreferredSize(maximumSize);
         log.info("GameTabbed width {} ， height {}", tab.getWidth(), tab.getHeight());
         refreshCenterPanel(gamePanel);
@@ -393,9 +416,35 @@ public class IKunDldXl extends AbstractGame {
         tab.setSelectedIndex(3);
         JPanel packagePanel = masterGame.getPackagePanel();
         packagePanel.setLayout(FLOW_LEFT_LAYOUT);
-        PackageTab packageTab = new PackageTab();
-        packagePanel.add(packageTab.getPackageTabPanel());
+        packageTab= new PackageTab();
+        packageTypeTab = packageTab.getTab();
+        packageTypeTab.setSelectedIndex(1);
+        JPanel packageTabPanel = packageTab.getPackageTabPanel();
+        packagePanel.add(packageTabPanel);
+        loadPlayerWeapon();
+        packageTypeTab.addChangeListener(e -> {
+            int packageType = packageTypeTab.getSelectedIndex();
+            log.info("当前类型{}", packageType);
+            switch (packageType) {
+                case 1 :
+                    loadPlayerWeapon();
+                    break;
+                default:
+                    NotifyUtils.info(GAME_NAME, packageType + "功能没开发");
+            }
+        });
+    }
 
+    private void loadPlayerWeapon() {
+        JPanel weaponPanel = packageTab.getWeaponPanel();
+        weaponPanel.removeAll();
+        detailTab = new PackageDetailTab();
+        JPanel detailPanel = detailTab.getDetailPanel();
+        JPanel propsPanel = detailTab.getPropsPanel();
+        JTextArea detailArea = detailTab.getDetailArea();
+        detailArea.setText("就是不给你看物品描述");
+        weaponPanel.add(detailPanel);
+        updateUI(weaponPanel);
     }
 
     /**
