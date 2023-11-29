@@ -3,6 +3,7 @@ package cn.xeblog.plugin.game.dld.utils;
 import cn.hutool.core.bean.BeanUtil;
 import cn.xeblog.plugin.game.dld.model.Result;
 import cn.xeblog.plugin.game.dld.model.common.Page;
+import cn.xeblog.plugin.game.dld.model.vo.BattleResult;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 
@@ -38,6 +39,10 @@ public class ResultUtil {
             result.add(BeanUtil.mapToBean(item, cls, true));
         }
         return result;
+    }
+
+    public static <T> BattleResult convertBattleResult(Result dataResult, Class<T> cls) {
+        return BeanUtil.mapToBean((Map) dataResult.getData(), BattleResult.class, true);
     }
 
     public static <T> T convertObjData(Result result, Class<T> cls) {

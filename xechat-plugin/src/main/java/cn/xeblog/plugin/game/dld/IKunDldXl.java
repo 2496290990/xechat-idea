@@ -27,14 +27,21 @@ import cn.xeblog.plugin.game.dld.utils.ResultUtil;
 import cn.xeblog.plugin.util.AlertMessagesUtil;
 import cn.xeblog.plugin.util.NotifyUtils;
 import com.google.common.collect.Lists;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.jgoodies.forms.layout.CellConstraints;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.tools.ant.taskdefs.condition.Not;
+import org.yaml.snakeyaml.events.Event;
 
 import javax.swing.*;
+import javax.swing.border.LineBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.Arrays;
 import java.util.List;
 
@@ -416,6 +423,7 @@ public class IKunDldXl extends AbstractGame {
     private void loadPackageTab() {
         tab.setSelectedIndex(3);
         JPanel packagePanel = masterGame.getPackagePanel();
+        packagePanel.removeAll();
         packagePanel.setLayout(FLOW_LEFT_LAYOUT);
         packageTab= new PackageTab();
         packageTypeTab = packageTab.getTab();
@@ -441,7 +449,8 @@ public class IKunDldXl extends AbstractGame {
         weaponPanel.removeAll();
         detailTab = new PackageDetailTab();
         JPanel detailPanel = detailTab.getDetailPanel();
-        JPanel propsPanel = detailTab.getPropsPanel();
+        detailPanel.setBorder(new LineBorder(JBColor.BLUE, 1));
+        refreshPlayerWeapon();
         JTextArea detailArea = detailTab.getDetailArea();
         detailArea.setText("就是不给你看物品描述");
         weaponPanel.add(detailPanel, new CellConstraints());
@@ -456,6 +465,29 @@ public class IKunDldXl extends AbstractGame {
             Result result = HttpSendUtil.post(GET_ALL_WEAPON, dto);
             List<Weapon> weaponList = ResultUtil.convertListData(result, Weapon.class);
             List<List<Weapon>> partition = Lists.partition(weaponList, 5);
+            JPanel propsPanel = detailTab.getPropsPanel();
+            propsPanel.setLayout(new GridLayout(partition.size(), 5));
+            JPanel detailRowPanel = null;
+            JPanel detailPanel = null;
+            JLabel detailLabel = null;
+            for (List<Weapon> weapons : partition) {
+                detailRowPanel = new JPanel(new GridLayout(1, 5));
+                for (Weapon weapon : weapons) {
+                    detailPanel = new JPanel();
+                    detailPanel.setBorder(new LineBorder(JBColor.RED, 1));
+                    detailLabel = new JLabel(weapon.getName());
+                    detailPanel.addMouseListener(new MouseAdapter() {
+                        @Override
+                        public void mouseClicked(MouseEvent e) {
+                            NotifyUtils.info(GAME_NAME, "点击了" + weapon.getName());
+                        }
+                    });
+                    detailPanel.add(detailLabel, BorderLayout.CENTER);
+                    detailRowPanel.add(detailPanel);
+                }
+                propsPanel.add(detailRowPanel);
+            }
+
             log.info("当前的数据 {}", partition);
         });
     }
@@ -535,8 +567,8 @@ public class IKunDldXl extends AbstractGame {
                         }
                         invoke(() -> {
                             Result processResult = HttpSendUtil.post(NPC_CHALLENGE, new NpcFightDto(currentPlayer.getId(), instanceNpc));
-                            List<ProcessVo> list = ResultUtil.convertListData(processResult, ProcessVo.class);
-                            list.forEach(this::addFightProcess);
+                            BattleResult battleResult = ResultUtil.convertBattleResult(processResult, ProcessVo.class);
+                            battleResult.getProcessList().forEach(this::addFightProcess);
 
                             playerArea.removeAll();
                             updateUI(playerArea);
@@ -595,10 +627,18 @@ public class IKunDldXl extends AbstractGame {
                         fightArea.setText(CLEAR_MSG);
                         invoke(() -> {
                             Result processResult = HttpSendUtil.post(Const.BATTLE_DO, new BattleDto(record.getMac()));
-                            List<ProcessVo> list = ResultUtil.convertListData(processResult, ProcessVo.class);
+                            BattleResult battleResult = ResultUtil.convertBattleResult(processResult, null);
+                            List<ProcessVo> list = battleResult.getProcessList();
                             list.forEach(System.out::println);
                             list.forEach(this::addFightProcess);
                             refreshPlayerList();
+                            if (battleResult.getSuccess()) {
+                                boolean confirmResult = AlertMessagesUtil.showYesNoDialog(GAME_NAME, String.format("恭喜你战胜了【%s】，是否发送鱼塘嘲讽", record.getNickname()));
+                                if (confirmResult) {
+                                    log.info("你嘲讽了 {}", record.getNickname());
+                                    HttpSendUtil.post(BATTLE_TAUNT, new TauntDto(currentUser.getUuid(), record.getMac()));
+                                }
+                            }
                         });
                     });
                 } else {

@@ -22,7 +22,7 @@ public class Const {
      */
     //public static final String BASE_URL = "http://103.153.101.174:9528/ikun";
     public static final String BASE_URL = "http://localhost:9528/ikun";
-    /**
+    /**#pla
      * 系统控制器
      */
     public static final String SYS_CONTROLLER = BASE_URL + "/sys";
@@ -66,6 +66,7 @@ public class Const {
      * 战斗
      */
     public static final String BATTLE_DO = BATTLE_CONTROLLER + "/doBattle";
+    public static final String BATTLE_TAUNT = BATTLE_CONTROLLER + "/taunt";
     /**
      * 副本列表
      */
@@ -82,7 +83,6 @@ public class Const {
     public static final String GET_ALL_WEAPON = PLAYER_WEAPON_CONTROLLER + "/getAll";
 
     public static final String GAME_NAME = "爱坤大乐斗";
-
 
     public static final String INSTANCE_OVER_MSG = "当前副本已完成，请重新选择副本";
 }
