@@ -1,5 +1,6 @@
 package cn.xeblog.plugin.game.dld;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.xeblog.commons.entity.User;
 import cn.xeblog.commons.enums.Game;
@@ -31,8 +32,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.jgoodies.forms.layout.CellConstraints;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.tools.ant.taskdefs.condition.Not;
-import org.yaml.snakeyaml.events.Event;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
@@ -41,7 +40,6 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.util.Arrays;
 import java.util.List;
 
@@ -122,6 +120,11 @@ public class IKunDldXl extends AbstractGame {
 
     private Dimension maximumSize = new Dimension(800, 600);
 
+    private Page page;
+    // 分页参数
+    private JLabel pageLabel;
+
+    private JTextField searchTextField;
 
 
     @Override
@@ -300,6 +303,7 @@ public class IKunDldXl extends AbstractGame {
         pvpTab = new PvpTab();
         playerArea = pvpTab.getPlayerArea();
         fightArea = pvpTab.getFightArea();
+        pageLabel = pvpTab.getPageLabel();
         JButton clearBtn = pvpTab.getClearBtn();
         clearBtn.addActionListener(e -> {
             fightArea.setText(Const.CLEAR_MSG);
@@ -308,6 +312,38 @@ public class IKunDldXl extends AbstractGame {
         JButton refreshBtn = pvpTab.getRefreshBtn();
         invoke(this::refreshPlayerList);
         refreshBtn.addActionListener(e -> invoke(this::refreshPlayerList));
+        // 上一页下一页操作
+        JButton prevBtn = pvpTab.getPrevBtn();
+        prevBtn.addActionListener(e -> {
+            if (page == null) {
+                NotifyUtils.info(GAME_NAME, "分页数据尚未初始化");
+                invoke(this::refreshPlayerList);
+                return;
+            }
+            if (page.getCurrent() <= 1) {
+                NotifyUtils.info(GAME_NAME, "当前已经是首页了");
+                return;
+            }
+            page.setCurrent(page.getCurrent() - 1);
+            invoke(this::refreshPlayerList);
+        });
+        JButton nextBtn = pvpTab.getNextBtn();
+        nextBtn.addActionListener(e -> {
+            if (page == null) {
+                NotifyUtils.info(GAME_NAME, "分页数据尚未初始化");
+                invoke(this::refreshPlayerList);
+                return;
+            }
+            if (page.getCurrent() >= page.getPages()) {
+                NotifyUtils.info(GAME_NAME, "当前已经是末页了");
+                return;
+            }
+            page.setCurrent(page.getCurrent() + 1);
+            invoke(this::refreshPlayerList);
+        });
+        JButton searchBtn = pvpTab.getSearchBtn();
+        searchTextField = pvpTab.getSearchTextField();
+        searchBtn.addActionListener(e -> invoke(this::refreshPlayerList));
         pvpPanel.add(pvpTab.getPvpPanel());
         updateUI(tab, pvpPanel);
     }
@@ -339,7 +375,7 @@ public class IKunDldXl extends AbstractGame {
                         accessLevel,
                         instance.getFloorNum()));
                 boolean accessFlag = currentPlayer.getLevel() >= accessLevel;
-                itemLabel.setForeground(accessFlag ? Color.GREEN : Color.GRAY);
+                itemLabel.setForeground(accessFlag ? JBColor.GREEN : JBColor.GRAY);
                 itemBtn = new JButton("进入副本");
                 if (!accessFlag) {
                     itemBtn.setEnabled(false);
@@ -425,6 +461,7 @@ public class IKunDldXl extends AbstractGame {
         JPanel packagePanel = masterGame.getPackagePanel();
         packagePanel.removeAll();
         packagePanel.setLayout(FLOW_LEFT_LAYOUT);
+        packagePanel.setPreferredSize(maximumSize);
         packageTab= new PackageTab();
         packageTypeTab = packageTab.getTab();
         packageTypeTab.setSelectedIndex(1);
@@ -446,10 +483,13 @@ public class IKunDldXl extends AbstractGame {
 
     private void loadPlayerWeapon() {
         JPanel weaponPanel = packageTab.getWeaponPanel();
+        weaponPanel.setPreferredSize(maximumSize);
+        weaponPanel.setBorder(new LineBorder(JBColor.BLUE, 1));
         weaponPanel.removeAll();
         detailTab = new PackageDetailTab();
         JPanel detailPanel = detailTab.getDetailPanel();
         detailPanel.setBorder(new LineBorder(JBColor.BLUE, 1));
+        detailPanel.setMinimumSize(maximumSize);
         refreshPlayerWeapon();
         JTextArea detailArea = detailTab.getDetailArea();
         detailArea.setText("就是不给你看物品描述");
@@ -504,6 +544,7 @@ public class IKunDldXl extends AbstractGame {
         instancePanel.removeAll();
         instancePanel.setLayout(FLOW_LEFT_LAYOUT);
         pvpTab = new PvpTab();
+
         playerArea = pvpTab.getPlayerArea();
         fightArea = pvpTab.getFightArea();
         JButton clearBtn = pvpTab.getClearBtn();
@@ -587,7 +628,17 @@ public class IKunDldXl extends AbstractGame {
     }
 
     private void refreshPlayerList() {
-        PlayerDto dto = new PlayerDto(new Page<PlayerVo>());
+        if (page == null) {
+            page = new Page<PlayerVo>();
+            page.setCurrent(1);
+            page.setSize(10);
+        }
+        PlayerDto dto = new PlayerDto(page);
+        if (searchTextField != null) {
+            String nickname = searchTextField.getText();
+            dto.setNickname(nickname);
+            page.setCurrent(1);
+        }
         Result result = HttpSendUtil.post(Const.PLAYER_GET_ALL, dto);
         Object data = result.getData();
         if (Const.ERROR_CODE.equals(result.getCode())) {
@@ -596,10 +647,15 @@ public class IKunDldXl extends AbstractGame {
             // 防止出现战斗后列表紊乱的问题
             playerArea.removeAll();
             Page<PlayerVo> playerPage = ResultUtil.convertPageData(data, PlayerVo.class);
+            page.setTotal(playerPage.getTotal());
+            page.setCurrent(playerPage.getCurrent());
+            page.setPages(playerPage.getPages());
+            // todo 设置分页参数
+            pageLabel.setText(playerPage.getCurrent() + "/" + playerPage.getPages());
             List<PlayerVo> records = playerPage.getRecords();
-            JPanel playerPanel = null;
-            JButton battleBtn = null;
-            JLabel playerInfoLabel = null;
+            JPanel playerPanel;
+            JButton battleBtn;
+            JLabel playerInfoLabel;
             User currentUser = DataCache.getCurrentUser();
             int size = records.size();
             log.info("当前人数{}", size);

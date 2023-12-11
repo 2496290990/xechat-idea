@@ -20,12 +20,14 @@ public class Page<T> {
     private Long total;
     private Long size;
     private Long current;
+    private Long pages;
+
     private List<OrderItem> orders;
 
     public Page() {
         this.records = Collections.emptyList();
         this.total = 0L;
-        this.size = 999L;
+        this.size = 10L;
         this.current = 1L;
         this.orders = new ArrayList();
     }
@@ -114,7 +116,12 @@ public class Page<T> {
         return this.orders;
     }
 
-    public long getPages() {
-        return getTotal() / getSize();
+    public Long getPages() {
+        return pages;
+    }
+
+    public Page<T> setPages(Long pages) {
+        this.pages = pages;
+        return this;
     }
 }

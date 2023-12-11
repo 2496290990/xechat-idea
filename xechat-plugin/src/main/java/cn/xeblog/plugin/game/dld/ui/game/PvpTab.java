@@ -18,6 +18,12 @@ public class PvpTab {
     private JButton refreshBtn;
     private JLabel fightLabel;
     private JLabel playerLabel;
+    private JTextField searchTextField;
+    private JButton searchBtn;
+    private JButton prevBtn;
+    private JButton nextBtn;
+    private JLabel pageLabel;
+    private JPanel pvpFooterPanel;
 
     public PvpTab() {
 

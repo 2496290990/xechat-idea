@@ -18,6 +18,8 @@ public class PlayerDto {
 
     private Integer accountId;
 
+    private String nickname;
+
     /**
      * 网卡地址
      */
