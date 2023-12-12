@@ -5,6 +5,7 @@ import cn.xeblog.commons.entity.OnlineServer;
 import cn.xeblog.commons.entity.User;
 import cn.xeblog.commons.enums.UserStatus;
 import cn.xeblog.plugin.action.ConnectionAction;
+import cn.xeblog.plugin.entity.Mask;
 import cn.xeblog.plugin.tools.browser.config.BrowserConfig;
 import cn.xeblog.plugin.tools.read.ReadConfig;
 import com.intellij.openapi.project.Project;
@@ -87,6 +88,8 @@ public class DataCache {
     public static BrowserConfig browserConfig = new BrowserConfig();
 
     public static String loginToken = null;
+
+    public static Mask mask = new Mask();
 
     /**
      * 获取用户信息

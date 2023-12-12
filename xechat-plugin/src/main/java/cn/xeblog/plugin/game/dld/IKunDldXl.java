@@ -1,6 +1,6 @@
 package cn.xeblog.plugin.game.dld;
 
-import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.xeblog.commons.entity.User;
 import cn.xeblog.commons.enums.Game;
@@ -43,7 +43,8 @@ import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.List;
 
-import static cn.xeblog.plugin.game.dld.Const.*;
+import static cn.xeblog.plugin.game.dld.Const.GAME_NAME;
+
 
 /**
  * @author eleven
@@ -76,7 +77,6 @@ public class IKunDldXl extends AbstractGame {
     private JTextArea fightArea;
 
     private JPanel playerArea;
-    private JPanel npcArea;
 
     private final FlowLayout FLOW_LEFT_LAYOUT = new FlowLayout(FlowLayout.LEFT);
 
@@ -112,13 +112,10 @@ public class IKunDldXl extends AbstractGame {
     /**
      * 当前玩家
      */
-    private PlayerVo currentPlayer;
+    private PlayerInfoVo currentPlayer;
 
-    private String account;
-
-    private String password;
-
-    private Dimension maximumSize = new Dimension(800, 600);
+    private final Dimension maximumSize = new Dimension(800, 800);
+    private final Dimension minimumSize = new Dimension(800, 650);
 
     private Page page;
     // 分页参数
@@ -341,6 +338,22 @@ public class IKunDldXl extends AbstractGame {
             page.setCurrent(page.getCurrent() + 1);
             invoke(this::refreshPlayerList);
         });
+        // 跳转按钮
+        JButton toBtn = pvpTab.getToBtn();
+        toBtn.setToolTipText("左侧输入框输入页数进行跳转");
+        toBtn.addActionListener(e -> {
+            String text = searchTextField.getText();
+            if (StrUtil.isBlank(text)) {
+                NotifyUtils.info(GAME_NAME, "请输入页数");
+                return;
+            }
+            if (!NumberUtil.isNumber(text)) {
+                NotifyUtils.info(GAME_NAME, "必须输入数字");
+                return;
+            }
+            page.setCurrent(Long.parseLong(text));
+            this.refreshPlayerList();
+        });
         JButton searchBtn = pvpTab.getSearchBtn();
         searchTextField = pvpTab.getSearchTextField();
         searchBtn.addActionListener(e -> invoke(this::refreshPlayerList));
@@ -502,7 +515,7 @@ public class IKunDldXl extends AbstractGame {
             log.info("当前获取玩家武器开始");
             QueryWeaponDto dto = new QueryWeaponDto();
             dto.setPlayerId(currentPlayer.getId());
-            Result result = HttpSendUtil.post(GET_ALL_WEAPON, dto);
+            Result result = HttpSendUtil.post(Const.GET_ALL_WEAPON, dto);
             List<Weapon> weaponList = ResultUtil.convertListData(result, Weapon.class);
             List<List<Weapon>> partition = Lists.partition(weaponList, 5);
             JPanel propsPanel = detailTab.getPropsPanel();
@@ -560,7 +573,7 @@ public class IKunDldXl extends AbstractGame {
     }
 
     private void refreshInstanceNpcList(InstanceVo instance) {
-        Result result = HttpSendUtil.post(INSTANCE_JOIN, new JoinInstanceDto(currentPlayer.getId(), instance.getId()));
+        Result result = HttpSendUtil.post(Const.INSTANCE_JOIN, new JoinInstanceDto(currentPlayer.getId(), instance.getId()));
         ChallengeInstanceVo challengeInstanceVo = ResultUtil.convertObjData(result, ChallengeInstanceVo.class);
         log.info("返回结果 {}", challengeInstanceVo);
 
@@ -596,10 +609,10 @@ public class IKunDldXl extends AbstractGame {
                     battleBtn = new JButton("战斗");
                     playerPanel.add(battleBtn);
                     battleBtn.addActionListener(e -> {
-                        fightArea.setText(CLEAR_MSG);
+                        fightArea.setText(Const.CLEAR_MSG);
                         if (challengeInstanceVo.getRecord().getCompleteFlag()) {
-                            fightArea.setText(INSTANCE_OVER_MSG);
-                            NotifyUtils.info(GAME_NAME, INSTANCE_OVER_MSG, false);
+                            fightArea.setText(Const.INSTANCE_OVER_MSG);
+                            NotifyUtils.info(GAME_NAME, Const.INSTANCE_OVER_MSG, false);
                             JButton refreshBtn = pvpTab.getRefreshBtn();
                             refreshBtn.setText("返回列表");
                             refreshBtn.addActionListener(re -> invoke(this::loadInstanceTab));
@@ -607,7 +620,7 @@ public class IKunDldXl extends AbstractGame {
                             return;
                         }
                         invoke(() -> {
-                            Result processResult = HttpSendUtil.post(NPC_CHALLENGE, new NpcFightDto(currentPlayer.getId(), instanceNpc));
+                            Result processResult = HttpSendUtil.post(Const.NPC_CHALLENGE, new NpcFightDto(currentPlayer.getId(), instanceNpc));
                             BattleResult battleResult = ResultUtil.convertBattleResult(processResult, ProcessVo.class);
                             battleResult.getProcessList().forEach(this::addFightProcess);
 
@@ -680,7 +693,7 @@ public class IKunDldXl extends AbstractGame {
                     battleBtn = new JButton("挑战");
                     playerPanel.add(battleBtn);
                     battleBtn.addActionListener(e -> {
-                        fightArea.setText(CLEAR_MSG);
+                        fightArea.setText(Const.CLEAR_MSG);
                         invoke(() -> {
                             Result processResult = HttpSendUtil.post(Const.BATTLE_DO, new BattleDto(record.getMac()));
                             BattleResult battleResult = ResultUtil.convertBattleResult(processResult, null);
@@ -692,13 +705,11 @@ public class IKunDldXl extends AbstractGame {
                                 boolean confirmResult = AlertMessagesUtil.showYesNoDialog(GAME_NAME, String.format("恭喜你战胜了【%s】，是否发送鱼塘嘲讽", record.getNickname()));
                                 if (confirmResult) {
                                     log.info("你嘲讽了 {}", record.getNickname());
-                                    HttpSendUtil.post(BATTLE_TAUNT, new TauntDto(currentUser.getUuid(), record.getMac()));
+                                    HttpSendUtil.post(Const.BATTLE_TAUNT, new TauntDto(currentUser.getUuid(), record.getMac()));
                                 }
                             }
                         });
                     });
-                } else {
-                    currentPlayer = record;
                 }
                 playerArea.add(playerPanel, BorderLayout.WEST);
             }
@@ -708,8 +719,8 @@ public class IKunDldXl extends AbstractGame {
 
     private void addFightProcess(ProcessVo process) {
         String processStr = process.getProcess();
-        for (int i = 0; i < processStr.length(); i += COLUMN_NUM) {
-            int end = Math.min(i + COLUMN_NUM, processStr.length());
+        for (int i = 0; i < processStr.length(); i += Const.COLUMN_NUM) {
+            int end = Math.min(i + Const.COLUMN_NUM, processStr.length());
             String chunk = processStr.substring(i, end);
             fightArea.append(String.format("\n%s", chunk));
         }
@@ -735,18 +746,7 @@ public class IKunDldXl extends AbstractGame {
             // TODO: 2023/10/24 自动执行 #over 9
             return;
         } else {
-            LoginDto macLoginDto = LoginDto.macLogin();
-            invoke(() -> {
-                log.info("当前开始执行登录流程 地址 {}", Const.SYS_LOGIN);
-                Result loginResult = HttpSendUtil.post(Const.SYS_LOGIN, macLoginDto);
-                log.info("当前登录返回结果 -{}", loginResult);
-                if (loginResult.getCode() == 200) {
-                    DataCache.loginToken = String.format("Bearer %s", loginResult.getData().toString());
-                    initMasterGame();
-                } else {
-                    AlertMessagesUtil.showErrorDialog(GAME_NAME, loginResult.getMessage());
-                }
-            });
+            invoke(() -> doLogin(LoginDto.macLogin()));
         }
     }
 
@@ -762,21 +762,24 @@ public class IKunDldXl extends AbstractGame {
             NotifyUtils.error(GAME_NAME, "密码不允许为空");
             return;
         }
-        LoginDto accountDto = LoginDto.accountLogin(accountStr, pwdStr);
-        invoke(() -> {
-            log.info("当前开始执行登录流程 地址 {}", Const.SYS_LOGIN);
-            Result loginResult = HttpSendUtil.post(Const.SYS_LOGIN, accountDto);
-            log.info("当前登录返回结果 -{}", loginResult);
-            if (loginResult.getCode() == 200) {
-                DataCache.loginToken = String.format("Bearer %s", loginResult.getData().toString());
-                initMasterGame();
-            } else {
-                AlertMessagesUtil.showErrorDialog(GAME_NAME, loginResult.getMessage());
-            }
-        });
+        invoke(() -> doLogin(LoginDto.accountLogin(accountStr, pwdStr)));
     }
 
     private void loginByEmail() {
         AlertMessagesUtil.showInfoDialog(GAME_NAME, "功能暂未开发，请选择MAC登录");
+    }
+
+    private void doLogin(LoginDto dto) {
+        log.info("当前开始执行登录流程 地址 {}", Const.SYS_LOGIN);
+        Result loginResult = HttpSendUtil.post(Const.SYS_LOGIN, dto);
+        log.info("当前登录返回结果 -{}", loginResult);
+        if (loginResult.getCode() == 200) {
+            PlayerInfoVo playerInfoVo = ResultUtil.convertObjData(loginResult, PlayerInfoVo.class);
+            currentPlayer = playerInfoVo;
+            DataCache.loginToken = String.format("Bearer %s", playerInfoVo.getToken());
+            initMasterGame();
+        } else {
+            AlertMessagesUtil.showErrorDialog(GAME_NAME, loginResult.getMessage());
+        }
     }
 }

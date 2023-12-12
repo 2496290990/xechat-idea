@@ -24,6 +24,7 @@ public class PvpTab {
     private JButton nextBtn;
     private JLabel pageLabel;
     private JPanel pvpFooterPanel;
+    private JButton toBtn;
 
     public PvpTab() {
 

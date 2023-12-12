@@ -1,5 +1,6 @@
 package cn.xeblog.plugin.action.handler.message;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.thread.GlobalThreadPool;
 import cn.xeblog.commons.entity.Response;
@@ -15,6 +16,7 @@ import cn.xeblog.plugin.action.ReactAction;
 import cn.xeblog.plugin.action.handler.ReactResultConsumer;
 import cn.xeblog.plugin.annotation.DoMessage;
 import cn.xeblog.plugin.cache.DataCache;
+import cn.xeblog.plugin.entity.Mask;
 import cn.xeblog.plugin.enums.Style;
 import cn.xeblog.plugin.util.NotifyUtils;
 import com.intellij.ide.actions.OpenFileAction;
@@ -28,6 +30,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.util.List;
 
 /**
  * @author anlingyi
@@ -42,6 +45,32 @@ public class UserMessageHandler extends AbstractMessageHandler<UserMsgDTO> {
     protected void process(Response<UserMsgDTO> response) {
         User user = response.getUser();
         UserMsgDTO body = response.getBody();
+        Mask mask = DataCache.mask;
+        List<String> maskIps = mask.getMaskIps();
+        Boolean notShow = mask.getNotShow();
+        if (maskIps.contains(user.getIp())) {
+            if (notShow) {
+                return;
+            }
+            body.setMsgType(UserMsgDTO.MsgType.TEXT);
+            body.setContent("已被禁言，无法发言");
+        }
+        List<String> maskRegions = mask.getMaskRegions();
+        if (maskRegions.contains(user.getShortRegion())) {
+            if (notShow) {
+                return;
+            }
+            body.setMsgType(UserMsgDTO.MsgType.TEXT);
+            body.setContent("已被禁言，无法发言");
+        }
+        List<String> maskUsernames = mask.getMaskUsernames();
+        if (maskUsernames.stream().anyMatch(item -> item.contains(user.getUsername()))) {
+            if (notShow) {
+                return;
+            }
+            body.setMsgType(UserMsgDTO.MsgType.TEXT);
+            body.setContent("已被禁言，无法发言");
+        }
         boolean isImage = body.getMsgType() == UserMsgDTO.MsgType.IMAGE;
         if (isImage) {
             renderImage(response);

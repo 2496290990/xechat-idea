@@ -66,7 +66,9 @@ public enum Command {
     ADMIN("admin", "管控"),
     LOGOUT("exit", "退出"),
     CLEAN("clean", "清屏"),
-    HELP("help", "帮助");
+    HELP("help", "帮助"),
+    MASK("mask", "屏蔽 多个用,隔开 -u 昵称屏蔽 -r 省份屏蔽 -i ip屏蔽 -c 解除所有屏蔽 -n 不展示屏蔽人消息"),
+    ;
 
     private String command;
     private String desc;
